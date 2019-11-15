@@ -4,6 +4,7 @@
     "description": "",
     "private": true,
     "dependencies": {
+        "big.js": "^5.2.2",
         "highlight.js": "^9.13.1",
         "react-grid-layout": "^0.16.6",
         "react-icons": "^2.2.7",

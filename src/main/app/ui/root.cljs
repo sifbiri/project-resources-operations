@@ -2,8 +2,10 @@
   (:require
     [app.model.session :as session]
     [clojure.string :as str]
+    [app.math :as math]
     ["semantic-ui-calendar-react" :as SemanticUICalendar]
-    [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button]]
+    [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button tr td table thead th tbody tfoot]]
+    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
     [com.fulcrologic.fulcro.dom.html-entities :as ent]
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.fulcro.application :as app]
@@ -92,9 +94,42 @@
       (ui-dropdown
        {:options project-options
         :search true
-        :onChange (fn [evt data]
+        :onChange (fn [evtork data]
                     (m/set-value! this :work-line/project [:project/id (.-value data)]))})))))
 
+
+(def ui-work-line (comp/factory WorkLine))
+(defsc WorkDay [this {:work-day/keys [all-work-lines]}]
+  {:query         [{:work-day/all-work-lines (comp/get-query WorkLine) }]
+   :initial-state {:work-day/all-work-lines []}
+   :ident         (fn [] [:component/id :work-day])
+   :route-segment ["work-day"]
+   }
+  (let [total (reduce
+                (fn [amt {:item/keys [hours]}]
+                  (+ amt hours))
+                0
+                all-work-lines)]
+     (table :.ui.table
+            (thead (tr (th "Project") (th "Task") (th "Hours")  (th "Row Action")))
+            (tbody (map ui-work-line  all-work-lines))
+            (tfoot (tr
+                                        ;(th "") (th "") (th "") (th "")
+                    (th "") (th "Total hours: ") (th total) (th "")
+                    (th
+                     (button :.ui.primary.icon.button
+                             {:onClick (fn []
+                                         (merge/merge-component! this WorkLine
+                                                                 {:ui/new?       true
+                                                                  :item/id       (tempid/tempid)
+                                                                  :item/title    ""
+                                                                  :item/in-stock 0
+                                                                  :item/price    (math/bigdecimal "0")}
+                                                                 :append [:component/id
+                                                                          :item-list/all-items]))}
+                             (dom/i :.plus.icon)))))))
+  ;; TODO maybe have it stored as decimal instead of string ...
+  )
 
 
 
