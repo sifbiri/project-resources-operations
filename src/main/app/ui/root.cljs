@@ -47,6 +47,56 @@
   )
 (def ui-date (comp/factory Date))
 
+(defsc Main [this {:main/keys [date welcome-message]}]
+  {:query         [:main/welcome-message {:main/date (comp/get-query Date)}]
+   :initial-state (fn [_] {:main/welcome-message "Hi!"
+                           :main/date (comp/get-initial-state Date {})})
+   :ident         (fn [] [:component/id :main])
+   :route-segment ["main"]}
+
+  (js/console.log "Date" date)
+  (ui-date date))
+
+
+(defsc Project [_ _]
+  {:query [:project/id]
+   :indent :project/id}
+  :form-fields #{:category/id}
+  :ident :category/id)
+
+(defsc Task [_ _]
+  {:query [:task/id :task/name]
+   :indent :task/id})
+
+(defsc WorkLine [this {:ui/keys [new? saving?]
+                       :work-line/keys [id project]
+                       :as props}
+                 ]
+  {:query [:ui/new?
+           :ui/saving?
+           :work-line/id
+           {:work-line/project (comp/get-query Project)}
+           :work-line/hours
+           [:project/options '_]
+           fs/form-config-join]
+
+   :form-fields #{:work-line/hours :work-line/projec}
+
+   :pre-merge (fn [{:keys [data-tree]}] (fs/add-form-config WorkLine data-tree))
+
+   :indent :work-line/id
+   }
+  (let [project-options (get props :project/options)]
+    (tr
+     (td
+      (ui-dropdown
+       {:options project-options
+        :search true
+        :onChange (fn [evt data]
+                    (m/set-value! this :work-line/project [:project/id (.-value data)]))})))))
+
+
+
 
 (defsc SignupSuccess [this props]
   {:query         ['*]
@@ -188,7 +238,7 @@
     (h3 "Settings")))
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main Signup SignupSuccess Settings]})
+  {:router-targets [Main Signup SignupSuccess Settings WorkDay]})
 
 (def ui-top-router (comp/factory TopRouter))
 
