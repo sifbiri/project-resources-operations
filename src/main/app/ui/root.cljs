@@ -289,7 +289,7 @@
     (div :.ui.container
          (div :.ui.secondary.pointing.menu
               (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                             :onClick (fn [] (dr/change-route this ["main"]))} "Main")
+                             :ONClick (fn [] (dr/change-route this ["main"]))} "Main")
               (dom/a :.item {:classes [(when (= :settings current-tab) "active")]
                              :onClick (fn [] (dr/change-route this ["settings"]))} "Settings")
               (div :.right.menu
