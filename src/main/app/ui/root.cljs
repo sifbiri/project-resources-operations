@@ -2,6 +2,7 @@
   (:require
     [app.model.session :as session]
     [clojure.string :as str]
+    ["semantic-ui-calendar-react" :as SemanticUICalendar]
     [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button]]
     [com.fulcrologic.fulcro.dom.html-entities :as ent]
     [com.fulcrologic.fulcro.dom.events :as evt]
@@ -12,6 +13,8 @@
     [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
     [com.fulcrologic.fulcro.algorithms.merge :as merge]
     [com.fulcrologic.fulcro-css.css :as css]
+    [com.fulcrologic.fulcro.algorithms.react-interop :as interop]
+    [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]
     [com.fulcrologic.fulcro.algorithms.form-state :as fs]
     [taoensso.timbre :as log]))
 
@@ -21,7 +24,29 @@
       (dom/label {:htmlFor label} label)
       (dom/input input-props)
       (dom/div :.ui.error.message {:classes [(when valid? "hidden")]}
-        error-message))))
+               error-message))))
+
+
+(def ui-date-input (interop/react-factory SemanticUICalendar/DateInput))
+
+(defsc Date [this {:date/keys [selected-day]}]
+  {:query         [:date/selected-day]
+   :initial-state (fn [_] {:date/selected-day "14-11-2019"})
+   :ident         (fn [] [:component/id :date])
+                                        ;:route-segment ["main"]
+   }
+
+  (ui-date-input  {:inline true :name "Date"
+                   :value (log/spy :info selected-day)
+                   :marked  ["15-11-2019" "16-11-2019" "14-11-2019"]
+                   :markColor "grey"
+                   :onChange (fn [] (dr/change-route this ["work-day"]))
+                                        ;(fn [evnt data] (js/console.log data))
+                   })
+                                        ;(ui-calendar {})
+  )
+(def ui-date (comp/factory Date))
+
 
 (defsc SignupSuccess [this props]
   {:query         ['*]
@@ -135,13 +160,24 @@
 
 (def ui-login (comp/factory Login))
 
-(defsc Main [this props]
+#_(defsc Main [this props]
   {:query         [:main/welcome-message]
    :initial-state {:main/welcome-message "Hi!"}
    :ident         (fn [] [:component/id :main])
    :route-segment ["main"]}
   (div :.ui.container.segment
     (h3 "Main")))
+
+
+(defsc Main [this {:main/keys [date welcome-message]}]
+  {:query         [:main/welcome-message {:main/date (comp/get-query Date)}]
+   :initial-state (fn [_] {:main/welcome-message "Hi!"
+                           :main/date (comp/get-initial-state Date {})})
+   :ident         (fn [] [:component/id :main])
+   :route-segment ["main"]}
+
+  (js/console.log "Date" date)
+  (ui-date date))
 
 (defsc Settings [this {:keys [:account/time-zone :account/real-name] :as props}]
   {:query         [:account/time-zone :account/real-name]
