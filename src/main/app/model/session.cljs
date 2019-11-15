@@ -120,4 +120,3 @@
     (let [{:account/keys [email password password-again]} (get-in @state signup-ident)]
       (boolean (and (valid-email? email) (valid-password? password)
                  (= password password-again))))))
-

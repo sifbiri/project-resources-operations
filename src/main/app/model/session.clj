@@ -6,6 +6,7 @@
     [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
     [taoensso.timbre :as log]
     [clojure.spec.alpha :as s]
+
     [com.fulcrologic.fulcro.server.api-middleware :as fmw]))
 
 (defonce account-database (atom {}))

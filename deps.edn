@@ -3,6 +3,7 @@
  :deps    {org.clojure/clojure                 {:mvn/version "1.10.1"}
            bidi                                {:mvn/version "2.1.6"}
            bk/ring-gzip                        {:mvn/version "0.3.0"}
+           gnl/ghostwheel {:mvn/version "0.3.9"}
            com.taoensso/timbre                 {:mvn/version "4.10.0"}
            com.taoensso/tufte                  {:mvn/version "2.1.0-RC4"}
            com.wsscode/pathom                  {:mvn/version "2.2.26"}
@@ -20,7 +21,8 @@
            datascript                          {:mvn/version "0.18.4"}
 
            ring/ring-core                      {:mvn/version "1.7.1"}
-           ring/ring-defaults                  {:mvn/version "0.3.2"}}
+           ring/ring-defaults                  {:mvn/version "0.3.2"}
+           com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}}
 
  :aliases {:clj-tests {:extra-paths ["src/test"]
                        :main-opts   ["-m" "kaocha.runner"]
