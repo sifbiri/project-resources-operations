@@ -7,7 +7,10 @@
     [com.wsscode.common.async-clj :refer [let-chan]]
     [clojure.core.async :as async]
     [app.model.account :as acct]
+    [app.model.work-line :as wol]
+  [app.model.project :as project]
     [app.model.session :as session]
+    [app.model.item :as item]
     [app.server-components.config :refer [config]]
     [app.model.mock-database :as db]))
 
@@ -19,10 +22,10 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [acct/resolvers session/resolvers index-explorer])
+(def all-resolvers [acct/resolvers session/resolvers index-explorer wol/resolvers project/resolvers item/resolvers])
 
 (defn preprocess-parser-plugin
-  "Helper to create a plugin that can view/modify the env/tx of a top-level request.
+  "helper to create a plugin that can view/modify the env/tx of a top-level request.
 
   f - (fn [{:keys [env tx]}] {:env new-env :tx new-tx})
 
@@ -69,4 +72,3 @@
 
 (defstate parser
   :start (build-parser db/conn))
-
