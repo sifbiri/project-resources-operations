@@ -22,6 +22,8 @@
    ::pc/output [:work-line/id :work-line/hours  {:work-line/project [:project/id]}]}
   (get @work-lines id))
 
+;; a comment
+
 (pc/defresolver all-work-lines-resolver [_ _]
   {::pc/output [{:work-day/all-work-lines [:work-line/id]}]}
   {:work-day/all-work-lines (->> work-lines deref vals (sort-by :work-line/id) vec)})
