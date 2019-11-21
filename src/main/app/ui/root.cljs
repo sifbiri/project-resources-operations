@@ -12,7 +12,7 @@
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [com.fulcrologic.fulcro.dom.html-entities :as ent]
    [com.fulcrologic.fulcro.dom.events :as evt]
-   ;[com.fulcrologic.fulcro.application :refer app]
+                                        ;[com.fulcrologic.fulcro.application :refer app]
    [app.model.item :as item]
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
@@ -21,7 +21,7 @@
    [com.fulcrologic.fulcro.algorithms.merge :as merge]
    [com.fulcrologic.fulcro-css.css :as css]
    [com.fulcrologic.fulcro.algorithms.react-interop :as interop]
-   [com.fulcrologic.fulcro.application :as app ]
+   [com.fulcrologic.fulcro.application :as app]
    [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [taoensso.timbre :as log]))
@@ -34,18 +34,25 @@
          (dom/div :.ui.error.message {:classes [(when valid? "hidden")]}
                   error-message))))
 
+(defmutation configure
+  [{:keys [id]}]
+  (action [{:keys [state]}]
+          (swap! state
+                 (fn [s] (-> s
+                ;(assoc :root/person [:person/id person-id])
+                ;(fs/add-form-config* PersonForm [:person/id person-id]) ; will not re-add config to entities that were present
+                             (fs/mark-complete* [:work-line/id id])
+                             (fs/pristine->entity* [:work-line/id id]) ; in case we're re-loading it, make sure the pristine copy it up-to-date
+                ;; it just came from server, so all fields should be valid
 
 
-
-
-
-
+               ; (fs/pristine->entity*)
+                             )))))
 
 (defsc Project [this {:project/keys [id] :as props}]
   {:query [:project/id :project/name fs/form-config-join]
    :ident :project/id
-   :form-fields #{:project/id}
-   })
+   :form-fields #{:project/id}})
 
 (defsc Task [_ _]
   {:query [:task/id :task/name]
@@ -66,69 +73,62 @@
                                                                          field)) "hidden")]}
           (or validation-message "Invalid value")))))
 
-(defsc WorkLine [this {:ui/keys [new? saving?]
-                       :work-line/keys [id project]
-                       :as props}]
-  {:query [:ui/new?
-           :ui/saving?
-           :work-line/id :work-line/hours
-           {:work-line/project (comp/get-query Project)}
-           [:project/project-options '_]
+#_(defsc WorkLine [this {:ui/keys [new? saving?]
+                         :work-line/keys [id]
+                         :as props}]
+    {:query [:ui/new?
+             :ui/saving?
+             :work-line/id :work-line/hours
+           ;{:work-line/project (comp/get-query Project)}
+           ;[:project/project-options '_]
 
-           fs/form-config-join]
+             fs/form-config-join]
 
-  ; :form-fields #{:work-line/hours :work-line/project}
+     :form-fields #{:work-line/hours}
 
-   ;:pre-merge (fn [{:keys [data-tree]}] (fs/add-form-config WorkLine data-tree))
+     :pre-merge (fn [{:keys [data-tree current-normalized]}]  (fs/add-form-config WorkLine data-tree))
 
-   :ident :work-line/id}
+     :ident :work-line/id}
 
-  (let [project-options (get props :project/project-options)]
-    
-    ;(js/console.log "hello" project)
-    (do
-      (js/console.log "project.." project)
+    (let [project-options (get props :project/project-options)]
 
-      (tr
-      (td
-       (ui-dropdown
-        {:options project-options
+                                        ;(js/console.log "hello" project)
+      (do
+;      (js/console.log "project.." project)
+
+        (tr
+         #_(td
+            (ui-dropdown
+             {:options project-options
                                         ;:value (second project)
-         :search true
-         :onChange (fn [evt data]
-                     (comp/transact! this [(fs/mark-complete! {:field :item/hours})
-                                           :item-list/all-items])
-                     (m/set-value! this :work-line/project [:project/id (.-value data)]))
-         :value (:project/id project)
+              :search true
+              :onChange (fn [evt data]
+                          (comp/transact! this [(fs/mark-complete! {:field :work-line/hours})
+                                                :item-list/all-items])
+                          (m/set-value! this :work-line/project [:project/id (.-value data)]))
+              :value (:project/id project)}))
 
-         }))
-      (table-cell-field this :work-line/hours {:validation-message "Quantity must be 0 or more."
-                                               :type               "number"
-                                               :value-xform        str
-                                               :onChange           (fn [evt]
-                                                                     (m/set-integer! this :work-line/hours :event evt)
-                                                                     (comp/transact! this [:work-day/all-work-lines]))})
-
-      (td
-       (let [visible? (or new? (fs/dirty? props))]
-         (when visible?
-           (div :.ui.buttons
-                (button :.ui.inline.primary.button
-                        {:classes  [(when saving? "loading")]
-                         :disabled (= :invalid  (log/spy :info (work-line/work-line-validator  props)))
-                         :onClick  (fn []
-                                     (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                                       (comp/transact! this [(work-line/try-save-work-line {:item/id id :diff diff})])))} "Save")
-                (button :.ui.inline.secondary.button
-                        {:onClick (fn [] (if new?
-                                           (comp/transact! this [(work-line/remove-work-line {:work-line/id id}) :item-list/all-items])
-                                           (comp/transact! this [(fs/reset-form! {}) :work-day/all-work-lines])))}
-                        "Undo")))))))))
-
-(def ui-work-line (comp/factory WorkLine {:keyfn :work-line/id}))
-
-
-
+         (table-cell-field this :work-line/hours {:validation-message "Quantity must be 0 or more."
+                                                  :type               "number"
+                                                  :value-xform        str
+                                                  :onChange           (fn [evt]
+                                                                        #_(comp/transact! this [(set-hours {:new-hours ()})])
+                                                                        (m/set-integer! this :work-line/hours :event evt)
+                                                                      ;(comp/transact! this [:work-day/all-work-lines])
+                                                                        )})
+         (td
+          (let [visible? (or new? (log/spy :info (fs/dirty? props)))]
+            (when visible?
+              (div :.ui.buttons
+                   (button :.ui.inline.primary.button
+                           {:classes  [(when saving? "loading")]
+                            :disabled (= :invalid  (log/spy :info (work-line/work-line-validator  props)))
+                            :onClick  (fn []
+                                        (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                          (comp/transact! this [(work-line/try-save-work-line {:item/id id :diff diff})])))} "Save")
+                   (button :.ui.inline.secondary.button
+                           {:onClick (fn [] (comp/transact! this [(fs/reset-form! {})]))}
+                           "Undo")))))))))
 
 (def ui-number-format (interop/react-factory NumberFormat))
 
@@ -151,28 +151,28 @@
     (ui-number-format attrs)))
 
 #_(defsc ItemCategory [this {:keys [:category/id] :as props}]
-  {:query       [:category/id
-                 fs/form-config-join]
-   :form-fields #{:category/id}
-   :ident       :category/id})
+    {:query       [:category/id
+                   fs/form-config-join]
+     :form-fields #{:category/id}
+     :ident       :category/id})
 
 #_(defsc ItemListItem [this {:ui/keys   [new? saving?]
-                           :item/keys [id category]
-                           :as        props}]
-  {:query       [:ui/new?
-                 :ui/saving?
-                 :item/id :item/title :item/in-stock :item/price
-                 {:item/category (comp/get-query ItemCategory)}
-                 [:category/options '_]
-                 fs/form-config-join]
-   :form-fields #{:item/title :item/in-stock :item/price :item/category}
-   :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config ItemListItem data-tree))
-   :ident       :item/id}
-  (let [category-options (get props :category/options)]
-    (tr
-      (table-cell-field this :item/title {:validation-message "Title must not be empty"
-                                          :onChange           #(m/set-string! this :item/title :event %)})
-      (td
+                             :item/keys [id category]
+                             :as        props}]
+    {:query       [:ui/new?
+                   :ui/saving?
+                   :item/id :item/title :item/in-stock :item/price
+                   {:item/category (comp/get-query ItemCategory)}
+                   [:category/options '_]
+                   fs/form-config-join]
+     :form-fields #{:item/title :item/in-stock :item/price :item/category}
+     :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config ItemListItem data-tree))
+     :ident       :item/id}
+    (let [category-options (get props :category/options)]
+      (tr
+       (table-cell-field this :item/title {:validation-message "Title must not be empty"
+                                           :onChange           #(m/set-string! this :item/title :event %)})
+       (td
         (ui-dropdown {:options  category-options
                       :search   true
                       :onChange (fn [evt data]
@@ -180,87 +180,223 @@
                                                         :item-list/all-items])
                                   (m/set-value! this :item/category [:category/id (.-value data)]))
                       :value    (:category/id category)}))
-      (table-cell-field this :item/in-stock {:validation-message "Quantity must be 0 or more."
-                                             :value-xform        str
-                                             :type               "number"
-                                             :onChange           #(m/set-integer! this :item/in-stock :event %)})
-      (table-cell-field this :item/price {:validation-message "Price must be a positive amount."
-                                          :input-tag          ui-money-input
-                                          :onChange           #(m/set-value! this :item/price %)})
+       (table-cell-field this :item/in-stock {:validation-message "Quantity must be 0 or more."
+                                              :value-xform        str
+                                              :type               "number"
+                                              :onChange           #(m/set-integer! this :item/in-stock :event %)})
+       (table-cell-field this :item/price {:validation-message "Price must be a positive amount."
+                                           :input-tag          ui-money-input
+                                           :onChange           #(m/set-value! this :item/price %)})
 
-      (td
+       (td
         (let [visible? (or new? (fs/dirty? props))]
           (when visible?
             (div :.ui.buttons
-              (button :.ui.inline.primary.button
-                {:classes  [(when saving? "loading")]
-                 :disabled (= :invalid (item/item-validator props))
-                 :onClick  (fn []
-                             (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                               (comp/transact! this [(item/try-save-item {:item/id id :diff diff})])))} "Save")
-              (button :.ui.inline.secondary.button
-                {:onClick (fn [] (if new?
-                                   (comp/transact! this [(item/remove-item {:item/id id})])
-                                   (comp/transact! this [(fs/reset-form! {})])))}
-                "Undo"))))))))
+                 (button :.ui.inline.primary.button
+                         {:classes  [(when saving? "loading")]
+                          :disabled (= :invalid (item/item-validator props))
+                          :onClick  (fn []
+                                      (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                        (comp/transact! this [(item/try-save-item {:item/id id :diff diff})])))} "Save")
+                 (button :.ui.inline.secondary.button
+                         {:onClick (fn [] (if new?
+                                            (comp/transact! this [(item/remove-item {:item/id id})])
+                                            (comp/transact! this [(fs/reset-form! {})])))}
+                         "Undo"))))))))
 
 #_(def ui-item-list-item (comp/factory ItemListItem {:keyfn :item/id}))
 #_(defsc ItemList [this {:item-list/keys [all-items] :as props}]
-  {:query         [{:item-list/all-items (comp/get-query ItemListItem)}]
-   :initial-state {:item-list/all-items []}
-   :ident         (fn [] [:component/id ::item-list])
-   :route-segment ["work-day"]}
-  (table :.ui.table
-    (thead (tr (th "Title") (th "Category") (th "# In Stock") (th "Price") (th "Row Action")))
-    (tbody (map ui-item-list-item all-items))
-    (tfoot (tr (th {:colSpan 5}
-                 (button :.ui.primary.icon.button
-                   {:onClick (fn []
-                               (merge/merge-component! this ItemListItem
-                                 {:ui/new?       true
-                                  :item/id       (tempid/tempid)
-                                  :item/title    ""
-                                  :item/in-stock 0
-                                  :item/price    (math/bigdecimal "0")}
-                                 :append [:component/id :app.client/item-list :item-list/all-items]))}
-                   (dom/i :.plus.icon)))))))
+    {:query         [{:item-list/all-items (comp/get-query ItemListItem)}]
+     :initial-state {:item-list/all-items []}
+     :ident         (fn [] [:component/id ::item-list])
+     :route-segment ["work-day"]}
+    (table :.ui.table
+           (thead (tr (th "Title") (th "Category") (th "# In Stock") (th "Price") (th "Row Action")))
+           (tbody (map ui-item-list-item all-items))
+           (tfoot (tr (th {:colSpan 5}
+                          (button :.ui.primary.icon.button
+                                  {:onClick (fn []
+                                              (merge/merge-component! this ItemListItem
+                                                                      {:ui/new?       true
+                                                                       :item/id       (tempid/tempid)
+                                                                       :item/title    ""
+                                                                       :item/in-stock 0
+                                                                       :item/price    (math/bigdecimal "0")}
+                                                                      :append [:component/id :app.client/item-list :item-list/all-items]))}
+                                  (dom/i :.plus.icon)))))))
+
+(defmutation reset-form [{:keys [id]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [s]
+                         
+                         (let [new-val-field (get-in s [:work-line/id id ::fs/config ::fs/pristine-state])]
+
+                           (-> s
+                               (update-in
+                                [:work-line/id id]
+                                merge
+                                new-val-field)
+                             
+                                        ; stop editing
+                                        ;(dissoc :root/phone)
+                                        ; revert to the pristine state
+                                     (fs/pristine->entity* [:work-line/id id]))))))
+  (refresh [env] [:work-day/all-work-lines]))
+
+(defsc WorkLine [this {:ui/keys   [new? saving?]
+                       :work-line/keys [id]
+                       :as        props}]
+  {:query       [:ui/new?
+                 :ui/saving?
+                 :work-line/id :work-line/hours
+;                 {:item/category (comp/get-query ItemCategory)}
+ ;                [:category/options '_]
+                 fs/form-config-join]
+   :form-fields #{:work-line/hours}
+   :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config WorkLine data-tree))
+   :ident       :work-line/id}
+  (let [;category-options (get props :category/options)
+        ]
+    (tr
+     #_(table-cell-field this :item/title {:validation-message "Title must not be empty"
+                                           :onChange           #(m/set-string! this :item/title :event %)})
+     #_(td
+        ;; (ui-dropdown {:options  category-options
+        ;;               :search   true
+        ;;               :onChange (fn [evt data]
+        ;;                           (comp/transact! this [(fs/mark-complete! {:field :item/title})
+        ;;                                                 :item-list/all-items])
+        ;;                           (m/set-value! this :item/category [:category/id (.-value data)]))
+        ;;               :value    (:category/id category)})
+        )
+     (table-cell-field this :work-line/hours {:validation-message "Quantity must be 0 or more."
+                                              :value-xform        str
+                                              :type               "number"
+                                              :onChange           #(m/set-integer! this :work-line/hours :event %)})
+     #_(table-cell-field this :work-line/hours
+                         {:validation-message "Hours must be a positive amount."
+;                                          :input-tag          ui-money-input
+                          :onChange           #(m/set-integer! this :work-line/hours %)})
+
+     (td
+      (let [visible? (or new? (fs/dirty? props))]
+        (when visible?
+          (div :.ui.buttons
+               (button :.ui.inline.primary.button
+                       {:classes  [(when saving? "loading")]
+                        :disabled (= :invalid (item/item-validator props))
+                        :onClick  (fn []
+                                    (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                      (comp/transact! this [(item/try-save-item {:item/id id :diff diff})])))} "Save")
+               (button :.ui.inline.secondary.button
+                       {:onClick (fn [] (if new?
+                                          (comp/transact! this [(work-line/remove-item {:work-line/id id})])
+                                          (comp/transact! this [(reset-form {:id id})])))}
+                       "Undo"))))))))
+
+(def ui-work-line (comp/factory WorkLine {:keyfn :work-line/id}))
+
 (defsc WorkDay [this {:work-day/keys [all-work-lines] :as props}]
   {:query         [{:work-day/all-work-lines (comp/get-query WorkLine)}]
    :initial-state {:work-day/all-work-lines []}
    :ident         (fn [] [:component/id :work-day])
    :route-segment ["work-day"]}
-    ;; TODO: work on this...
-  (let [total (reduce
-               (fn [amt {:work-line/keys [hours]}]
-                 (+ amt hours))
-               0
-               all-work-lines)]
-    (table :.ui.table
-           (thead (tr (th "Project")  (th "Hours")  (th "Row Action")))
-           (tbody (map ui-work-line  all-work-lines))
-           (tfoot (tr
-                                        ;(th "") (th "") (th "") (th "")
-                   (th "") (th "Total hours: ") (th total) (th "")
-                   (th
-                    (button :.ui.primary.icon.button
-                            {:onClick (fn []
-                                        (merge/merge-component! this WorkLine
-                                                                {:ui/new? true
-                                                                 :ui/saving? false
-                                                                 :work-line/project {:project/id 2}
-                                                                 :work-line/hours 22
-                                        ;:work-line/project {:project/id 3 :project/name "Something"}
-                                                                 :work-line/id (tempid/tempid)
-                                        ;:work-line/project
-                                                                 }
-                                                                :append [:component/id :work-day :work-day/all-work-lines]))}
+  
+  (table :.ui.table
+         (thead (tr (th "Hours") ;(th "Category") (th "# In Stock") (th "Price") (th "Row Action")
+                    ))
+         (tbody (map ui-work-line all-work-lines))
+         (tfoot (tr (th {:colSpan 5}
+                        (button :.ui.primary.icon.button
+                                {:onClick (fn []
+                                            (merge/merge-component! this WorkLine
+                                                                    {:ui/new?       true
+                                                                     :work-line/id       (tempid/tempid)
+                                                                     :work-line/hours 0}
+                                                                    :append [:component/id :work-day :work-day/all-work-lines]))}
+                                (dom/i :.plus.icon)))))))
 
-                            (dom/i :.plus.icon)))))))
-    ;; TODO maybe have it stored as decimal instead of string ...
-  )
+#_(defsc WorkDay [this {:work-day/keys [all-work-lines] :as props}]
+    {:query         [{:work-day/all-work-lines (comp/get-query WorkLine)}]
+     :initial-state {:work-day/all-work-lines []}
+     :ident         (fn [] [:component/id :work-day])
+
+     :route-segment ["work-day"]}
+  ;; TODO: work on this...
+    (let [total (reduce
+                 (fn [amt {:work-line/keys [hours]}]
+                   (+ amt hours))
+                 0
+                 all-work-lines)]
+      (table :.ui.table
+             (thead (tr (th "Project")  (th "Hours")  (th "Row Action")))
+             (tbody (map ui-work-line  all-work-lines))
+             (tfoot (tr
+                                        ;(th "") (th "") (th "") (th "")
+                     (th "") (th "Total hours: ") (th total) (th "")
+                     (th
+                      (button :.ui.primary.icon.button
+                              {:onClick (fn []
+                                          (merge/merge-component! this WorkLine
+                                                                  {:ui/new? true
+                                                                   :ui/saving? false
+                                                                   :work-line/project {:project/id 3}
+                                                                   :work-line/hours 22
+                                        ;:work-line/project {:project/id 3 :project/name "Something"}
+                                                                   :work-line/id (tempid/tempid)
+                                        ;:work-line/project
+                                                                   }
+                                                                  :append [:component/id :work-day :work-day/all-work-lines]))}
+
+                              (dom/i :.plus.icon)))))))
+  ;; TODO maybe have it stored as decimal instead of string ...
+    )
+(def ui-work-day (comp/factory WorkDay {:keyfn :work-day/work-lines}))
+
 (def ui-date-input (interop/react-factory SemanticUICalendar/DateInput))
 
+(def sample-server-response
+  [{:work-line/id 13,
+    :work-line/project {:project/id 2, :project/name "Hello"},
+    :work-line/hours 22}
+   {:work-line/id 14,
+    :work-line/project {:project/id 2, :project/name "Hello"},
+    :work-line/hours 8}])
 
+(def component-query [{:work-day/all-work-lines (comp/get-query WorkLine)}])
+
+(defmutation load-all-work-lines [params]
+  (action [{:keys [state app] :as params}]
+          (cljs.pprint/pprint (keys params))
+
+          #_(swap! state merge/merge-component WorkLine sample-server-response
+                   :append [:component/id :work-day :work-day/all-work-lines])
+          #_(swap! state (fn [s]
+                           (merge/merge-component! s component-query sample-server-response)))))
+
+#_(defmutation load-all-work-lines [_]
+    (action [{:keys [state ref app]}]
+            (-> state
+                (swap! merge/merge-component WorkLine {:work-line/id 13
+
+                                                       :work-line/project
+                                                       {:project/id 2 :project/name "Hello"}
+
+                                                       :work-line/hours 22}
+
+                       #_{:work-line/id 1
+
+                          :work-line/project
+                          {:project/id 2 :project/name "Hello"}
+
+                          :work-line/hours 3}
+
+                       :append [:component/id :work-day :work-day/all-work-lines]))
+
+            #_(df/load! app :work-day/all-work-lines WorkLine {:target [:component/id :work-day :work-day/all-work-lines]})
+            (dr/change-route app ["work-day"])))
+
+(fs/reset-form!)
 (defsc Date [this {:date/keys [selected-day]}]
   {:query         [:date/selected-day]
    :initial-state (fn [_] {:date/selected-day "14-11-2019"})
@@ -272,26 +408,40 @@
                    :value (log/spy :info selected-day)
                    :marked  ["15-11-2019" "16-11-2019" "14-11-2019"]
                    :markColor "grey"
-                   :onChange (fn []
+                                        ;  :componentDidMount
 
-                               (df/load! this :work-day/all-work-lines
-                                        WorkLine
-                                        {:target [:component/id :work-day :work-day/all-work-lines]
-                                         :params {:work-day 2}
-                                         }
-                                        )
-                               (comp/transact! this [:work-day/all-work-lines])
-                               (dr/change-route this ["work-day"]))
+                   ;; (fn [this props state]
+                   ;;   (df/load! this :work-day/all-work-lines
+                   ;;             WorkLine
+                   ;;             {:target [:component/id :work-day :work-day/all-work-lines]
+                   ;;              :params {:work-day 2}
+                   ;;              }
+                   ;;             ))
+                   :onChange (fn []
+                               #_(comp/transact! this [(load-all-work-lines) ;:work-day/all-work-lines
+                                                       ])
+                               #_(merge/merge-component! this WorkLine
+                                                         [{:work-line/hours 1
+                                                           :ui/new false
+                                        ;:work-line/project {:project/id 3 :project/name "Something"}
+                                                           :work-line/id (tempid/tempid)
+                                        ;:work-line/project
+                                                           }]
+                                                         :append [:component/id :work-day :work-day/all-work-lines])
+
+                               #_(df/load! this :work-day/all-work-lines WorkLine {:target [:component/id :work-day :work-day/all-work-lines]})
+                               #_(comp/transact! this [(configure {})])
+                               (dr/change-route this ["work-day"])
+
+
+;                               (comp/transact! this [(load-all-work-lines)])
+                               )
                                         ;(fn [evnt data] (js/console.log data))
                    })
                                         ;(ui-calendar {})
   )
 
-
-
 (def ui-date (comp/factory Date))
-
-
 
 (defsc Main [this {:main/keys [date welcome-message]}]
   {:query         [:main/welcome-message {:main/date (comp/get-query Date)}]
@@ -302,8 +452,6 @@
 
   (js/console.log "Date" date)
   (ui-date date))
-
-
 
 (defsc SignupSuccess [this props]
   {:query         ['*]
@@ -390,7 +538,7 @@
                            "Login"
                            (when open?
                              (dom/div :.four.wide.ui.raised.teal.segment {:onClick (fn [e]
-                                                                                       ;; Stop bubbling (would trigger the menu toggle)
+                                                                                     ;; Stop bubbling (would trigger the menu toggle)
                                                                                      (evt/stop-propagation! e))
                                                                           :classes [floating-menu]}
                                       (dom/h3 :.ui.header "Login")
@@ -444,7 +592,7 @@
        (h3 "Settings")))
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main Signup SignupSuccess Settings WorkDay]})
+  {:router-targets [Main Login Signup SignupSuccess WorkDay]})
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -480,10 +628,10 @@
                    (ui-login login)))
          (div :.ui.grid
               (div :.ui.row
-                   (ui-top-router router))))))
+                   (ui-top-router router)
+                   #_(ui-work-day))))))
 
 (def ui-top-chrome (comp/factory TopChrome))
-
 
 (def secured-request-middleware
   ;; The CSRF token is embedded via server_components/html.clj
@@ -491,29 +639,48 @@
    (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
    (net/wrap-fulcro-request)))
 
+#_(defsc Root [_ {:root/keys [work-day]}]
+  {:query         [{:root/work-day (comp/get-query WorkDay)}]
+   :initial-state {:root/work-day {}}}
+
+  (div :.ui.container.segment
+       (h3 "Inventory Items")
+       (ui-work-day work-day)))
+
 (defsc Root [this {:root/keys [top-chrome]}]
-  {:query         [{:root/top-chrome (comp/get-query TopChrome)}]
-   :initial-state {:root/top-chrome {}}}
-  (ui-top-chrome top-chrome))
+    {:query         [{:root/top-chrome (comp/get-query TopChrome)}]
+     :componentDidMount (fn [this] (df/load! this  :work-day/all-work-lines
+                                             WorkLine
+                                             {:target [:component/id :work-day :work-day/all-work-lines]
+                                              :refresh [:work-day/all-work-lines]})
+                        ;(comp/transact! [()] :work-day/all-work-lines)
+                          )
+     :initial-state {:root/top-chrome {}}}
+
+    (ui-top-chrome top-chrome))
 
 #_(defonce SPA (app/fulcro-app
-              {;; This ensures your client can talk to a CSRF-protected server.
-               ;; See middleware.clj to see how the token is embedded into the HTML
-               :remotes {:remote (net/fulcro-http-remote
-                                  {:url                "/api"
-                                   :request-middleware secured-request-middleware})}
+                {;; This ensures your client can talk to a CSRF-protected server.
+                 ;; See middleware.clj to see how the token is embedded into the HTML
+                 :remotes {:remote (net/fulcro-http-remote
+                                    {:url                "/api"
+                                     :request-middleware secured-request-middleware})}
 
-               :client-did-mount (let [;WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
-                                       project-class (comp/registry-key->class :app.ui.root/Project)]
+                 :client-did-mount (let [;WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
+                                         project-class (comp/registry-key->class :app.ui.root/Project)]
 
-                                   (fn [app]
-                                     (df/load app :work-day/all-work-lines
-                                              WorkLine
-                                              {:target [:component/id :work-day :work-day/all-work-lines]})
+                                     (fn [app]
+                                       (df/load app :work-day/all-work-lines
+                                                WorkLine
+                                                {:target [:component/id :work-day :work-day/all-work-lines]})
 
+                                       (df/load app :project/all-projects
+                                                project-class
+                                                {:post-mutation `work-line/create-project-options})))}))
 
+(comment
 
-                                     (df/load app :project/all-projects
-                                              project-class
-                                              {:post-mutation `work-line/create-project-options})))
-               }))
+  (as-> {} state
+    (merge/merge* state component-query sample-server-response)
+                                        ; (assoc state :k 1)
+    (cljs.pprint/pprint state)))

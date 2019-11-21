@@ -56,11 +56,21 @@
 
 
 (defmutation remove-work-line [{:work-line/keys [id]}]
+  
+  (action [{:keys [state]}]
+          (js/console.log "remove work line")
+          (swap! state (fn [s]
+                         (-> s
+                             
+                             (merge/remove-ident* [:work-line/id id] [:component/id :work-day :work-day/all-work-lines])
+                             (update :work-line/id dissoc id))))))
+
+(defmutation reset-form [{:work-line/keys [id]}]
   (action [{:keys [state]}]
           (swap! state (fn [s]
                          (-> s
-                             (merge/remove-ident* [:work-line/id id] [:component/id :work-day :work-day/all-work-lines])
-                             (update :work-line/id dissoc id))))))
+                             (fs/pristine->entity* [:work-line/id id])
+                             #_(update :work-line/id dissoc id))))))
 
 (defmutation try-save-work-line [{:work-line/keys [id]
                                   :keys      [diff]
@@ -80,9 +90,23 @@
               (comp/transact! app [(save-work-line  params)])
               (reset! state completed-state)))))
 
-(defmutation remove-item [{:item/keys [id]}]
+(defmutation remove-item [{:work-line/keys [id]}]
   (action [{:keys [state]}]
           (swap! state (fn [s]
                          (-> s
-                             (merge/remove-ident* [:item/id id] [:component/id :app.client/item-list :item-list/all-items])
-                             (update :item/id dissoc id))))))
+                             (merge/remove-ident* [:work-line/id id] [:component/id :work-day :work-day/all-work-lines ])
+                             (update :work-line/id dissoc id))))))
+
+
+(comment
+
+ #_ (swap! state (fn [s]
+                         (-> s
+                             (fs/pristine->entity* [:work-line/id id])
+                             #_(update :work-line/id dissoc id))))
+
+
+ (as-> {} s
+   (merge/merge-component! s WorkDay)))
+
+

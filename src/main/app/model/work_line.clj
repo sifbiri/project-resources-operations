@@ -5,13 +5,13 @@
 
 (def work-lines (atom {13
                        {:work-line/id 13
-                        :work-line/project {:project/id 2 :project/name "Hello"}
+                       ; :work-line/project {:project/id 2 :project/name "Hello"}
                         :work-line/hours 22 }
 
 
                        14
                        {:work-line/id 14
-                        :work-line/project {:project/id 2 :project/name "Hello"}
+                       ; :work-line/project {:project/id 1 :project/name "Fluxod"}
                         :work-line/hours 8 }}))
 
 (defn next-id []
