@@ -13,6 +13,9 @@
    (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
    (net/wrap-fulcro-request)))
 
+
+
+
 (defonce SPA (app/fulcro-app
               {;; This ensures your client can talk to a CSRF-protected server.
                ;; See middleware.clj to see how the token is embedded into the HTML
@@ -20,21 +23,30 @@
                                   {:url                "/api"
                                    :request-middleware secured-request-middleware})}
 
+               :remote-error?    (fn [{:keys [status-code body]}]
+                                   (or
+                                    #_(has-reader-error? body)
+                                    (not= 200 status-code)))
 
-
-               ;; :optimized-render! kr/render!
+                ;:optimized-render! kr/render!
                :client-did-mount
                (fn [app]
-
                  (let [WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
-                                        ;                                       Category (comp/registry-key->class :app.ui.root/Category)
-                       ]
+                       Project (comp/registry-key->class :app.ui.root/Project)]
+                   (df/load app :work-line/all-projects
+                            Project
+                            {:post-mutation `work-line/create-project-options}
+                            )
+                   
                    (df/load app  :work-day/all-work-lines
-                             WorkLine
-                             {:target [:component/id :work-day :work-day/all-work-lines]}))
-                 #_(df/load app :category/all-categories
-                            Category
-                            {:post-mutation `item/create-category-options}))}))
+                            WorkLine
+                            {:target [:component/id :work-day :work-day/all-work-lines]}
+
+                                        ;:post-mutation work-line/add-form-config
+                            )
+                            
+                   
+                   ))}))
 
 (comment
   (-> SPA (::app/runtime-atom) deref ::app/indexes))
