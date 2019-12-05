@@ -7,11 +7,11 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [clojure.data.json :as json]
-            ;[datomic.client.api :as d]
+                                        ;[datomic.client.api :as d]
             [datomic.api :as d]
             [clj-http.client :as client]
             )
-            )
+  )
 
 (def work-lines (atom {;; 14
                        ;; {:work-line/id 14
@@ -115,6 +115,7 @@
     {:work-line/id real-id}))
     
 
+;; TODO duplicated in api
 (defn get-all-projects
   []
   (let [response (-> (client/get "https://flu.sharepoint.com/sites/pwa/_api/ProjectServer/Projects"
@@ -132,6 +133,7 @@
                                         ;(def project-id "1747f6cc-bdfc-e911-b19d-9cb6d0e1bd60")
 
 
+;; TODO duplicated 
 (defn tasks-for-project [project-id]
   (let [url (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectServer/Projects('" project-id "')/Tasks")
         response (-> (client/get url

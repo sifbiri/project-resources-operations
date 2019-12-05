@@ -27,7 +27,15 @@
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [cljs-time.core :as tt]
    [cljs-time.format :as tf]
+   [cljs-time.coerce :as tc]
    [taoensso.timbre :as log]))
+
+
+
+(defn long->year-month-day [x]
+  (tf/unparse (tf/formatters :year-month-day) (tc/from-long x)))
+
+
 
 (defn field [{:keys [label valid? error-message] :as props}]
   (let [input-props (-> props (assoc :name label) (dissoc :label :valid? :error-message))]
@@ -150,7 +158,7 @@
                  [:project/options '_]
                  [:task/options '_]
                  fs/form-config-join]
-   :form-fields #{:work-line/hours  :work-line/project :work-line/task
+   :form-fields #{:work-line/hour  :work-line/project :work-line/task
                   }
    :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config WorkLine data-tree))
 
@@ -172,7 +180,7 @@
                                   (js/console.log "client " props)))
    :ident       :work-line/id
 
-   }
+   } 
   (let [project-options (get props :project/options)
         task-options (get props :task/options)]
     (tr
@@ -183,8 +191,10 @@
       (ui-dropdown {:options project-options
                     :search   true
                     :onChange (fn [evt data]
-                                (comp/transact! this [(fs/mark-complete! {:field :item/title})
-                                                      :item-list/all-items])
+                                ;; (comp/transact! this [(fs/mark-complete! {:field :item/title})
+                                ;;                       :item-list/all-items])
+
+                                
                                 (m/set-value! this :work-line/project [:project/id (.-value data)])
 
                                 (df/load this :work-line/tasks Task
@@ -211,11 +221,11 @@
                           :onChange           #(m/set-integer! this :work-line/hours %)})
 
      (table-cell-field this :work-line/hour {:validation-message "Quantity must be 0 or more."
-                                              :value-xform        str
-                                              :type               "number"
-                                              :onChange           (fn [evt]
-                                                                    (m/set-integer! this :work-line/hour :event evt)
-                                                                    (comp/transact! this [:work-day/all-work-lines]))                                              })
+                                             :value-xform        str
+                                             :type               "number"
+                                             :onChange           (fn [evt]
+                                                                   (m/set-integer! this :work-line/hour :event evt)
+                                                                   (comp/transact! this [:work-day/all-work-lines]))                                              })
      (td
       (let [visible? (or new? (fs/dirty? props) #_(log/spy :info (not saved?)) #_(fs/dirty? props :work-line/project) #_(fs/dirty? props :work-line/task))]
         (when visible?
@@ -291,7 +301,7 @@
                                                        :work-line/project
                                                        {:project/id 2 :project/name "Hello"}
 
-                                                       :work-line/hours 22}
+                                                       :work-line/hours 3}
 
                        #_{:work-line/id 1
 
@@ -299,6 +309,7 @@
                           {:project/id 2 :project/name "Hello"}
 
                           :work-line/hours 3}
+                       
 
                        :append [:component/id :work-day :work-day/all-work-lines]))
 
@@ -585,4 +596,6 @@
                                        (df/load app :project/all-projects
                                                 project-class
                                                 {:post-mutation `work-line/create-project-options})))}))
+
+
 

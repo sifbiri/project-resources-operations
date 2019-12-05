@@ -1,4 +1,4 @@
-(ns app.model.project
+(ns app.model.project-model
   (:require [clj-http.client :as client]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
@@ -19,11 +19,7 @@
 
 ;; security token
 
-(def load-stuff
 
-
-  
-  )
 
                                         ; AssignmentTimephasedDataSet
 

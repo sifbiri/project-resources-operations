@@ -7,19 +7,20 @@
            com.taoensso/tufte                  {:mvn/version "2.1.0-RC4"}
            com.wsscode/pathom                  {:mvn/version "2.2.26"}
                                         ;           com.fulcrologic/fulcro              {:mvn/version "3.0.3"}
-;           com.fulcrologic/fulcro {:mvn/version "3.0.9"}
+           ;com.fulcrologic/fulcro {:mvn/version "3.0.9"}
            ;com.fulcrologic/fulcro {:mvn/version "3.0.2"}
-           com.fulcrologic/fulcro              {:mvn/version "3.0.0-beta-17"}
+           ;com.fulcrologic/fulcro              {:mvn/version "3.0.0-beta-17"} 
 
 
            ;com.datomic/client-pro {:mvn/version "0.8.28"}
            
            ;com.datomic/datomic-free {:mvn/version "0.9.5697"}
-           com.datomic/datomic-free {:mvn/version "0.9.5697"}
+           ;com.datomic/datomic-free {:mvn/version "0.9.5697"}
+           com.datomic/datomic-pro {:mvn/version "0.9.5981"}
 
+           fulcrologic/fulcro
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "cb868405b57d38ef023fdbdba9393785debe3472"}
 
-           ;; fulcrologic/fulcro
-           ;; {:git/url "https://github.com/fulcrologic/fulcro" :sha "673fddbb017c293885aab3f97d99f7e11b20be80"}
            com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}
            com.fulcrologic/fulcro-garden-css   {:mvn/version "3.0.6"}
            clj-http                         {:mvn/version "3.10.0"}
@@ -30,7 +31,7 @@
            http-kit                            {:mvn/version "2.3.0"}
            mount                               {:mvn/version "0.1.12"}
            org.clojure/core.async              {:mvn/version "0.4.500"}
-
+           
            ;; To simulate Datomic on the back-end
            datascript                          {:mvn/version "0.18.4"}
 
