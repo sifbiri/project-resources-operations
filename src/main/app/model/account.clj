@@ -1,7 +1,7 @@
-q(ns app.model.account
+(ns app.model.account
   (:require
-    [app.model.mock-database :as db]
-    [datascript.core :as d]
+    [app.model.database :as db]
+    [datomic.api :as d]
     [ghostwheel.core :refer [>defn => | ?]]
     [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
     [taoensso.timbre :as log]

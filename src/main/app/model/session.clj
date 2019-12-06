@@ -1,6 +1,6 @@
 (ns app.model.session
   (:require
-    [app.model.mock-database :as db]
+    [app.model.database :as db]
     [datascript.core :as d]
     [ghostwheel.core :refer [>defn => | ?]]
     [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]

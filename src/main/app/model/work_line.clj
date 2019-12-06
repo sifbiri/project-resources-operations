@@ -2,7 +2,7 @@
   (:require [com.wsscode.pathom.connect :as pc]
             [taoensso.timbre :as log]
             [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
-            [app.model.project :as project]
+            [app.model.project-model :as project]
             [clojure.set :as s]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
@@ -25,7 +25,7 @@
                         :work-line/hours 22}}))
 
 ;(require '[datomic.api :as d])
-(def uri "datomic:free://localhost:4334/fp")
+(def uri "datomic:dev://localhost:4334/test")
 (d/create-database uri)
 (def conn (d/connect uri))
 (def db (d/db conn))
@@ -182,7 +182,7 @@
 
 ;(def res2 (-> @work-lines vals vec))
 
-(pc/defresolver all-work-lines-resolver [_ _]
+#_(pc/defresolver all-work-lines-resolver [_ _]
   {::pc/output [{:work-day/all-work-lines [:work-line/id :work-line/hour
                                            {:work-line/project [:project/id]}
                                            {:work-line/task [:task/id]}]}]}
@@ -217,7 +217,7 @@
       (cond-> {:item/id real-id}
         new? (assoc :tempids {id real-id}))))
 
-(def resolvers [work-line-resolver all-work-lines-resolver all-projects-resolver project-resolver
+(def resolvers [work-line-resolver #_all-work-lines-resolver all-projects-resolver project-resolver
                 all-tasks-for-project-resolver save-work-line #_task-resolver])
 
 
@@ -310,51 +310,3 @@
     :task/id  "3941bf0b-6af6-e911-b19c-9cb6d0e1bd60" }])
 
 
-(def schema-fp [{:db/ident :work-line/id
-              :db/valueType :db.type/string
-              :db/unique :db.unique/identity
-              :db/cardinality :db.cardinality/one}
-
-             {:db/ident :work-line/project
-              :db/valueType :db.type/ref
-              :db/cardinality :db.cardinality/one}
-             
-             {:db/ident :work-line/task
-              :db/valueType :db.type/ref
-              :db/cardinality :db.cardinality/one}
-
-             {:db/ident :work-line/hour
-              :db/valueType :db.type/long
-              :db/cardinality :db.cardinality/one}
-
-
-             {:db/ident :project/id
-              :db/valueType :db.type/string
-              :db/unique :db.unique/identity
-              :db/cardinality :db.cardinality/one}
-
-             {:db/ident :task/id
-              :db/valueType :db.type/string
-              :db/unique :db.unique/identity
-              :db/cardinality :db.cardinality/one}
-             ])
-
-#_(def test-data
-  [{:user/email "sally.jones@gmail.com"
-    :user/age 34}
-
-   {:user/email "franklin.rosevelt@gmail.com"
-    :user/age 14}])
-
-@(d/transact conn test-data-fp)
- @(d/transact conn schema-fp)
-
-
-
-#_(d/q '[:find ?e
-         :where
-         [?e :user/name "ftravers"]]
-       (d/db conn))
-
-(defn query1 [db]
-  )

@@ -21,6 +21,10 @@
            fulcrologic/fulcro
            {:git/url "https://github.com/fulcrologic/fulcro" :sha "cb868405b57d38ef023fdbdba9393785debe3472"}
 
+
+           com.wsscode/pathom-datomic {:git/url "https://github.com/wilkerlucio/pathom-datomic.git"
+                                       :sha     "23e23ac8ae96dba5461cd020879d896c355f65d3"}
+
            com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}
            com.fulcrologic/fulcro-garden-css   {:mvn/version "3.0.6"}
            clj-http                         {:mvn/version "3.10.0"}

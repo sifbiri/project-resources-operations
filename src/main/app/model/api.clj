@@ -15,6 +15,7 @@
                                         ;[clojure.data.generators :as gen]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
+   [app.model.database :as db :refer [conn]]
    [clojure.core :refer :all])
   (:import datomic.Util))
 
@@ -25,11 +26,11 @@
                    :project/created-date
                    ])
 
-(def db-url "datomic:dev://localhost:4334/test")
+;;(def db-url "datomic:dev://localhost:4334/test2")
 
-(d/create-database db-url)
+;;(d/create-database db-url)
 
-(def conn (d/connect db-url))
+;; (def conn (d/connect db-url))
 
 ;; DB stuff
 
@@ -413,38 +414,6 @@
         ]
     (assoc project :project/assignments assignments )))
 
-
-
-(def sample-project
-  {:project/work 144.0,
-   :project/id #uuid "79fdc49d-c0e3-e911-b09a-00155de03a0c",
-   :project/finish-date #inst "2020-06-23T17:00:00.000-00:00",
-   :project/start-date #inst "2019-12-02T07:00:00.000-00:00",
-   :project/name "LeFrak",
-   :project/assignments
-   [{:resource
-     (#:resource{:id
-                 #uuid "1fc7ae1a-c8df-e911-b08c-00155de0701e",
-                 :modified-date
-                 #inst "2019-10-07T12:36:21.093-00:00",
-                 :created-date
-                 #inst "2019-09-25T19:10:17.057-00:00",
-                 :email-address "Swu@fluxym.com",
-                 :type 2,
-                 :name "Scott Wu",
-                 :is-active true}),
-     :modified-date
-     #inst "2019-11-28T16:05:35.220-00:00",
-     :id
-     #uuid "59de24ef-8a10-ea11-9802-10653002b864",
-     :task
-     #:task{:name "Project Start",
-            :id
-            #uuid "189d689f-c0e3-e911-b09a-00155de03a0c",
-            :is-active true},
-     :work 0.0,
-     :by-day
-     #inst "2019-12-02T00:00:00.000-00:00"}]})
 
 
 #_(d/q '[:find ?e

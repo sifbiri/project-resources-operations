@@ -8,11 +8,15 @@
     [clojure.core.async :as async]
     [app.model.account :as acct]
     [app.model.work-line :as wol]
-  ;; [app.model.project :as project]
+    ;; [app.model.project :as project]
+    [com.wsscode.pathom.connect.datomic :as pcd]
+    [com.wsscode.pathom.connect.datomic.on-prem :refer [on-prem-config]]
+    
     [app.model.session :as session]
     [app.model.item :as item]
+    [datomic.api :as d]
     [app.server-components.config :refer [config]]
-    [app.model.mock-database :as db]))
+    [app.model.database :as db]))
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
@@ -50,11 +54,12 @@
                                                               pc/open-ident-reader p/env-placeholder-reader]
                                     ::p/placeholder-prefixes #{">"}}
                        ::p/plugins [(pc/connect-plugin {::pc/register all-resolvers})
+                                    (pcd/datomic-connect-plugin (assoc on-prem-config ::pcd/conn db-connection))
                                     (p/env-wrap-plugin (fn [env]
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
                                                          ;; environment, like the server config, database connections, etc.
                                                          (assoc env
-                                                           :db @db-connection ; real datomic would use (d/db db-connection)
+                                                           :db (d/db db-connection) ; real datomic would use (d/db db-connection)
                                                            :connection db-connection
                                                            :config config)))
                                     (preprocess-parser-plugin log-requests)

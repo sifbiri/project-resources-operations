@@ -265,7 +265,7 @@
       (table :.ui.table
           (thead (tr (th "Project" ) (th "Task") (th "# Hours")))
           (tbody (map ui-work-line all-work-lines))
-          (tfoot (tr (th "") (th "Total hours: " ) (th total)
+          #_(tfoot (tr (th "") (th "Total hours: " ) (th total)
                      (button :.ui.primary.icon.button
                              {:onClick (fn []
                                          (merge/merge-component! this WorkLine
