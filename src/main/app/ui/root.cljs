@@ -208,7 +208,8 @@
 
     (table :.ui.table
            (thead (tr (th "Project" ) (th "Assignment") (th "# Hours")))
-           (tbody (map ui-work-line all-work-lines)))))
+           (tbody (map ui-work-line all-work-lines))
+           (tfoot (tr (th "        ") (th "      ")  (th "Total: " total))))))
 
 (def ui-work-day (comp/factory WorkDay {:keyfn :work-day/work-lines}))
 
@@ -507,7 +508,7 @@
          (div :.ui.secondary.pointing.menu
               (dom/a :.item {:classes [(when (= :main current-tab) "active")]
                              :onClick (fn [] (dr/change-route this ["main"]))} "Main")
-              (dom/a :.item {:classes [(when (= :settings current-tab) "active")]
+              #_(dom/a :.item {:classes [(when (= :settings current-tab) "active")]
                              :onClick (fn [] (dr/change-route this ["settings"]))} "Settings")
               (div :.right.menu
                    (ui-login login)))

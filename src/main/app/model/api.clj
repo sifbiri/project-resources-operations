@@ -19,16 +19,16 @@
    [clojure.core :refer :all])
   (:import datomic.Util))
 
-(def project-keys [ :project/work  :project/id
+(def project-keys [:project/id
                    :project/finish-date
                    #_:project/author-name  :project/start-date
                    :project/name
                    :project/created-date
                    ])
 
-;; (def db-url "datomic:dev://localhost:4334/one")
+(def db-url "datomic:dev://localhost:4334/one2")
 
-;; (d/create-database db-url)
+(d/create-database db-url)
 ;; (d/delete-database db-url)
 
 ;; (def conn2 (d/connect db-url))

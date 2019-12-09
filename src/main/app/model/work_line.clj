@@ -24,8 +24,8 @@
                         :work-line/hours 22}}))
 
 ;(require '[datomic.api :as d])
-(def uri "datomic:dev://localhost:4334/one")
-(d/create-database uri)
+(def uri "datomic:dev://localhost:4334/one2")
+;(d/create-database uri)
 (def conn (d/connect uri))
 (def db (d/db conn))
 

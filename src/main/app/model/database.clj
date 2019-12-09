@@ -17,7 +17,7 @@
 
 
 
-(def db-url "datomic:dev://localhost:4334/one")
+(def db-url "datomic:dev://localhost:4334/one2")
 
 (d/create-database db-url)
 
