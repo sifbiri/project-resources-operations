@@ -26,11 +26,12 @@
                    :project/created-date
                    ])
 
-;;(def db-url "datomic:dev://localhost:4334/test2")
+;; (def db-url "datomic:dev://localhost:4334/one")
 
-;;(d/create-database db-url)
+;; (d/create-database db-url)
+;; (d/delete-database db-url)
 
-;; (def conn (d/connect db-url))
+;; (def conn2 (d/connect db-url))
 
 ;; DB stuff
 

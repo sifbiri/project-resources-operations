@@ -7,7 +7,9 @@
            com.taoensso/tufte                  {:mvn/version "2.1.0-RC4"}
            com.wsscode/pathom                  {:mvn/version "2.2.26"}
                                         ;           com.fulcrologic/fulcro              {:mvn/version "3.0.3"}
-           ;com.fulcrologic/fulcro {:mvn/version "3.0.9"}
+                                        ;com.fulcrologic/fulcro {:mvn/version "3.0.9"}
+
+           ;com.fulcrologic.fulcro {:mvn/version "3.0.13"}
            ;com.fulcrologic/fulcro {:mvn/version "3.0.2"}
            ;com.fulcrologic/fulcro              {:mvn/version "3.0.0-beta-17"} 
 
@@ -18,8 +20,8 @@
            ;com.datomic/datomic-free {:mvn/version "0.9.5697"}
            com.datomic/datomic-pro {:mvn/version "0.9.5981"}
 
-           fulcrologic/fulcro
-           {:git/url "https://github.com/fulcrologic/fulcro" :sha "cb868405b57d38ef023fdbdba9393785debe3472"}
+            fulcrologic/fulcro
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "fa79f904c2e23437a3431d5feadcfad38f986aea"}
 
 
            com.wsscode/pathom-datomic {:git/url "https://github.com/wilkerlucio/pathom-datomic.git"

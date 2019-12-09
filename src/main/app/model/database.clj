@@ -3,7 +3,8 @@
   less setup than Datomic itself.  Its API is very close to Datomics, and for a demo app makes it possible to have the
   *look* of a real back-end without having quite the amount of setup to understand for a beginner."
   (:require
-    [datomic.api :as d]
+   [datomic.api :as d]
+   [datascript.core :as d2]
     [mount.core :refer [defstate]]))
 
 ;; In datascript just about the only thing that needs schema
@@ -12,12 +13,12 @@
 (def schema {:account/id {:db/cardinality :db.cardinality/one
                           :db/unique      :db.unique/identity}})
 
-;;(defn new-database [] (d/create-conn schema))
+(defn new-database [] (d2/create-conn schema))
 
 
 
-(def db-url "datomic:dev://localhost:4334/test")
+(def db-url "datomic:dev://localhost:4334/one")
 
-#_(d/create-database db-url)
+(d/create-database db-url)
 
 (defstate conn :start (d/connect db-url))

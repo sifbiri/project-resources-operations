@@ -10,8 +10,7 @@
                                         ;[datomic.client.api :as d]
             [datomic.api :as d]
             [clj-http.client :as client]
-            )
-  )
+            ))
 
 (def work-lines (atom {;; 14
                        ;; {:work-line/id 14
@@ -25,7 +24,7 @@
                         :work-line/hours 22}}))
 
 ;(require '[datomic.api :as d])
-(def uri "datomic:dev://localhost:4334/test")
+(def uri "datomic:dev://localhost:4334/one")
 (d/create-database uri)
 (def conn (d/connect uri))
 (def db (d/db conn))
@@ -182,18 +181,31 @@
 
 ;(def res2 (-> @work-lines vals vec))
 
-#_(pc/defresolver all-work-lines-resolver [_ _]
+(pc/defresolver all-work-lines-resolver [{:keys [db connection] :as env} stuff]
   {::pc/output [{:work-day/all-work-lines [:work-line/id :work-line/hour
-                                           {:work-line/project [:project/id]}
-                                           {:work-line/task [:task/id]}]}]}
-  ;{:work-day/all-work-lines (->> work-lines deref vals vec)}
-  {:work-day/all-work-lines (first (d/q '[:find
-                                          (pull ?e [:work-line/id :work-line/hour
-                                                    {:work-line/project [:project/id]}
-                                                    {:work-line/task [:task/id]}])
-                                    :where
-                                    [?e :work-line/id _]]
-                                  (d/db conn)))})
+                                           :work-line/project
+                                           :work-line/assignment]}]}
+  (let [by-day (-> env :ast :params :by-day)
+        username (-> env :ast :params :username)
+
+        q (d/q '[:find ?a ?pn ?n  ?w
+                 :in $ ?by-day ?username
+                 
+                 :where
+                 [?a :assignment/by-day ?by-day]
+                 [?a :assignment/task ?t]
+                 [?t :task/name ?n]
+                 [?pr :project/assignments ?a]
+                 [?pr :project/name ?pn]
+                 [?a :assignment/resource ?r]
+                 [?r :resource/email-address ?username]
+                 [?a :assignment/work ?w]
+                 ] (d/db conn) by-day username)
+        mapped (map (fn [x](zipmap [:work-line/id :work-line/project :work-line/assignment :work-line/hour] x) ) q)]
+
+    
+    (println "date is " by-day)
+    {:work-day/all-work-lines mapped}))
 
 
 
@@ -217,7 +229,7 @@
       (cond-> {:item/id real-id}
         new? (assoc :tempids {id real-id}))))
 
-(def resolvers [work-line-resolver #_all-work-lines-resolver all-projects-resolver project-resolver
+(def resolvers [work-line-resolver all-work-lines-resolver all-projects-resolver project-resolver
                 all-tasks-for-project-resolver save-work-line #_task-resolver])
 
 

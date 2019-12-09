@@ -3,7 +3,7 @@
             [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.data-fetch :as df]
             [com.fulcrologic.fulcro.components :as comp]
-            [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
+;            [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
             [app.model.work-line :as work-line]))
                                         ;[app.ui.root :as root]))
 
@@ -12,7 +12,6 @@
   (->
    (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
    (net/wrap-fulcro-request)))
-
 
 
 
@@ -28,22 +27,17 @@
                                     #_(has-reader-error? body)
                                     (not= 200 status-code)))
 
-               :optimized-render! kr/render!
+ ;              :optimized-render! kr/render!
                :client-did-mount
                (fn [app]
                  (let [WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
                        Project (comp/registry-key->class :app.ui.root/Project)]
-                   (df/load app :work-line/all-projects
-                            Project
-                            {:post-mutation `work-line/create-project-options}
-                            )
+                   ;; (df/load app :work-line/all-projects
+                   ;;          Project
+                   ;;          {:post-mutation `work-line/create-project-options}
+                   ;;          )
                    
-                   (df/load app  :work-day/all-work-lines
-                            WorkLine
-                            {:target [:component/id :work-day :work-day/all-work-lines]}
-
-                                        ;:post-mutation work-line/add-form-config
-                            )
+                   
                             
                    
                    ))}))

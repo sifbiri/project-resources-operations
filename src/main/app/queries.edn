@@ -1,0 +1,17 @@
+
+(d/q '[:find ?pn (pull ?a [*])  ?n ?name ?w
+       :where
+       [?a :assignment/by-day #inst "2019-11-23T00:00:00.000-00:00"]
+       [?a :assignment/task ?t]
+       [?t :task/name ?n]
+       [?pr :project/assignments ?a]
+       [?pr :project/name ?pn]
+       [?a :assignment/resource ?r]
+       [?r :resource/name ?name]
+       [?a :assignment/work ?w]
+       ] conn)
+
+
+
+
+

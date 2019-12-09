@@ -33,7 +33,7 @@
 (defn process-session-result [env error-message]
   (let [success? (uism/alias-value env :session-valid?)]
     (when success?
-      (dr/change-route SPA ["work-day"]))
+      (dr/change-route SPA ["main"]))
     (cond-> (clear env)
       success? (->
                  (uism/assoc-aliased :modal-open? false)

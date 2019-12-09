@@ -1,0 +1,5 @@
+create a schema where
+assigment rules
+
+that is we have assignement/project as ref to a project the same for tasks as asssigment/task , and task
+is a ref to a task/name for example...
