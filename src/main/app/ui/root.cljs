@@ -30,7 +30,7 @@
    [cljs-time.coerce :as tc]
    [taoensso.timbre :as log]))
 
-;;(def xxx 1)
+
 
 (defn long->year-month-day [x]
   (tf/unparse (tf/formatters :year-month-day) (tc/from-long x)))
