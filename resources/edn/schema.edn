@@ -116,6 +116,7 @@
 
   :db/valueType :db.type/instant
   :db/cardinality :db.cardinality/one
+  :db/unique :db.unique/value
   
   }
 
@@ -133,7 +134,9 @@
   :db/ident :assignment/id
 
   :db/valueType :db.type/uuid
-  
+
+  :db/unique :db.unique/identity
+  :db/index true
   :db/cardinality :db.cardinality/one
 
   
@@ -201,6 +204,7 @@
   :db/valueType :db.type/uuid
   
   :db/cardinality :db.cardinality/one
+  :db/unique :db.unique/identity
   
   }
 

@@ -14,4 +14,26 @@
 
 
 
+;; second working query
+
+[:find ?bd ?name
+ :where
+ [?e :db/doc ?doc]
+ [?resource :resource/name "Newsha Neishaboory"]
+ [?a :assignment/resource ?resource]
+ [?a :assignment/by-day ?bd]
+ [?a :assignment/task ?t]
+ [?t :task/name ?name]
+ ]
+
+
+
+[{:db/id 98999 :project-name "pr-name" :task/name "task-name" :by-day "22"}
+ {:db/id 98999 :project-name "pr-name" :task/name "task-name" :by-day "32" }
+ {:db/id 98999 :project-name "pr-name" :task/name "task-name" :by-day "21"}]
+
+
+(grou-by-line)
+
+
 

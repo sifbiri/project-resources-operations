@@ -3,7 +3,7 @@
             [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.data-fetch :as df]
             [com.fulcrologic.fulcro.components :as comp]
-;            [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
+           [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
             [app.model.work-line :as work-line]))
                                         ;[app.ui.root :as root]))
 
@@ -27,15 +27,19 @@
                                     #_(has-reader-error? body)
                                     (not= 200 status-code)))
 
- ;              :optimized-render! kr/render!
+           :optimized-render! kr/render!
                :client-did-mount
                (fn [app]
                  (let [WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
-                       Project (comp/registry-key->class :app.ui.root/Project)]
+                       Project (comp/registry-key->class :app.ui.root/Project)
+                       Resource (comp/registry-key->class :app.ui.root/Resource)]
                    ;; (df/load app :work-line/all-projects
                    ;;          Project
                    ;;          {:post-mutation `work-line/create-project-options}
                    ;;          )
+
+
+                   
                    
                    
                             

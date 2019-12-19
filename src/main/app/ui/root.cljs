@@ -1,6 +1,12 @@
+
 (ns app.ui.root
   (:require
+   [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]
+   [app.application :as a :refer [SPA]]
    [app.model.session :as session]
+   ["react-table" :as react-table]
+   [app.model.project :as project]
+   [app.model.resource :as resource]
    [com.fulcrologic.fulcro.networking.http-remote :as net]
    [com.fulcrologic.fulcro.data-fetch :as df]
    [app.model.work-line :as work-line]
@@ -8,11 +14,15 @@
    [clojure.string :as str]
    [app.math :as math]
    ["react-number-format" :as NumberFormat]
+   ["react-collapsing-table" :as ReactCollapsingTable]
+   ["react-calendar-timeline" :as TimeLine]
    ["semantic-ui-calendar-react" :as SemanticUICalendar]
+   ["react-timeline-9000" :as ReactTimeLine]
    [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button tr td table thead th tbody tfoot]]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [com.fulcrologic.fulcro.dom.html-entities :as ent]
    [com.fulcrologic.fulcro.dom.events :as evt]
+   [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
    
    [app.model.item :as item]
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
@@ -28,7 +38,60 @@
    [cljs-time.core :as tt]
    [cljs-time.format :as tf]
    [cljs-time.coerce :as tc]
-   [taoensso.timbre :as log]))
+   [taoensso.timbre :as log]
+
+
+                                        ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
+   [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
+
+
+
+
+
+   [com.fulcrologic.semantic-ui.collections.table.ui-table-row :refer [ui-table-row]]
+   [com.fulcrologic.semantic-ui.collections.table.ui-table :refer [ui-table]]
+   [com.fulcrologic.semantic-ui.collections.table.ui-table-header-cell :refer [ui-table-header-cell]]
+   [com.fulcrologic.semantic-ui.collections.table.ui-table-header :refer [ui-table-header]]
+   
+   [com.fulcrologic.semantic-ui.collections.table.ui-table-body :refer [ui-table-body]]
+   [com.fulcrologic.semantic-ui.collections.table.ui-table-cell :refer [ui-table-cell]]
+                                        ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
+
+   ))
+
+
+(def dates
+  [
+   "2019-11-28"
+   "2019-11-29"
+   "2019-11-30"
+   "2019-12-01"
+   "2019-12-02"
+   "2019-12-03"
+   "2019-12-04"
+   "2019-12-05"
+   "2019-12-06"
+   "2019-12-07"
+   "2019-12-08"
+   "2019-12-09"
+   "2019-12-10"
+   "2019-12-11"
+   "2019-12-12"
+   "2019-12-13"
+   "2019-12-14"
+   "2019-12-15"])
+
+
+
+(defn get-from-source [date maps]
+  (let [r (first (filter (fn [map] (get map date)) maps))]
+
+    (if (nil? r) {date 0 :assignment/name (:assignment/name (first maps))} r)))
+
+(def dates2 (map #(js/Date. %) dates))
+
+
+
 
 
 
@@ -60,14 +123,18 @@
                                         ; (fs/pristine->entity*)
                              )))))
 
+(defsc Assignment [this {:assignment/keys [name id day work] :as props}]
+  {:query [:assignment/id :assignment/name :assignment/day :assignment/work]
+   :ident :assignment/id})
+
+
+
 #_(defsc Project [this {:project/keys [id name] :as props}]
-  {:query [#_:project/id :project/name  fs/form-config-join
-           ]
-   :ident :project/name
-   :form-fields #{:project/id :project/name} ;
-   })
-
-
+    {:query [#_:project/id :project/name  fs/form-config-join
+             ]
+     :ident :project/name
+     :form-fields #{:project/id :project/name} ;
+     })
 
 #_(defsc Project [this {:project/keys [id name] :as props}]
     {:query [:project/id :project/name  fs/form-config-join
@@ -76,11 +143,11 @@
      :form-fields #{#_:project/id :project/name}
      })
 #_(defsc Assignment [this {:assignment/keys [id name] :as props}]
-  {:query [#_:assignment/id :assignment/name fs/form-config-join
-           ]
-   :ident :assignment/name
-   :form-fields #{#_:assignment/id :assignment/name}
-   }) 
+    {:query [#_:assignment/id :assignment/name fs/form-config-join
+             ]
+     :ident :assignment/name
+     :form-fields #{#_:assignment/id :assignment/name}
+     }) 
 
 (defn table-cell-field [this field {:keys [onChange validation-message input-tag value-xform type]}]
   (let [props         (comp/props this)
@@ -98,6 +165,9 @@
           (or validation-message "Invalid value")))))
 
 (def ui-number-format (interop/react-factory NumberFormat))
+(def ui-collapsing-table (interop/react-factory ReactCollapsingTable))
+(def ui-timeline (interop/react-factory ReactTimeLine))
+
 
 (defn ui-money-input
   "Render a money input component. Props can contain:
@@ -146,6 +216,16 @@
                                                    
                                                    tasks)))))
 
+
+
+;; components
+;; Assignment
+;; Project
+;; Task
+;; AssignmentLine 
+
+
+
 (defsc WorkLine [this {:ui/keys   [new? saving? saved?]
                        :work-line/keys [project assignment hour]
                        :as        props}]
@@ -169,10 +249,10 @@
                                       work-line-id (:work-line/id props)]
 
                                   #_(df/load this :work-line/assignments Assignment
-                                           {:params               {:project-id project-id}
-                                            :post-mutation        `populate-tasks-options                                                                             
-                                       
-                                            })
+                                             {:params               {:project-id project-id}
+                                              :post-mutation        `populate-tasks-options                                                                             
+                                              
+                                              })
                                         ;(comp/transact! this [(fs/mark-complete! [:work/line work-line-id])])
                                   (js/console.log "client " props)))
    :ident       :work-line/id
@@ -206,10 +286,20 @@
                0
                all-work-lines)]
 
-    (table :.ui.table
-           (thead (tr (th "Project" ) (th "Assignment") (th "# Hours")))
-           (tbody (map ui-work-line all-work-lines))
-           (tfoot (tr (th "        ") (th "      ")  (th "Total: " total))))))
+    
+
+
+    (ui-button {} "Button")
+                                        ;(button "sss")
+
+    
+    #_(ui-timeline {})
+    (js/console.log "all work lines " all-work-lines )
+    (div {:style {:overflow "auto"}}
+         (table :.ui.table 
+                (thead (tr (map th  [ "Project" "Assignement " "Work"])))
+                (tbody (map ui-work-line all-work-lines))
+                (tfoot (tr (th "        ") (th "      ")  (th "Total: " total)))))))
 
 (def ui-work-day (comp/factory WorkDay {:keyfn :work-day/work-lines}))
 
@@ -247,13 +337,17 @@
 
                        :append [:component/id :work-day :work-day/all-work-lines]))
 
-         
+            
 
             
             (dr/change-route app ["work-day"])))
 
 
 #_(def date-stored (atom nil))
+
+
+
+
 
 
 (defn format-date [d]
@@ -267,6 +361,8 @@
    :ident         (fn [] [:component/id :date])
                                         ;:route-segment ["main"]
    }
+
+  
 
   (ui-date-input  {:inline true :name "Date"
                    :value (log/spy :info selected-day)
@@ -293,16 +389,16 @@
 
                                      {username :account/name} (get props [:component/id :session])
 
-                                      ]
+                                     ]
                                  
                                  (df/load! this  :work-day/all-work-lines
-                                             WorkLine
-                                             {:target [:component/id :work-day :work-day/all-work-lines]
-                                              :params {:by-day (format-date current-date) :username username}
-                                              }
-                                             
+                                           WorkLine
+                                           {:target [:component/id :work-day :work-day/all-work-lines]
+                                            :params {:by-day (format-date current-date) :username username}
+                                            }
+                                           
                                         ;:post-mutation work-line/add-form-config
-                                             ))
+                                           ))
                                
                                (dr/change-route this ["work-day"])
                                ;; TODO using parameters?
@@ -328,7 +424,10 @@
    :route-segment ["main"]}
 
   (js/console.log "Date" date)
-  (ui-date date))
+
+  
+  
+  #_(ui-date date))
 
 (defsc SignupSuccess [this props]
   {:query         ['*]
@@ -442,14 +541,17 @@
 
                                            
 
-#_(div :.ui.message
-                                                (dom/p "Don't have an account?")
-                                                (dom/a {:onClick (fn []
-                                                                   (uism/trigger! this ::session/session :event/toggle-modal {})
-                                                                   (dr/change-route this ["signup"]))}
-                                                       "Please sign up!"))))))))))))
+                                           #_(div :.ui.message
+                                                  (dom/p "Don't have an account?")
+                                                  (dom/a {:onClick (fn []
+                                                                     (uism/trigger! this ::session/session :event/toggle-modal {})
+                                                                     (dr/change-route this ["signup"]))}
+                                                         ))))))))))))
 
 (def ui-login (comp/factory Login))
+
+
+
 
 #_(defsc Main [this props]
     {:query         [:main/welcome-message]
@@ -469,18 +571,410 @@
   (js/console.log "Date" date)
   (ui-date date))
 
-(defsc Settings [this {:keys [:account/time-zone :account/real-name] :as props}]
-  {:query         [:account/time-zone :account/real-name]
-   :ident         (fn [] [:component/id :settings])
-   :route-segment ["settings"]
-   :initial-state {}}
-  (div :.ui.container.segment
-       (h3 "Settings")))
+(defsc Resource
+  [this {:resource/keys [id name email-address]}]
+  {:query [:resource/id :resource/name :resource/email-address ]
+   :ident :resource/id}
+  #_(let 
+        [resources-options (:resource/options (comp/props this))]
+
+      (js/console.log "resource options" (comp/props this))
+      (dom/div
+       (ui-dropdown {:placeholder "Select Resource"
+                     :options  options
+                     :search   true
+                     :onChange (fn [evt data] (println (.-value data)
+                                                       )
+                                 (m/set-value! this :resource/id  (.-value data))
+                                 
+
+                                 (js/console.log (.-value data))
+                                 )
+                     :value id})
+       ;;
+       
+       #_(when (:resource/id resource)
+           (p "hello there")))))
+
+(defsc Project
+  [this {:project/keys [id name]}]
+  {:query [:project/id :project/name]
+   :ident :project/id})
+
+(defsc SelectedProject
+  [this {:selected/keys [project]}]
+  {:query [:selected/project (comp/get-query Project)
+           {:selected/resource (comp/get-query Resource)}]
+   :ident (fn [] [:component/id :selected])}
+
+  (js/console.log "Selected" (:project/name project))
+  (dom/p {} "sd"))
+
+(def ui-selected-project (comp/factory SelectedProject))
+
+(def ui-selected-comp (comp/factory SelectedProject))
+
+(defn ui-selected [{:selected/keys [project resource]}]
+  (js/console.log "project" project)
+  (dom/p (:project/name project)))
+
+
+(def ui-resource (comp/factory Resource))
+
+
+
+
+
+
+(defsc AssignmentTable [this {:keys [assignments]}]
+  {:query [{:assignments (comp/get-query Assignment)}]
+   :indent [:component/id :assignment]}
+  
+  (dom/p {} (str (:assignment/name (first assignments)))))
+
+
+
+(def ui-assignment-table (comp/factory AssignmentTable))
+
+
+#_(defn set-selected
+    [this payload]
+    (let []
+      (comp/set-state! this payload)
+      (df/load! this :assignments Assignment
+                { ;:post-mutation        `project/populate-projects
+                 :target [:component/id :resources :resources/assignments]})))
+
+
+(defsc ProjectLine [this {:keys [project-line/id
+                                 project-line/resource
+                                 project-line/assignments
+                                 project-line/project
+                                 ui/selected] }]
+  {:query [:project-line/id
+           {:project-line/project (comp/get-query Project)}
+           {:project-line/resource (comp/get-query Resource)}
+           {:project-line/assignments (comp/get-query Assignment)}
+           :ui/selected ]
+   :ident (fn [] [:project-line/id id])
+   :initial-state {:ui/selected false}
+   :initLocalState (fn [this] {:ui/selected false})
+   ;:componentDidMount 
+   }
+
+  
+  
+  
+  (let [r-step
+        (map
+         (fn [[k vals]]
+           (reduce (fn [r x] (let [day (:assignment/day x)
+                                   work (:assignment/work x)
+                                   m {day work :assignment/name k}]
+                               (conj r m)
+                               
+                               )) [] vals)) (group-by :assignment/name assignments))
+
+
+        transformed (map
+                     (fn [r]
+                       (map (fn [date] (get-from-source date r) ) dates2))
+                     r-step
+                     
+
+
+                     )]
+    
+
+    (comp/fragment
+     (tr {:onClick (fn []
+                     #_(comp/set-state! this {:ui/selected (not (:ui/selected (comp/get-state this)))})
+                     (m/toggle! this :ui/selected)
+                     (df/load! this :assignments Assignment
+                               {:params               {:resource/id (:resource/id resource)
+                                                       :project/id (:project/id project)}
+                                :target (conj (comp/get-ident this) :project-line/assignments)}))}
+         
+         (td (:project/name project))
+         
+         )
+     (when selected
+       
+       (map (fn [asses]
+              (js/console.log "ASSES" asses)
+              (tr (concat [(td "") (td (:assignment/name (first asses)))]
+                          (map #(td (first (vals %))) asses))) )
+            transformed)))))
+(defmutation set-project-line [{:keys [resource project  id]}]
+  (action [{:keys [state] :as env}]
+          (js/console.log "running..." state)
+          (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
+          (swap! state assoc-in [:project-line/id id :project-line/project] project)
+          (swap! state assoc-in [:project-line/id id :project-line/id] id)
+
+          (swap! state (df/load   :assignments Assignment
+                                  {:params               {:resource/id (:resource/id resource)
+                                                          :project/id (:project/id project)}
+                                   :target [:project-line/id id :project-line/assignments]
+                                   
+                                   })) ))
+
+
+(defmutation set-project-lines [{:keys [resource project  id]}]
+  (action [{:keys [state] :as env}]
+          (js/console.log "running..." state)
+          (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
+          (swap! state assoc-in [:project-line/id id :project-line/project] project)
+          (swap! state assoc-in [:project-line/id id :project-line/id] id)
+
+          (swap! state (df/load   :assignments Assignment
+                                  {:params               {:resource/id (:resource/id resource)
+                                                          :project/id (:project/id project)}
+                                   :target [:project-line/id id :project-line/assignments]
+                                   
+                                   })) ))
+
+(defmutation set-projects-lines [{:keys [projects resource-id]}]
+  (action [{:keys [state] :as env}]
+
+          (let 
+              [projects-s (get-in @state [:component/id :resources :resources/projects])
+               resource-s (get-in @state [:component/id :resources :resources/resource])
+               projects-resolved (map (fn [[_ project-id]] (get-in @state [:project/id project-id]))projects-s)
+               resource-resolved (get-in @state [:resource/id resource-id])
+               project-lines-ids (atom [])]
+
+            
+            (js/console.log "PPP" projects)
+            (js/console.log "PPP2" projects-resolved)
+            
+
+            (doseq [c-project projects-resolved]
+              
+              
+              
+              (let [project-line-id (random-uuid)
+                                        ;state-map (comp/component->state-map this)
+                    ]
+                
+                                        ;(swap! state project-lines-ids conj [:project-line/id project-line-id])
+                (js/console.log "PRINT" c-project)
+                (swap! state merge/merge-component  ProjectLine
+                       {:project-line/resource resource-resolved
+                        :project-line/project c-project
+                        :project-line/id project-line-id
+                        :project-line/assignments []
+                        }) 
+                
+                
+                (swap! project-lines-ids conj project-line-id)
+
+                
+                
+                
+
+                
+                
+
+                #_(comp/transact! this  `[(set-project-line {:resource resource
+                                                             :project c-project
+                                                             :id project-line-id}   )] 
+                                  
+                                  )
+                
+
+                
+                
+                #_(df/load this  :assignments Assignment
+                           {:params               {:resource/id (:resource/id resource)
+                                                   :project/id (:project/id c-project)}
+                            :target [:project-line/id project-line-id :project-line/assignments]
+                            
+                            })
+                
+                ))
+            (js/console.log "@project-lines-ids" @project-lines-ids)
+            (swap! state assoc-in [:component/id :resources :resources/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
+            
+            ))
+  #_(ok-action [{:keys [state]}]
+             
+             ))
+
+
+
+
+
+(defmutation set-project-lines-for-resources [{:keys [project-lines-ids]}]
+  (action [{:keys [state] :as env}]
+
+          (js/console.log "INSIDE" project-lines-ids)
+          (swap! state (fn [s]
+                         
+                         (-> s
+                             
+                             (assoc-in [:component/id :resources :resources/project-lines] project-lines-ids)
+                             )
+                         
+                         ))
+          ))
+
+
+
+#_(defn set-project-line [{:keys [resource project ident id state]}]
+    (-> state
+        (assoc-in [:project-line/id id :project-line/resource]  resource)
+        (assoc-in [:project-line/id id :project-line/project]  project)
+        (assoc-in [:project-line/id id :project-line/id]  id)
+        (update-in [:component/id :resources :resources/project-lines] conj [:project-line/id id])
+        (df/load :assignments Assignment
+                 {:params               {:resource/id (:resource/id resource)
+                                         :project/id (:project/id project)}
+                  :target [:project-line/id id :project-line/assignments]
+                  
+                  })
+        ))
+
+
+(defmutation set-project-line-assignments [{:keys [id ident]}]
+  (action [{:keys [state] :as env}]
+
+          (js/console.log "we have this" (:assignments state))
+          (swap! state (fn [s]
+                         (-> s 
+                             (assoc-in (conj ident :project-line/assignments) (:assignments s)))))
+          state))                 
+
+
+(def asses (atom []))
+
+
+
+
+
+
+(def ui-project-line (comp/factory ProjectLine))
+
+
+#_(defsc ProjectLine [this [{:project-line/keys [project resource] :as props}]]
+    {:query [:project-line/project :project-line/resource]}
+    (tr (td "Hi")))
+
+(defmutation set-resource [{:keys [resource]}]
+  (action [{:keys [state] :as env}]
+          
+          (swap! state assoc-in [:component/id :projects-table :projects-table/resource]
+                 [:resource/id (:resource/id resource)])))
+
+(defsc ProjectsTable [this {:projects-table/keys [resource projects project-lines] :as props}]
+  {:query [:projects-table/projects :projects-table/resource :projects-table/project-lines]
+   :ident (fn [] [:component/id :projects-table])
+                                        ;:componentDidMount (fn [this]
+                                        ; )
+   }
+
+  
+  (div {:style {:overflow-x "scroll" :width "1200px" :height "1000px" :overflowY "auto" }}
+
+
+
+       ))
+
+
+(def ui-projects-table (comp/factory ProjectsTable))
+
+
+(defmutation set-projects [{:keys [projects resource]}]
+  (action [{:keys [state]}]
+          (swap! state merge/merge-component ProjectsTable {:projects-table/projects projects :project-table/resource resource})))
+
+
+(defsc Resources [this {:resources/keys [resource projects #_selected assignments project-lines] :as props}]
+  {:query         [{:resources/resource (comp/get-query Resource)}
+                   {:resources/projects (comp/get-query Project)}
+                   {:resources/project-lines (comp/get-query ProjectLine)}
+                                        ;{:resources/selected (comp/get-query SelectedProject)}
+                   {:resources/assignments (comp/get-query Assignment)}
+                   [:resource/options '_]]
+   :ident         (fn [] [:component/id :resources])
+   :route-segment ["resources"]
+                                        ;:initLocalState (fn [this _] {:project nil :resource (:resources/resource (comp/props this))})
+   
+   :initial-state {:resources/project-lines [] :resources/projects [] :resources/resource {}}
+   }
+  (let [resources-options (:resource/options (comp/props this))]
+    
+    
+
+    (div {:style {:overflowX "auto" :width "1200px" :height "1000px" :overflowY "auto" }}
+     (ui-dropdown {:placeholder "Select Resource"
+                       :options  resources-options
+                       :search   false
+                       
+                       :onChange (fn [evt data]
+                                   (let [project-lines-ids (atom [])]
+                                     
+                                     (js/console.log "DATA" (js->clj data))
+                                     #_(js/console.log "EVENGT" evt)
+                                     (comp/set-state! this {:updated true})
+                                     (df/load! this :projects Project
+                                               {:params               {:resource/id (.-value data)}
+                                                
+                                                :target [:component/id :resources :resources/projects]
+                                        ;:post-mutation        `project/populate-projects
+                                                :post-mutation `set-projects-lines
+                                                :post-mutation-params {:projects projects :resource-id (.-value data)}
+                                                
+                                                })
+                                     (m/set-value! this :resources/resource [:resource/id (.-value data)])
+                                     ;; maybe access the state with (comp/componenet->state-map)
+
+                                        ;(println "NOOOOOOOOO" )
+                                     #_(comp/transact! this  [(set-project-line {:resource resource
+                                                                                 :project (first projects)
+                                                                                 :id (random-uuid)}   )] 
+                                                       
+                                                       )))
+
+                       
+                       
+                       
+                       :value (:resource/id resource)}
+                      )
+
+
+         
+         
+     (table :.ui.table {:celled true}   
+            (thead (tr (map th  (concat [ "Project" "Assignement "] dates))))
+            (tbody (map ui-project-line project-lines)))
+
+
+         )
+
+    ))
+
+
+
+
+                                        ;(dr/change-route)
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main  Signup SignupSuccess WorkDay]})
+  {:router-targets [Main  Signup SignupSuccess WorkDay Resources]})
 
 (def ui-top-router (comp/factory TopRouter))
+
+
+
+
+
+
+
+
+
+
+
+
 
 (defsc Session
   "Session representation. Used primarily for server queries. On-screen representation happens in Login component."
@@ -492,7 +986,12 @@
                            data-tree))
    :initial-state {:session/valid? false :account/name ""}})
 
+
+
+
 (def ui-session (comp/factory Session))
+
+
 
 (defsc TopChrome [this {:root/keys [router current-session login]}]
   {:query         [{:root/router (comp/get-query TopRouter)}
@@ -507,9 +1006,14 @@
     (div :.ui.container
          (div :.ui.secondary.pointing.menu
               (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                             :onClick (fn [] (dr/change-route this ["main"]))} "Main")
-              #_(dom/a :.item {:classes [(when (= :settings current-tab) "active")]
-                             :onClick (fn [] (dr/change-route this ["settings"]))} "Settings")
+                             :onClick (fn []
+                                        ;(m/load! this )
+                                        (dr/change-route this ["main"]))} "Calendar")
+              (dom/a :.item {:classes [(when (= :settings current-tab) "active")]
+                             :onClick (fn [event]
+                                        (df/load! this :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
+                                        
+                                        (dr/change-route this ["resources"]))} "WorkPlan")
               (div :.right.menu
                    (ui-login login)))
          (div :.ui.grid
@@ -542,27 +1046,146 @@
    ;;                                      ;(comp/transact! [()] :work-day/all-work-lines)
    ;;                      )
    :initial-state {:root/top-chrome {}}}
+  
+  
+  (ui-top-chrome top-chrome)
+  )
 
-  (ui-top-chrome top-chrome))
+;; (defonce SPA (app/fulcro-app
+;;               {;; This ensures your client can talk to a CSRF-protected server.
+;;                ;; See middleware.clj to see how the token is embedded into the HTML
+;;                :remotes {:remote (net/fulcro-http-remote
+;;                                   {:url                "/api"
+;;                                    :request-middleware secured-request-middleware})}
 
-#_(defonce SPA (app/fulcro-app
-                {;; This ensures your client can talk to a CSRF-protected server.
-                 ;; See middleware.clj to see how the token is embedded into the HTML
-                 :remotes {:remote (net/fulcro-http-remote
-                                    {:url                "/api"
-                                     :request-middleware secured-request-middleware})}
+;;                :client-did-mount (let [;WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
+;;                                        project-class (comp/registry-key->class :app.ui.root/Project)]
 
-                 :client-did-mount (let [;WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
-                                         project-class (comp/registry-key->class :app.ui.root/Project)]
+;;                                    (fn [app]
+;;                                      (df/load app :work-day/all-work-lines
+;;                                               WorkLine
+;;                                               {:target [:component/id :work-day :work-day/all-work-lines]})
 
-                                     (fn [app]
-                                       (df/load app :work-day/all-work-lines
-                                                WorkLine
-                                                {:target [:component/id :work-day :work-day/all-work-lines]})
+;;                                      (df/load app :project/all-projects
+;;                                               project-class
+;;                                               {:post-mutation `work-line/create-project-options})))}))
 
-                                       (df/load app :project/all-projects
-                                                project-class
-                                                {:post-mutation `work-line/create-project-options})))}))
+
+
+
+
+
+(def r
+
+  [#:assignment{:id 17592186055123,
+                :name "model domain",
+                :day #inst "2019-12-05T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055138,
+                :name "model domain",
+                :day #inst "2019-12-10T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055135,
+                :name "model domain",
+                :day #inst "2019-12-09T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055126,
+                :name "model domain",
+                :day #inst "2019-12-06T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055120,
+                :name "model domain",
+                :day #inst "2019-12-04T00:00:00.000-00:00",
+                :work 6.0}
+   #:assignment{:id 17592186055141,
+                :name "model domain",
+                :day #inst "2019-12-11T00:00:00.000-00:00",
+                :work 2.0}
+   #:assignment{:id 17592186055132,
+                :name "model domain",
+                :day #inst "2019-12-08T00:00:00.000-00:00",
+                :work 0.0}
+   #:assignment{:id 17592186055129,
+                :name "model domain",
+                :day #inst "2019-12-07T00:00:00.000-00:00",
+                :work 0.0}])
+
+(comment
+  (reduce (fn [r [k v]] (map (fn [date] ()) dates )) (group-by #(select-keys % [:assignment/name]) r))
+
+  
+  
+  (def v '[{:assignment/id 17592186053305, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-09T00:00:00.000-00:00", :assignment/work 8} {:assignment/id 17592186053284, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-02T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053296, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-06T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053287, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-03T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053293, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-05T00:00:00.000-00:00", :assignment/work 4}])
+
+
+
+  (map
+
+
+   (fn [r-reduce]
+     (reduce (fn [r date]
+               (reduce (fn [r2 m]
+                         (if (=  date (first (keys m)))
+                           (conj r m)
+                           (conj r {date 0 :assignment/name (:assignment/name m)}))) [] r-reduce))   [] (map #(js/Date. %) dates)))
+
+
+   (map
+    (fn [[k vals]]
+      (reduce (fn [r x] (let [day (:assignment/day x)
+                              work (:assignment/work x)
+                              m {day work :assignment/name k}]
+                          (conj r m)
+                          
+                          )) [] vals)) (group-by :assignment/name r)))
+
+                                        ;{#inst .... 3}
+
+
+
+
+  (map (fn [r [k v]] (conj r "s")) (group-by :assignment/name r))
+
+  ;; (reduce (fn [r m]
+  ;;           (concat r (reduce (fn [_ date]
+  ;;                               (if (not (= date (first (keys m))))
+  ;;                                 (conj r {date 0})
+  ;;                                 (conj r {date (first (vals m))})))
+  ;;                             [] (map #(js/Date. %) dates))))    [] r-reduce)
+
+  
+  )
+
+
+
+
+
+
+
+
+(def r-reduce '({#inst "2019-12-09T00:00:00.000-00:00" 8} {#inst "2019-12-02T00:00:00.000-00:00" 4} {#inst "2019-12-06T00:00:00.000-00:00" 4} {#inst "2019-12-03T00:00:00.000-00:00" 4} {#inst "2019-12-05T00:00:00.000-00:00" 4}))
+
+(def step-r (map
+             (fn [[k vals]]
+               (reduce (fn [r x] (let [day (:assignment/day x)
+                                       work (:assignment/work x)
+                                       m {day work :assignment/name k}]
+                                   (conj r m)
+                                   
+                                   )) [] vals)) (group-by :assignment/name r)))
+
+
+
+
+
+
+(reduce (fn [works date] (if (not (contains? (map (comp first keys) (first step-r)) date))
+                           (conj r {date 0} )) ) (first step-r) dates2)
+
+
+
+
+#_(map (comp first keys) (first step-r))
 
 
 

@@ -16,6 +16,7 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [app.model.database :as db :refer [conn]]
+   [clj-time.core :as t]
    [clojure.core :refer :all])
   (:import datomic.Util))
 
@@ -31,11 +32,11 @@
 (d/create-database db-url)
 ;; (d/delete-database db-url)
 
-;; (def conn2 (d/connect db-url))
+(def conn2 (d/connect db-url))
 
 ;; DB stuff
 
-;(def db-uri-base "datomic:mem://")
+                                        ;(def db-uri-base "datomic:mem://")
 
 (def resource io/resource)
 
@@ -96,7 +97,7 @@
      :resource/modified-date
      :resource/created-date
      :resource/email-address
-     ;:resource/type
+                                        ;:resource/type
      :resource/name
      
      :resource/is-active
@@ -201,42 +202,42 @@
                    
                    (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id)
                                   :assignment/task (remove-nils {:task/name task-name
-                                                     :task/id task-id
-                                                     :task/is-active task-is-active})
+                                                                 :task/id task-id
+                                                                 :task/is-active task-is-active})
                                   :assignment/resource resource)))) response)
     ))
 
 (def all-project-names '("LeFrak"
-                        "RBC - IVALUA - S2C"
-                        "Louboutin US"
-                        "Boys & Girls Club of America"
-                        "Visteon (Xeeva)"
-                        "simple"
-                        "TESTPROJECT2"
-                        "FLX NORAM Portfolio Master"
-                        "Desjardins - Appro360"
-                        "Revo - APA"
-                        "OLIN BRASS - APA"
-                        "NEOGEN - APA"
-                        "Kraton - APA"
-                        "Ivanhoe Cambridge - P2P"
-                        "Ivanhoe Cambridge - TMA"
-                        "Customers Support"
-                        "Vacations"
-                        "Cadillac Fairview - Quantum"
-                        "COGECO - S2C - Wave 1"
-                        "COGECO - Spend - Wave 2"
-                        "COGECO - Supplier Performance - Wave 3"
-                        "Other Projects"
-                        "Training"
-                        "Closed Projects"
-                        "COGECO - LEGAL AFFAIRS"
-                        "Cadillac Fairview - Enhancements and Reports"
-                        "Vortex - CMS Activities"
-                        "Bell - Enhancements"
-                        "Ivalua - Subcontracting"
-                        "Test 679"
-                        "Opérations d’administration de feuilles de temps"))
+                         "RBC - IVALUA - S2C"
+                         "Louboutin US"
+                         "Boys & Girls Club of America"
+                         "Visteon (Xeeva)"
+                         "simple"
+                         "TESTPROJECT2"
+                         "FLX NORAM Portfolio Master"
+                         "Desjardins - Appro360"
+                         "Revo - APA"
+                         "OLIN BRASS - APA"
+                         "NEOGEN - APA"
+                         "Kraton - APA"
+                         "Ivanhoe Cambridge - P2P"
+                         "Ivanhoe Cambridge - TMA"
+                         "Customers Support"
+                         "Vacations"
+                         "Cadillac Fairview - Quantum"
+                         "COGECO - S2C - Wave 1"
+                         "COGECO - Spend - Wave 2"
+                         "COGECO - Supplier Performance - Wave 3"
+                         "Other Projects"
+                         "Training"
+                         "Closed Projects"
+                         "COGECO - LEGAL AFFAIRS"
+                         "Cadillac Fairview - Enhancements and Reports"
+                         "Vortex - CMS Activities"
+                         "Bell - Enhancements"
+                         "Ivalua - Subcontracting"
+                         "Test 679"
+                         "Opérations d’administration de feuilles de temps"))
 
 
 (def selected-project-names #{"Louboutin US" "simple" "Desjardins - Appro360"})
@@ -289,8 +290,8 @@
                    (remove-nils (assoc x :project/assignments (mapv (fn [x] (dissoc x :project/name))  assignments)))))
          result6)]
     
-    result7))
-
+    result7)
+  )
 (def all-projects (get-all-projects))
 (def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
 
@@ -394,43 +395,97 @@
 
 
 
-;(transact-all  conn "resources/edn/schema.edn")
+                                        ;(transact-all  conn "resources/edn/schema.edn")
                                         ;(transact-all2 conn (reduce (fn [r x] (conj r [x] )) [] assignement-phased))
 (
  def all-projects (butlast (get-all-projects)))
 
 (defn project-by-name
- [name]
- (filter #(= (:project/name %) name) (get-all-projects)))
+  [name]
+  (filter #(= (:project/name %) name) (get-all-projects)))
 
 #_(defn assignements-for-project
-  [name]
-  (filter #(= (:project/name %)  name) assignement-phased))
+    [name]
+    (filter #(= (:project/name %)  name) assignement-phased))
 
 
 
 #_(def my-project-data
-  (let [project (first (project-by-name "simple"))
-        assignments (assignements-for-project "simple")
-        ]
-    (assoc project :project/assignments assignments )))
+    (let [project (first (project-by-name "simple"))
+          assignments (assignements-for-project "simple")
+          ]
+      (assoc project :project/assignments assignments )))
 
 
 
 #_(d/q '[:find ?e
-       :where
-       [?e :project/id #uuid "df2ebab7-0816-ea11-a08e-005056eb471c"]
-       [?e :task/name "model domain"]
-       [?e :project/assignments ?a ]]
-     db)
+         :where
+         [?e :project/id #uuid "df2ebab7-0816-ea11-a08e-005056eb471c"]
+         [?e :task/name "model domain"]
+         [?e :project/assignments ?a ]]
+       db)
 
 
 ;; To repeat
 
 #_(def conn (scratch-conn))
-#_(transact-all  conn "resources/edn/schema.edn")
+#_(transact-all  conn2 "resources/edn/schema.edn")
 
 
 
 
 #_(def simple-project (filter #(= (:project/name %) "simple") all-projects))
+
+
+#_(d/q '[:find ?day ?a ?pn ?n ?w
+       :keys day id project task work
+       :where
+       [?a :assignment/by-day ?day]
+       [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
+       [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
+       [?a :assignment/task ?t]
+       [?t :task/name ?n]
+       [?pr :project/assignments ?a]
+       [?pr :project/name ?pn]
+       [?a :assignment/resource ?r]
+       [?r :resource/name "Newsha Neishaboory"]
+       [?a :assignment/work ?w]
+       ] (d/db conn2))
+
+
+
+
+#_(d/q '
+ [:find ?day ?task-name ?work ?project
+  :where
+  [?resource :resource/name "Newsha Neishaboory"]
+  [?assignment :assignment/by-day ?day]
+  [?assignment :assignment/task ?task]
+  [?task :task/name ?task-name]
+  [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
+  [(.before ?day #inst "2019-03-10T00:00:00.000-00:00")]
+  [?p :project/name ?project]
+  [?assignment :assignment/work ?work]
+  ])
+
+#_(def r (reduce (fn [s a]
+                 (if-not (contains? (set (map :assignment/id s))
+                                    (:assignment/id a))
+                   (conj s a))
+                 s) #{} (:project/assignments one-pr)))
+
+
+(defn find-in-grouped-by [m key]
+  (->> (seq m)
+       (reduce (fn [r [{:keys [:user-id :a]} :as k] v] (update r a conj {k v}))) {}))
+
+(def r (take 5 (d/q '[:find ?a ?pn ?name ?bd
+               :keys :db/id project task day
+               :where
+               [?a :assignment/task ?t]
+               [?t :task/name ?name]
+               [?a :assignment/by-day ?bd]
+               [?p :project/name ?pn]
+               [?a :assignment/resource ?resource]
+               [?resource :resource/email-address "nneishaboory@fluxym.com"]
+               ] (d/db conn2))))

@@ -11,8 +11,9 @@
     ;; [app.model.project :as project]
     [com.wsscode.pathom.connect.datomic :as pcd]
     [com.wsscode.pathom.connect.datomic.on-prem :refer [on-prem-config]]
-    
+    [app.model.project :as project]
     [app.model.session :as session]
+    [app.model.resource :as resource]
     [app.model.item :as item]
     [datomic.api :as d]
     [app.server-components.config :refer [config]]
@@ -26,7 +27,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [acct/resolvers session/resolvers index-explorer wol/resolvers #_project/resolvers item/resolvers])
+(def all-resolvers [acct/resolvers session/resolvers resource/resolvers project/resolvers index-explorer wol/resolvers #_project/resolvers item/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.

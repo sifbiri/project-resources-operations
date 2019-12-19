@@ -20,8 +20,11 @@
            ;com.datomic/datomic-free {:mvn/version "0.9.5697"}
            com.datomic/datomic-pro {:mvn/version "0.9.5981"}
 
+           clj-time {:mvn/version "0.15.2"}
+
+
             fulcrologic/fulcro
-           {:git/url "https://github.com/fulcrologic/fulcro" :sha "fa79f904c2e23437a3431d5feadcfad38f986aea"}
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "5967a590011fc682e5f361f068d3f6311df18c91"}
 
 
            com.wsscode/pathom-datomic {:git/url "https://github.com/wilkerlucio/pathom-datomic.git"
