@@ -4,5 +4,11 @@ assigment rules
 that is we have assignement/project as ref to a project the same for tasks as asssigment/task , and task
 is a ref to a task/name for example...
 * Features
-** when total work for assignment is 0, don't show it
+** [x] when total work for assignment is 0, don't show it / same for project
+** show the total of tasks per project
+** [x] navigate in time (start day / end day)
+** [x] add icon to projects view
+** make deployement script
+** delete other projects ....
 ** add tooltip for calendar view
+** [x] add loading table marker
