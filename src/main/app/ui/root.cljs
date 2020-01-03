@@ -11,9 +11,9 @@
    [com.fulcrologic.semantic-ui.elements.icon.ui-icon :refer [ui-icon]]
    [com.fulcrologic.semantic-ui.elements.loader.ui-loader :refer [ui-loader]]
    [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]
-   ;["react-country-flags" :as Flag]
+                                        ;["react-country-flags" :as Flag]
    [app.application :as a :refer [SPA]]
-   ;["react-flags" :as Flag]
+                                        ;["react-flags" :as Flag]
    [app.model.session :as session]
    ["react-table" :as react-table]
    ["react-world-flags" :as Flag]
@@ -32,7 +32,7 @@
    ["react-country-flag" :as  ReactCountryFlag] 
                                         ;["react-collapsing-table" :as ReactCollapsingTable]
    
-   ;["react-calendar-timeline" :as TimeLine]
+                                        ;["react-calendar-timeline" :as TimeLine]
    ["semantic-ui-calendar-react" :as SemanticUICalendar]
    ["react-timeline-9000" :as ReactTimeLine]
    [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button tr td table thead th tbody tfoot]]
@@ -59,7 +59,7 @@
    [cljs-time.coerce :as tc]
    [taoensso.timbre :as log]
 
-  
+   
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
    [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
 
@@ -186,10 +186,10 @@
 (def ui-number-format (interop/react-factory NumberFormat))
 
 
-;(def ui-flag (interop/react-factory Flag))
+                                        ;(def ui-flag (interop/react-factory Flag))
 (def ui-flag-icon (interop/react-factory FlagIcon))
 (def ui-react-country-flag   (interop/react-factory ReactCountryFlag))
-;(def ui-collapsing-table (interop/react-factory ReactCollapsingTable))
+                                        ;(def ui-collapsing-table (interop/react-factory ReactCollapsingTable))
 (def ui-timeline (interop/react-factory ReactTimeLine))
 
 
@@ -232,8 +232,8 @@
 (defmutation populate-tasks-options [_]
   (action [{:keys [state]}]
           (let [tasks (vals (get @state :task/id))]
-                                        
-                                        
+            
+            
             (swap! state assoc :task/options (into []
                                                    (map #(set/rename-keys % {:task/id   :value
                                                                              :task/name :text}))
@@ -272,10 +272,10 @@
                                       work-line-id (:work-line/id props)]
 
                                   #_(df/load this :work-line/assignments Assignment
-                                           {:params               {:project-id project-id}
-                                            :post-mutation        `populate-tasks-options                                                                             
-                                       
-                                            })
+                                             {:params               {:project-id project-id}
+                                              :post-mutation        `populate-tasks-options                                                                             
+                                              
+                                              })
                                         ;(comp/transact! this [(fs/mark-complete! [:work/line work-line-id])])
                                   ))
    :ident       :work-line/id
@@ -587,18 +587,18 @@
   
   (div (ui-date date)
        #_(div  {:style {:flex 1 :display "flex"
-                      :marginTop "200px"
-                      :align-items "center"
-                      :color "gray"
-                      :text-align "center"
-                      :justify-content "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
-                      
+                        :marginTop "200px"
+                        :align-items "center"
+                        :color "gray"
+                        :text-align "center"
+                        :justify-content "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
+                        
                                         ;(ui-flag-icon #js {:code "CA"})
-                      
-                      ;; (Flag {:code "CA"})
+                        
+                        ;; (Flag {:code "CA"})
 
-                      ;; (ui-react-country-flag {:code "US" :svg true :title "CA" :style {:width "2em" :height "2em"}})
-                      ))
+                        ;; (ui-react-country-flag {:code "US" :svg true :title "CA" :style {:width "2em" :height "2em"}})
+                        ))
   
   )
 
@@ -686,13 +686,21 @@
       r)))
 
 
-
-#_(defn generate-row-dates [start end]
-    (loop [s (tf/parse (tf/formatters :date) start)
+(defn generate-row-dates-readable
+  [start end]
+  (loop [s (t/date start)
          r []]
-    (if (not= end (tf/unparse (tf/formatters :date) s))
-      (recur (tt/plus s (tt/days 1)) (conj r (tf/unparse (tf/formatters :date) s)))
-      r)))
+    (if (= (str end) (str s))
+      r
+      (let [day-of-week (apply str (take 3 (str (t/day-of-week s))))
+            day-of-month (t/day-of-month s)
+            month (apply str (take 3 (str (t/month s))))
+            year (t/year s)]
+        (recur (t/+ s (t/new-period 1 :days))
+               (conj r (str (str/capitalize day-of-week) ", " (str (str/capitalize month) ", " day-of-month) " " year)))))))
+
+
+
 
 
 (defsc ProjectLine [this {:keys [project-line/id
@@ -716,12 +724,12 @@
                 (merge current-normalized data-tree))
    
    :componentDidMount (fn [this]
-                         (let [project (:project-line/project (comp/props this))
-                               resource (:project-line/resource (comp/props this))]
-                           (df/load! this :assignments Assignment
-                                     {:params               {:resource/id (:resource/id resource)
-                                                             :project/id (:project/id project)}
-                                      :target (conj (comp/get-ident this) :project-line/assignments)})))
+                        (let [project (:project-line/project (comp/props this))
+                              resource (:project-line/resource (comp/props this))]
+                          (df/load! this :assignments Assignment
+                                    {:params               {:resource/id (:resource/id resource)
+                                                            :project/id (:project/id project)}
+                                     :target (conj (comp/get-ident this) :project-line/assignments)})))
    }
 
   
@@ -730,6 +738,12 @@
   (let [state-map (comp/component->state-map this)
         start (:start dates)
         end (:end dates)
+
+        color (fn [n] (cond
+                        (= n 0) "white"
+                        (and (> n 0) (<= n 8)) "lightGreen"
+                        (and (> n 8) (<= n 10)) "orange"
+                        (> n 10) "red"))
 
         
         r-step
@@ -760,42 +774,36 @@
 
     (when (> total 0)
       (comp/fragment
-      (tr {:onClick (fn []
-                      #_(comp/set-state! this {:ui/selected (not (:ui/selected (comp/get-state this)))})
-                      (m/toggle! this :ui/selected)
-                      )}
-          
-          (td (str (:project/name project) " ")  (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
-          (map #(td "") (generate-row-dates start end))
-          
-          
-          
-          
-          
-          
-          )
-      (when selected
-        
-        (conj (map (fn [asses]
-                     ;; hide assignment line with 0 work load
-                     (when (> (reduce (fn [r m] (+ r (first (vals m)))) 0 asses) 0)
-                       (tr (concat [(td "") (td (:assignment/name (first asses)))]
-                                   (map #(td (first (vals %))) asses))))
-                     )
-                   transformed)
+       (tr 
+           {:style {}
+            :onClick (fn []
+                       #_(comp/set-state! this {:ui/selected (not (:ui/selected (comp/get-state this)))})
+                       (m/toggle! this :ui/selected)
+                       )}
+           
+           (td (str (:project/name project) " ")  (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
+           #_(map #(td "") (generate-row-dates-readable start end))
+           (td "")
 
-              
-              (tr  (td "") (td "")
-                   (map #(td %)
-                        (loop [r transformed
-                               t []]
-                          (if (ffirst r) 
-                            (let [total (reduce (fn [r m] (+ r (first (vals m)))) 0 (map first r))]
-                              (recur (map rest r) (conj t total)))
-                            t))))
-              
-              
-              ))))))
+           (map #(td {:style {:background-color (color %)}}
+                     (goog.string.format "%.2f" %))
+                (loop [r transformed
+                       t []]
+                  (if (ffirst r) 
+                    (let [total (reduce (fn [r m] (+ r (first (vals m)))) 0 (map first r))]
+                      (recur (map rest r) (conj t total)))
+                    t))))
+
+       (when selected
+         
+         (map (fn [asses]
+                ;; hide assignment line with 0 work load
+                (when (> (reduce (fn [r m] (+ r (first (vals m)))) 0 asses) 0)
+                  (tr (concat [(td "") (td (:assignment/name (first asses)))]
+                              (map #(td {:style {:background-color (color (first (vals %)))}}
+                                        (goog.string.format "%.2f" (first (vals %)))) asses))))
+                )
+              transformed))))))
 
 
 (defmutation set-project-line [{:keys [resource project  id]}]
@@ -888,8 +896,8 @@
             
             ))
   #_(ok-action [{:keys [state]}]
-             
-             ))
+               
+               ))
 
 
 
@@ -998,21 +1006,21 @@
                    {:resources/project-lines (comp/get-query ProjectLine)}
                    
                    
-                                       ;{:resources/selected (comp/get-query SelectedProject)}
+                                        ;{:resources/selected (comp/get-query SelectedProject)}
                    {:resources/assignments (comp/get-query Assignment)}
                    [:resource/options '_]
                    [:ui/dates '_]
                    [df/marker-table :projects]]
    :ident         (fn [] [:component/id :resources])
    :route-segment ["resources"]
-   ;:initLocalState (fn [this _] {:project nil :resource (:resources/resource (comp/props this))})
+                                        ;:initLocalState (fn [this _] {:project nil :resource (:resources/resource (comp/props this))})
    
    :initial-state {:resources/project-lines []
                    :resources/projects []
                    :ui/loading false
                    :resources/resource {}
                                         ;:resources/start (tf/unparse (tf/formatters :date) (tt/now))
-                   ;:resources/end
+                                        ;:resources/end
                    ;; (tf/unparse (tf/formatters :date)
                    ;;                             (tt/plus (tt/now) (tt/weeks 3)))
                    }
@@ -1034,17 +1042,17 @@
 
     (when dates
       (div 
-           {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
-           (div :.ui.row
-                (ui-input {:type "date" :size "mini" :label "Start"  :style {:border "2px solid LightGray" :border-radius "5px" :margin-right "5px"}
-                           :onChange (fn [event data]
-                                       
-                                       (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))})])
-                                       
-                                       
-                                       )
-                           :value (:start dates)
-                           :action true})
+       {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
+       (div :.ui.row
+            (ui-input {:type "date" :size "mini" :label "Start"  :style {:border "2px solid LightGray" :border-radius "5px" :margin-right "5px"}
+                       :onChange (fn [event data]
+                                   
+                                   (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))})])
+                                   
+                                   
+                                   )
+                       :value (:start dates)
+                       :action true})
             
             
             (ui-input {:type "date" :size "mini" :label "End"  
@@ -1098,21 +1106,28 @@
               
               :value (:resource/id resource)}
              ))
-           
-          
-          
+       
+       
+       
 
 
-          
-          
-          (if loading
-            (ui-loader {:active true :inline "centered"})
-            (comp/fragment(table :.ui.table.celled    
-                    (thead (tr (map th  (concat [ "Project" "Assignement "] (generate-row-dates (:start dates) (:end dates))))))
+       
+       
+       (if loading
+         (ui-loader {:active true :inline "centered"})
+         (comp/fragment
+          (ui-table {:celled true}
+                    (ui-table-header {:fullWidth true}
+                                     (ui-table-row  {}
+
+                                                    (map #(ui-table-header-cell {} %)  [ "Project" "Assignement "])
+
+                                                    (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                                    ))
                     (tbody (map ui-project-line project-lines)))
-             ))
-                   
-          ))))
+          ))
+       
+       ))))
 
 
 
@@ -1351,8 +1366,8 @@
 
 
 
-;(tt/plus (tf/parse (tf/formatter "yyyy-mm-dd") "2019-12-10") (tt/days 1))
-;(tf/unparse (tf/formatter "yyyy-mm-dd") r)
+                                        ;(tt/plus (tf/parse (tf/formatter "yyyy-mm-dd") "2019-12-10") (tt/days 1))
+                                        ;(tf/unparse (tf/formatter "yyyy-mm-dd") r)
 
 
 
