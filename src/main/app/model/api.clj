@@ -397,8 +397,7 @@
 
                                         ;(transact-all  conn "resources/edn/schema.edn")
                                         ;(transact-all2 conn (reduce (fn [r x] (conj r [x] )) [] assignement-phased))
-(
- def all-projects (butlast (get-all-projects)))
+(def all-projects (butlast (get-all-projects)))
 
 (defn project-by-name
   [name]

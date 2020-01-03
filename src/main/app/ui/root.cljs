@@ -732,9 +732,6 @@
                                      :target (conj (comp/get-ident this) :project-line/assignments)})))
    }
 
-  
-  
-  
   (let [state-map (comp/component->state-map this)
         start (:start dates)
         end (:end dates)
@@ -821,19 +818,7 @@
                                    })) ))
 
 
-(defmutation set-project-lines [{:keys [resource project  id]}]
-  (action [{:keys [state] :as env}]
-          
-          (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
-          (swap! state assoc-in [:project-line/id id :project-line/project] project)
-          (swap! state assoc-in [:project-line/id id :project-line/id] id)
 
-          (swap! state (df/load   :assignments Assignment
-                                  {:params               {:resource/id (:resource/id resource)
-                                                          :project/id (:project/id project)}
-                                   :target [:project-line/id id :project-line/assignments]
-                                   
-                                   })) ))
 
 (defmutation set-projects-lines [{:keys [projects resource-id]}]
   (action [{:keys [state] :as env}]
@@ -862,15 +847,7 @@
                         :project-line/assignments []
                         }) 
                 
-                
                 (swap! project-lines-ids conj project-line-id)
-
-                
-                
-                
-
-                
-                
 
                 #_(comp/transact! this  `[(set-project-line {:resource resource
                                                              :project c-project
@@ -998,27 +975,27 @@
 
 
 
-(defsc Resources [this {:resources/keys [resource projects #_selected assignments project-lines ]
+(defsc WorkPlan [this {:workplan/keys [resource projects #_selected assignments project-lines ]
                         :keys [ui/dates ui/loading]:as props}]
-  {:query         [{:resources/resource (comp/get-query Resource)}
+  {:query         [{:workplan/resource (comp/get-query Resource)}
                    :ui/loading
-                   {:resources/projects (comp/get-query Project)}
-                   {:resources/project-lines (comp/get-query ProjectLine)}
+                   {:workplan/projects (comp/get-query Project)}
+                   {:workplan/project-lines (comp/get-query ProjectLine)}
                    
                    
-                                        ;{:resources/selected (comp/get-query SelectedProject)}
-                   {:resources/assignments (comp/get-query Assignment)}
+                                        ;{:workplan/selected (comp/get-query SelectedProject)}
+                   {:workplan/assignments (comp/get-query Assignment)}
                    [:resource/options '_]
                    [:ui/dates '_]
                    [df/marker-table :projects]]
-   :ident         (fn [] [:component/id :resources])
-   :route-segment ["resources"]
-                                        ;:initLocalState (fn [this _] {:project nil :resource (:resources/resource (comp/props this))})
+   :ident         (fn [] [:component/id :workplan])
+   :route-segment ["workplan"]
+                                        ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
    
-   :initial-state {:resources/project-lines []
-                   :resources/projects []
+   :initial-state {:workplan/project-lines []
+                   :workplan/projects []
                    :ui/loading false
-                   :resources/resource {}
+                   :workplan/resource {}
                                         ;:resources/start (tf/unparse (tf/formatters :date) (tt/now))
                                         ;:resources/end
                    ;; (tf/unparse (tf/formatters :date)
@@ -1085,13 +1062,13 @@
                                       {:marker :projects
                                        :params               {:resource/id (.-value data)}
                                        
-                                       :target [:component/id :resources :resources/projects]
+                                       :target [:component/id :workplan :workplan/projects]
                                         ;:post-mutation        `project/populate-projects
                                        :post-mutation `set-projects-lines
                                        :post-mutation-params {:projects projects :resource-id (.-value data)}
                                        
                                        })
-                            (m/set-value! this :resources/resource [:resource/id (.-value data)])
+                            (m/set-value! this :workplan/resource [:resource/id (.-value data)])
                             ;; maybe access the state with (comp/componenet->state-map)
 
                                         ;(println "NOOOOOOOOO" )
@@ -1135,7 +1112,7 @@
                                         ;(dr/change-route)
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main  Signup SignupSuccess WorkDay Resources]})
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan]})
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -1189,7 +1166,7 @@
                              :onClick (fn [event]
                                         (df/load! this :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
                                         
-                                        (dr/change-route this ["resources"]))} "WorkPlan")
+                                        (dr/change-route this ["workplan"]))} "WorkPlan")
               (div :.right.menu
                    (ui-login login)
                    
