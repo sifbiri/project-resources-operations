@@ -590,10 +590,10 @@
   (div (ui-date date)
        #_(div  {:style {:flex 1 :display "flex"
                         :marginTop "200px"
-                        :align-items "center"
+                        :alignItems "center"
                         :color "gray"
-                        :text-align "center"
-                        :justify-content "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
+                        :textAlign "center"
+                        :justifyContent "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
                         
                                         ;(ui-flag-icon #js {:code "CA"})
                         
@@ -785,7 +785,7 @@
            #_(map #(td "") (generate-row-dates-readable start end))
            (td "")
 
-           (map #(td {:style {:background-color (color %)}}
+           (map #(td {:style {:backgroundColor (color %)}}
                      (goog.string.format "%.2f" %))
                 (loop [r transformed
                        t []]
@@ -995,6 +995,13 @@
    :ident         (fn [] [:component/id :workplan])
    :route-segment ["workplan"]
                                         ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
+   :will-enter (fn [app route-params]
+                 (dr/route-deferred
+                  [:component/id :workplan]
+                  (fn []
+                    (df/load! app :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
+                    (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
+                    
    
    :initial-state {:workplan/project-lines []
                    :workplan/projects []
@@ -1021,7 +1028,7 @@
         current-state (uism/get-active-state this ::session/session)
         logged-in? (= :state/logged-in current-state)] 
     
-    
+    (js/console.log "resources " resources-options)
 
     (if (and dates logged-in?)
       (div 
@@ -1045,7 +1052,7 @@
                                    (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))})])
                                    
                                    )
-                       :style {:marginRight "15px" :border "2px solid LightGray" :border-radius "5px"}})
+                       :style {:marginRight "15px" :border "2px solid LightGray" :borderRadius "5px"}})
             (ui-dropdown 
              { :button true
               :labeled true
@@ -1168,9 +1175,9 @@
                              :onClick (fn []
                                         ;(m/load! this )
                                         (dr/change-route this ["main"]))} "Calendar")
-              (dom/a :.item {:classes [(when (= :settings current-tab) "active")]
+              (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
                              :onClick (fn [event]
-                                        (df/load! this :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
+                                        
                                         
                                         (dr/change-route this ["workplan"]))} "WorkPlan")
               (div :.right.menu
