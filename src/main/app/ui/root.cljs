@@ -53,6 +53,8 @@
    [com.fulcrologic.fulcro.algorithms.react-interop :as interop]
    [com.fulcrologic.fulcro.application :as app]
    [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]
+   [com.fulcrologic.semantic-ui.elements.segment.ui-segment :refer [ui-segment]]
+   
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [cljs-time.core :as tt]
    [cljs-time.format :as tf]
@@ -732,6 +734,7 @@
                                      :target (conj (comp/get-ident this) :project-line/assignments)})))
    }
 
+  
   (let [state-map (comp/component->state-map this)
         start (:start dates)
         end (:end dates)
@@ -824,8 +827,8 @@
   (action [{:keys [state] :as env}]
 
           (let 
-              [projects-s (get-in @state [:component/id :resources :resources/projects])
-               resource-s (get-in @state [:component/id :resources :resources/resource])
+              [projects-s (get-in @state [:component/id :workplan :workplan/projects])
+               resource-s (get-in @state [:component/id :workplan :workplan/resource])
                projects-resolved (map (fn [[_ project-id]] (get-in @state [:project/id project-id]))projects-s)
                resource-resolved (get-in @state [:resource/id resource-id])
                project-lines-ids (atom [])]
@@ -868,8 +871,8 @@
                 ))
             
             
-            (swap! state assoc-in [:component/id :resources :resources/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
-            (swap! state update-in [:component/id :resources :ui/loading] not)
+            (swap! state assoc-in [:component/id :workplan :workplan/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
+            (swap! state update-in [:component/id :workplan :ui/loading] not)
             
             ))
   #_(ok-action [{:keys [state]}]
@@ -978,10 +981,11 @@
 (defsc WorkPlan [this {:workplan/keys [resource projects #_selected assignments project-lines ]
                         :keys [ui/dates ui/loading]:as props}]
   {:query         [{:workplan/resource (comp/get-query Resource)}
+                   
                    :ui/loading
                    {:workplan/projects (comp/get-query Project)}
                    {:workplan/project-lines (comp/get-query ProjectLine)}
-                   
+                   [::uism/asm-id ::session/session]
                    
                                         ;{:workplan/selected (comp/get-query SelectedProject)}
                    {:workplan/assignments (comp/get-query Assignment)}
@@ -1013,11 +1017,13 @@
                                                                            })]))
    }
   (let [resources-options (:resource/options (comp/props this))
-        marker (get props [df/marker-table :projects] )] 
+        marker (get props [df/marker-table :projects] )
+        current-state (uism/get-active-state this ::session/session)
+        logged-in? (= :state/logged-in current-state)] 
     
     
 
-    (when dates
+    (if (and dates logged-in?)
       (div 
        {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
        (div :.ui.row
@@ -1053,9 +1059,6 @@
               
               :onChange (fn [evt data]
                           (let [project-lines-ids (atom [])]
-                            
-                            
-                            
                             (comp/set-state! this {:updated true})
                             (m/toggle! this :ui/loading)
                             (df/load! this :projects Project
@@ -1097,14 +1100,17 @@
                     (ui-table-header {:fullWidth true}
                                      (ui-table-row  {}
 
-                                                    (map #(ui-table-header-cell {} %)  [ "Project" "Assignement "])
+                                                    (map #(ui-table-header-cell {} %)  ["Project" "Assignement "])
 
                                                     (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
                                                     ))
                     (tbody (map ui-project-line project-lines)))
           ))
        
-       ))))
+       )
+      (ui-segment {:style {:textAlign "center"}}
+                  (div  "Please login with Fluxym account")))
+    ))
 
 
 
