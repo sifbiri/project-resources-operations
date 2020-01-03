@@ -10,5 +10,9 @@ is a ref to a task/name for example...
 ** [x] add icon to projects view
 ** make deployement script
 ** delete other projects ....
+** [x] move from cljs-time to tick
+** use react-input-factory
 ** add tooltip for calendar view
 ** [x] add loading table marker
+** start and end date
+** in ui use label with ribbon flag for project names column

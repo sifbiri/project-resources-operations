@@ -1,4 +1,15 @@
 {:deps   {:aliases [:dev]}
+ :source-paths ["src"]
+
+ :dependencies
+
+ [[tick "0.4.17-alpha"]
+                                        ; you need to add this extra dependency! 
+  [thheller/shadow-cljsjs "0.0.16"]]
+
+
+
+ 
  :nrepl  {:port 9000}
  :builds {:main       {:target     :browser
                        :output-dir "resources/public/js/main"
