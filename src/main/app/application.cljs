@@ -3,7 +3,7 @@
             [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.data-fetch :as df]
             [com.fulcrologic.fulcro.components :as comp]
-           [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
+           [com.fulcrologic.fulcro.rendering.keyframe-render :as kr]
             [app.model.work-line :as work-line]))
                                         ;[app.ui.root :as root]))
 
