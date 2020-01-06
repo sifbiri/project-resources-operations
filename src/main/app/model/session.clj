@@ -1,11 +1,12 @@
 (ns app.model.session
   (:require
     [app.model.database :as db]
-    [datascript.core :as d]
+    
     [ghostwheel.core :refer [>defn => | ?]]
     [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
     [taoensso.timbre :as log]
     [clojure.spec.alpha :as s]
+    [datomic.api :as d]
     [com.fulcrologic.fulcro.server.api-middleware :as fmw]
     [clj-http.client :as client]))
 
@@ -51,46 +52,37 @@
         (let [new-session (merge existing-session mutation-response)]
           (assoc resp :session new-session))))))
 
-(defmutation login [env {:keys [username password]}]
-  {::pc/output [:session/valid? :account/name]}
-  (log/info "Authenticating" username)
-  (let [{expected-email    :email
-         expected-password :password} (get @account-database username)]
-    (if (and (= username expected-email) (= password expected-password))
-      (response-updating-session env
-                                 {:session/valid? true
-                                  :account/name   username})
-      (do
-        (log/error "Invalid credentials supplied for" username)
-        (throw (ex-info "Invalid credentials" {:username username}))))))
 
 
 
 
-(defmutation login [env {:keys [username password]}]
+
+(defmutation login [{:keys [db connection] :as env} {:keys [username password]}]
   {::pc/output [:session/valid? :account/name]}
   (log/info "Authenticating" username)
   (let [response (client/post "https://login.microsoftonline.com/extSTS.srf"
                               {:body (make-load username password)
                                :body-encoding "UTF-8"})]
     (if (valid-response? response)
-      (response-updating-session env
-                                 {:session/valid? true
-                                  :account/name   username})
+      (let [resource-id (d/q
+                         '[:find ?rid .
+                           :in $ ?email
+                          :where
+                          [?e :resource/email-address ?email]
+                           [?e :resource/id ?rid]] db username)]
+        
+        (response-updating-session env
+                                  {:session/valid? true
+                                   :account/name   username
+                                   :account/resource resource-id}))
       (do
         (log/error "Invalid credentials supplied for" username)
         (throw (ex-info "Invalid credentials" {:username username}))))))
 
 
-
-
-
-
-
-
 (defmutation logout [env params]
   {::pc/output [:session/valid?]}
-  (response-updating-session env {:session/valid? false :account/name ""}))
+  (response-updating-session env {:session/valid? false :account/name "" :account/resource nil}))
 
 (defmutation signup! [env {:keys [email password]}]
   {::pc/output [:signup/result]}

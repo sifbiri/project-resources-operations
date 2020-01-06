@@ -7,6 +7,7 @@
     [com.fulcrologic.fulcro.components :as comp]
     [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
     [com.fulcrologic.fulcro.algorithms.form-state :as fs]
+    ;[app.ui.root :refer [set-resource-lines]]
     [clojure.string :as str]))
 
 (defn clear [env]
@@ -31,8 +32,14 @@
     (uism/activate :state/checking-session)))
 
 (defn process-session-result [env error-message]
-  (let [success? (uism/alias-value env :session-valid?)]
+  (let [success?
+        (uism/alias-value env :session-valid?)
+
+        resource-id (uism/alias-value env :resource-id)
+        ]
+    
     (when success?
+      ;(comp/transact! SPA `[(app.ui.root/set-resource-lines ~{:ids [#uuid "d771d4d9-34de-e911-b085-00155de0a811"]})])
       (dr/change-route SPA ["workplan"]))
     (cond-> (clear env)
       success? (->
@@ -54,6 +61,7 @@
     :error          [:actor/login-form :ui/error]
     :modal-open?    [:actor/login-form :ui/open?]
     :session-valid? [:actor/current-session :session/valid?]
+    :resource-id    [:actor/current-session :account/resource]
     :current-user   [:actor/current-session :account/name]}
 
    ::uism/states

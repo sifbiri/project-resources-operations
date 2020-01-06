@@ -19,5 +19,6 @@
             (js/console.log "RESOURCES " resources-reduced)
             (swap! state assoc :resource/options (into []
                                                        (map #(set/rename-keys % {:resource/id   :value
+                                                                                 :resource/email-address :key
                                                                                  :resource/name :text}))
                                                        resources-reduced)))))

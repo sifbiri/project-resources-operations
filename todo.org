@@ -18,3 +18,10 @@ is a ref to a task/name for example...
 ** in ui use label with ribbon flag for project names column
 
 ** link: http://ec2-3-14-70-230.us-east-2.compute.amazonaws.com:3000/
+
+* Feautres2
+** move to 3.1.2 and try using input buffered types
+** show total per resource
+
+* Export to excel
+** https://github.com/SheetJS/sheetjs
