@@ -831,7 +831,7 @@
                                      :post-mutation-params {:projects (:resource-line/projects (comp/props this)) :resource-id (:resource-line/id (comp/props this))}
                                      
                                      })))}
-  (js/console.log "PROJECT LINE" project-lines)
+  
   (let [start (:start dates)
         end (:end dates)]
 
@@ -885,7 +885,7 @@
                project-lines-ids (atom [])]
 
 
-            (js/console.log "YYY" projects-s)
+            
             (doseq [c-project projects-resolved]
               
               
@@ -1136,7 +1136,7 @@
           :search true
           
           :onChange (fn [evt data]
-                      (js/console.log "DB1" (.-value data))
+                      
                  ;     (comp/set-state! this {:value (.-value data)})
                       (comp/transact! this [(set-resource-lines {:ids (.-value data)}) :workplan/resource-lines] )
                       )
