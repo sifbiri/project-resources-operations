@@ -14,6 +14,7 @@
    ["react-world-flags" :as Flag]
    ["react-flag-kit" :as FlagIcon ]
 
+   
 
    [app.model.project :as project]
    [app.model.resource :as resource]
@@ -50,6 +51,18 @@
    [com.fulcrologic.fulcro.application :as app]
    [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]
    [com.fulcrologic.semantic-ui.elements.segment.ui-segment :refer [ui-segment]]
+
+
+
+   ;; semantic comoponents 
+   [com.fulcrologic.semantic-ui.modules.accordion.ui-accordion :refer [ui-accordion]]
+   [com.fulcrologic.semantic-ui.modules.accordion.ui-accordion-title :refer [ui-accordion-title]]
+   [com.fulcrologic.semantic-ui.modules.accordion.ui-accordion-content :refer [ui-accordion-content]]
+   [com.fulcrologic.semantic-ui.collections.menu.ui-menu :refer [ui-menu]]
+   [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
+   [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
+   [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
+   
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [cljs-time.core :as tt]
@@ -1005,8 +1018,6 @@
             (swap! state assoc-in [:resource-line/id resource-line-id :resource-line/totals] totals))))
 
 
-
-
 (defmutation set-projects-lines [{:keys [projects resource-id]}]
   (action [{:keys [state] :as env}]
 
@@ -1351,7 +1362,13 @@
                    :style {:marginRight "15px" :border "2px solid LightGray" :borderRadius "5px"}})
         )
       
-
+       #_(ui-accordion
+        {:as ui-menu :vertical true}
+        (ui-menu-item {} (ui-accordion-title
+                          {:active true
+                           :content "Size"
+                           :index 0
+                           :onClick #(js/console.log "accordion" %1 %2)})))
        
        (ui-table {:celled true}
                  (ui-table-header {:fullWidth true}

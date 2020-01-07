@@ -29,8 +29,11 @@
 
 (def db-url "datomic:dev://localhost:4334/one2")
 
-(d/create-database db-url)
-;; (d/delete-database db-url)
+
+
+
+(d/create-database "datomic:dev://localhost:4334/one2")
+(d/delete-database db-url)
 
 (def conn2 (d/connect db-url))
 
@@ -292,6 +295,8 @@
     
     result7)
   )
+
+
 (def all-projects (get-all-projects))
 (def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
 

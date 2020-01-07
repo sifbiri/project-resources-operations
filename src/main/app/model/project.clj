@@ -75,17 +75,5 @@
 (def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver])
 
 
-(d/q
- '[:find ?a ?tn ?bd  ?w
-   :keys assignment/id assignment/name assignment/day assignment/work
-   :where
-   [?p :project/name "simple"]
-   [?a :assignment/resource ?r]
-   [?r :resource/name "Sifou Biri"]
-   [?a :assignment/by-day ?bd]
-   [?a :assignment/task ?t]
-   [?a :assignment/work ?w]
-   [?t :task/name ?tn]
-   [?p :project/assignments ?a]
-   ] (d/db conn2))
+
 
