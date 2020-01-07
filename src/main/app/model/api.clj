@@ -27,21 +27,19 @@
                    :project/created-date
                    ])
 
-(def db-url "datomic:dev://localhost:4334/one2")
+;(def db-url "datomic:dev://localhost:4334/one2")
 
+                                        ;(d/create-database "datomic:dev://localhost:4334/one2")
+;(d/delete-database db-url)
 
-
-
-(d/create-database "datomic:dev://localhost:4334/one2")
-(d/delete-database db-url)
-
-(def conn2 (d/connect db-url))
+;(def conn2 (d/connect db-url))
 
 ;; DB stuff
 
                                         ;(def db-uri-base "datomic:mem://")
 
 (def resource io/resource)
+
 
 ;; (defn scratch-conn
 ;;   "Create a connection to an anonymous, in-memory database."
@@ -71,7 +69,7 @@
              more)
       {:datoms n})))
 
-(io/resource "edn/schema.edn")
+
 
 
 
@@ -246,7 +244,7 @@
 (def selected-project-names #{"Louboutin US" "simple" "Desjardins - Appro360"})
 
 
-(def simple-project-id #uuid "df2ebab7-0816-ea11-a08e-005056eb471c")
+
 
 (defn get-all-projects
   []
@@ -358,10 +356,10 @@
      (keyword (clojure.string/replace-first (name x) #"-" "/")) )
    (get-project2 name)))
 
-(def all-projects (get-all-projects))
 
 
-(def simple-project (filter #(= (:project/name %) "simple")(get-all-projects)))
+
+;(def simple-project (filter #(= (:project/name %) "simple")(get-all-projects)))
 
 
 
@@ -416,24 +414,15 @@
 
 #_(def my-project-data
     (let [project (first (project-by-name "simple"))
-          assignments (assignements-for-project "simple")
-          ]
+          assignments (assignements-for-project "simple")]
       (assoc project :project/assignments assignments )))
 
 
 
-#_(d/q '[:find ?e
-         :where
-         [?e :project/id #uuid "df2ebab7-0816-ea11-a08e-005056eb471c"]
-         [?e :task/name "model domain"]
-         [?e :project/assignments ?a ]]
-       db)
-
-
 ;; To repeat
 
-#_(def conn (scratch-conn))
-#_(transact-all  conn2 "resources/edn/schema.edn")
+;(def conn (scratch-conn))
+;(transact-all  conn2 "resources/edn/schema.edn")
 
 
 
@@ -483,13 +472,4 @@
   (->> (seq m)
        (reduce (fn [r [{:keys [:user-id :a]} :as k] v] (update r a conj {k v}))) {}))
 
-(def r (take 5 (d/q '[:find ?a ?pn ?name ?bd
-               :keys :db/id project task day
-               :where
-               [?a :assignment/task ?t]
-               [?t :task/name ?name]
-               [?a :assignment/by-day ?bd]
-               [?p :project/name ?pn]
-               [?a :assignment/resource ?resource]
-               [?resource :resource/email-address "nneishaboory@fluxym.com"]
-               ] (d/db conn2))))
+
