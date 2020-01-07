@@ -697,7 +697,7 @@
             month (apply str (take 3 (str (t/month s))))
             year (t/year s)]
         (recur (t/+ s (t/new-period 1 :days))
-               (conj r (str (str/capitalize day-of-week) ", " (str (str/capitalize month) ", " day-of-month) " " year)))))))
+               (conj r (str (str/capitalize day-of-week) ". " (str (str/capitalize month) ". " day-of-month) " " year)))))))
 
 
 
@@ -763,6 +763,7 @@
     (when (> total 0 )
       (comp/fragment
 
+       
        (tr
         {:style {}
          :onClick (fn []
@@ -800,19 +801,17 @@
 (def ui-project-line (comp/factory ProjectLine {:keyfn :project-line/id}))
 
 
-(defmutation set-total [{:keys [resource project  id]}]
-  (action [{:keys [state] :as env}]
-
-          (js/console.log "STATEIS2" @state)
-          ))
 
 
-(defsc ResourceLine [this {:resource-line/keys [resource project-lines]
+
+(defsc ResourceLine [this {:resource-line/keys [resource project-lines totals]
                            :keys [ui/selected ui/dates]
                            :as props}]
   {:query
    [:ui/selected
-    {:resource-line/resource (comp/get-query Resource)}
+    {:resource-line/resource (comp/get-query Resource)
+     }
+    :resource-line/totals
     [:ui/dates '_]
     :resource-line/id
     {:resource-line/projects (comp/get-query Project)}
@@ -820,714 +819,780 @@
     ]
    :initLocalState (fn [this props] {:count 0})
    :ident :resource-line/id
-   :componentDidUpdate (fn [this next-props next-state]
-                         (let [state (comp/component->state-map this)
-                               id (:resource-line/id
-                                   (comp/props this))
-                               project-lines (get-in
-                                              state
-                                              [:resource-line/id id :resource-line/project-lines])
 
-                               project-lines-r
-                               (map (fn [ident]
-                                      (get-in state ident))
-                                    project-lines)
+   
+   #_#_:getDerivedStateFromProps
+   (fn [props state]
+     (when (= (:count state) 0)
+       (js/console.log "PROPS" props)
+       ())
+     (let [ 
+           id (:resource-line/id
+               props)
+           project-lines-r
 
-                               ;; TODO resolve projects 
-                               start (:start (:dates (comp/props this)))
-                               end (:end (:dates (comp/props this)))]
-                           
-                           (when (= (:count next-state) 0)
+           (:resource-line/project-lines props)
+           
 
-                             (let [transform-project-line
+           ;; TODO resolve projects 
+           start (:start (:ui/dates props))
+           end (:end (:ui/dates props))
+           
+           transform-project-line
 
-                                   (fn [pl]
-                                     (let [r-step
-                                           (map
-                                            (fn [[k vals]]
-                                              (reduce (fn [r x] (let [day (:assignment/day x)
-                                                                      work (:assignment/work x)
-                                                                      m {day work :assignment/name k}]
-                                                                  (conj r m)
-                                                                  
-                                                                  )) [] vals))
-                                            (group-by :assignment/name (:project-line/assignments pl)))]
+           (fn [pl]
+             (let [asses (:project-line/assignments pl)
+                   asses-resolved]
+               (js/console.log "ASA" asses)
+               (map
+                (fn [r]
+                  
+                  (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
+                                                                  (generate-row-dates start end))))
+                
+                (map
+                 (fn [[k vals]]
+                   (reduce (fn [r x] (let [day (:assignment/day x)
+                                           work (:assignment/work x)
+                                           m {day work :assignment/name k}]
+                                       (conj r m)
+                                       
+                                       )) [] vals))
+                 (group-by :assignment/name
+                           (map (fn [ident] (get-in state ident))
+                                )))
 
-
-                                       (js/console.log "STEP" r-step)
-                                       (map
-                                        (fn [r]
-                                          (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
-                                                                                          (generate-row-dates start end))))
-                                        r-step
-                                        
-
-
-                                        )))
-                                   
-                                   totals
-                                   (map transform-project-line  project-lines-r)]
-
-                               
-                               
-                               
-                               
+                )
 
 
-                               (comp/update-state! this assoc :count (+ (:count state) 1) )
-                               (js/console.log "TOTALS"  project-lines-r)
-                               (js/console.log "STATE!"  state)))))
+               )
+             )
+           
+           ]
+       (js/console.log "TOTALSIII" project-lines-r))
+     nil
+     )
 
 
-
-                             
-                             
-
-                             :componentDidMount (fn [this]
-                                                  (let
-                                                      [start (:start (:dates (comp/props this)))
-
-                                                       end (:end (:dates (comp/props this)))
-                                                       resource-line-id (:resource-line/id (comp/props this))
-                                                       {:resource-line/keys [resource projects]}
-                                                       (:resource-line/resource (comp/props this))
-
-                                                       ]
-
-                                                    (df/load! this :projects Project
-                                                              {:marker :projects
-                                                               :params               {:resource/id resource-line-id}
-
-                                                               :target [:resource-line/id  resource-line-id :resource-line/projects]
-                                        ;:post-mutation        `project/populate-projects
-                                                               :post-mutation `set-projects-lines
-                                                               ;; we get the resource from workplan
-                                                               :post-mutation-params {:projects (:resource-line/projects (comp/props this)) :resource-id (:resource-line/id (comp/props this))}
-
-                                                               })
-
-
-
-
-                                                    (let [project-lines (get-in  [:resource-line/id  resource-line-id]
-
-                                                                                 (comp/component->state-map this))]
-
-
-                                                      (js/console.log "PROJECT-LINES" (:resource-line/id (comp/component->state-map this))))
-
-
-
-
-                                                    )
-                                                  )
-                             
-
-
-                             }
-
-                           ;; TODO extract common functions to top
-
-
-
-
-                           (comp/fragment
-                            (tr
-                             {:style {}
-                              :onClick (fn []
-                                         (m/toggle! this :ui/selected)
-                                         )}
-
-                             (td (str (:resource/name resource) " ")
-                                 (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
-
-
+   
+   #_#_:componentDidUpdate (fn [this next-props next-state]
                              )
 
-                            (when selected
-                              (map ui-project-line project-lines))))
-                         (def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id}))
 
 
-                         (defmutation set-project-line [{:keys [resource project  id]}]
-                           (action [{:keys [state] :as env}]
+   
+   
 
+   :componentDidMount (fn [this]
+                        (let
+                            [start (:start (:dates (comp/props this)))
 
-                                   (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
-                                   (swap! state assoc-in [:project-line/id id :project-line/project] project)
-                                   (swap! state assoc-in [:project-line/id id :project-line/id] id)
+                             end (:end (:dates (comp/props this)))
+                             resource-line-id (:resource-line/id (comp/props this))
+                             {:resource-line/keys [resource projects]}
+                             (:resource-line/resource (comp/props this))
 
-                                   (swap! state (df/load   :assignments Assignment
-                                                           {:params               {:resource/id (:resource/id resource)
-                                                                                   :project/id (:project/id project)}
-                                                            :target [:project-line/id id :project-line/assignments]
+                             ]
 
-                                                            })) ))
+                          (df/load! this :projects Project
+                                    {:marker :projects
+                                     :params               {:resource/id resource-line-id}
 
+                                     :target [:resource-line/id  resource-line-id :resource-line/projects]
+                                        ;:post-mutation        `project/populate-projects
+                                     :post-mutation `set-projects-lines
+                                     ;; we get the resource from workplan
+                                     :post-mutation-params {:projects (:resource-line/projects (comp/props this)) :resource-id (:resource-line/id (comp/props this))}
 
-
-
-
-
-                         (defmutation set-projects-lines [{:keys [projects resource-id]}]
-                           (action [{:keys [state] :as env}]
-
-                                   (let
-                                       [projects-s (get-in @state [:resource-line/id resource-id  :resource-line/projects])
-                                        resource-s (get-in @state [:resource-line/id resource-id  :resource-line/resource])
-
-                                        projects-resolved (map (fn [[_ project-id]]
-                                                                 (get-in @state [:project/id project-id]))
-                                                               projects-s)
-                                        resource-resolved (get-in @state [:resource/id resource-id])
-                                        project-lines-ids (atom [])]
+                                     })
 
 
 
-                                     (doseq [c-project projects-resolved]
+
+                          (let [project-lines (get-in  [:resource-line/id  resource-line-id]
+
+                                                       (comp/component->state-map this))]
+
+
+                            (js/console.log "PROJECT-LINES" (:resource-line/id (comp/component->state-map this))))
 
 
 
-                                       (let [project-line-id (random-uuid)
+
+                          )
+                        )
+   
+
+
+   }
+
+  ;; TODO extract common functions to top
+
+
+
+
+  (comp/fragment
+   (tr
+    {:style {}
+     :onClick (fn []
+                (m/toggle! this :ui/selected)
+                )}
+
+    (td (str (:resource/name resource) " ")
+        (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
+
+    (td "") (td "") (when totals (map #(td (goog.string.format "%.2f" %)) totals))
+
+
+    )
+
+   (when selected
+     (map ui-project-line project-lines))))
+(def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id}))
+
+
+(defmutation set-project-line [{:keys [resource project  id]}]
+  (action [{:keys [state] :as env}]
+
+
+          (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
+          (swap! state assoc-in [:project-line/id id :project-line/project] project)
+          (swap! state assoc-in [:project-line/id id :project-line/id] id)
+
+          (swap! state (df/load   :assignments Assignment
+                                  {:params               {:resource/id (:resource/id resource)
+                                                          :project/id (:project/id project)}
+                                   :target [:project-line/id id :project-line/assignments]
+                                   
+                                   })) ))
+
+(defmutation set-totals [{:keys [resource-line-id] :as params}]
+  (action [{:keys [state] :as env}]
+
+          (let [project-lines (get-in @state [:resource-line/id resource-line-id :resource-line/project-lines])
+                  project-lines-r (map (fn [ident] (get-in @state ident)) project-lines)
+                  start (get-in @state [:ui/dates :start])
+                  end (get-in @state [:ui/dates :end])
+                ;; TODO abstract duplication see project line
+                  transform-pl 
+                  (fn [pl start end]
+
+
+                    (let [asses (map (fn [ident] (get-in @state ident))
+                                     (:project-line/assignments pl))]
+                      (map
+                       (fn [r]
+                         (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
+                                                                         (generate-row-dates start end))))
+                       
+                       (map
+                        (fn [[k vals]]
+                          (reduce (fn [r x] (let [day (:assignment/day x)
+                                                  work (:assignment/work x)
+                                                  m {day work :assignment/name k}]
+                                              (conj r m)
+
+                                              )) [] vals)) (group-by :assignment/name asses))))
+                    )
+
+                totals
+                (apply map +
+                       (map (fn [line]
+                              (map #(first (vals %)) line))
+                            (mapcat #(transform-pl % start end) project-lines-r)))]
+
+
+            (swap! state assoc-in [:resource-line/id resource-line-id :resource-line/totals] totals))))
+
+
+
+
+(defmutation set-projects-lines [{:keys [projects resource-id]}]
+  (action [{:keys [state] :as env}]
+
+          (let
+              [projects-s (get-in @state [:resource-line/id resource-id  :resource-line/projects])
+               resource-s (get-in @state [:resource-line/id resource-id  :resource-line/resource])
+
+               projects-resolved (map (fn [[_ project-id]]
+                                        (get-in @state [:project/id project-id]))
+                                      projects-s)
+               resource-resolved (get-in @state [:resource/id resource-id])
+               project-lines-ids (atom [])]
+
+
+
+            (doseq [c-project (butlast projects-resolved)]
+
+
+
+              (let [project-line-id (random-uuid)
                                         ;state-map (comp/component->state-map this)
-                                             ]
+                    ]
 
                                         ;(swap! state project-lines-ids conj [:project-line/id project-line-id])
 
 
 
 
-                                         #_(df/load! SPA :assignments Assignment
-                                                     {:params               {:resource/id (:resource/id resource-resolved)
-                                                                             :project/id (:project/id c-project)}
-                                                      :target (:project-line/id project-line-id :project-line/assignments)})
+                #_(df/load! SPA :assignments Assignment
+                            {:params               {:resource/id (:resource/id resource-resolved)
+                                                    :project/id (:project/id c-project)}
+                             :target (:project-line/id project-line-id :project-line/assignments)})
 
 
-                                         (swap! state merge/merge-component  ProjectLine
-                                                {:project-line/resource resource-resolved
-                                                 :project-line/project c-project
-                                                 :project-line/id project-line-id
+                (swap! state (fn[state]
 
-                                                 })
+                               (-> state
 
-                                         (df/load! SPA :assignments Assignment
-                                                   {:params               {:resource/id (:resource/id resource-resolved)
-                                                                           :project/id (:project/id c-project)}
-                                                    :target [:project-line/id project-line-id :project-line/assignments]})
+                                   (merge/merge-component ProjectLine {:project-line/resource resource-resolved
+                                                                       :project-line/project c-project
+                                                                       :project-line/id project-line-id
 
-                                         (swap! project-lines-ids conj project-line-id)
+                                                                       })
+
+                                   
 
 
-
-                                         #_(comp/transact! this  `[(set-project-line {:resource resource
-                                                                                      :project c-project
-                                                                                      :id project-line-id}   )]
-
-                                                           )
+                                   )
 
 
+                               )
+
+                       )
 
 
-                                         #_(df/load this  :assignments Assignment
-                                                    {:params               {:resource/id (:resource/id resource)
-                                                                            :project/id (:project/id c-project)}
-                                                     :target [:project-line/id project-line-id :project-line/assignments]
-
-                                                     })
-
-                                         ))
+                
+                (df/load! SPA :assignments Assignment
+                          {:params               {:resource/id (:resource/id resource-resolved)
+                                                  :project/id (:project/id c-project)}
+                           :target [:project-line/id project-line-id :project-line/assignments]
+                           #_:post-mutation})
 
 
+                
+                (swap! project-lines-ids conj project-line-id)
 
-                                     ;; TODO move loading to the level of resource line
-                                     (swap! state assoc-in [:resource-line/id  resource-id  :resource-line/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
-                                     (swap! state update-in [:component/id :workplan :ui/loading] not)
-
-                                     ))
-
-                           (ok-action [{:keys [state]}]
-                                      (js/console.log "OK_ACTION" @state)
-                                      ))
+                
+                )
+              
+              )
 
 
+            (let [project-line-id (random-uuid)]
+              (swap! state (fn[state]
 
-
-
-                         (defmutation set-project-lines-for-resources [{:keys [project-lines-ids]}]
-                           (action [{:keys [state] :as env}]
-
-
-                                   (swap! state (fn [s]
-
-                                                  (-> s
-
-                                                      (assoc-in [:component/id :resources :resources/project-lines] project-lines-ids)
-                                                      )
-
-                                                  ))
-                                   ))
-
-
-
-                         #_(defn set-project-line [{:keys [resource project ident id state]}]
                              (-> state
-                                 (assoc-in [:project-line/id id :project-line/resource]  resource)
-                                 (assoc-in [:project-line/id id :project-line/project]  project)
-                                 (assoc-in [:project-line/id id :project-line/id]  id)
-                                 (update-in [:component/id :resources :resources/project-lines] conj [:project-line/id id])
-                                 (df/load :assignments Assignment
-                                          {:params               {:resource/id (:resource/id resource)
-                                                                  :project/id (:project/id project)}
-                                           :target [:project-line/id id :project-line/assignments]
 
-                                           })
-                                 ))
+                                 (merge/merge-component ProjectLine {:project-line/resource resource-resolved
+                                                                     :project-line/project (last projects-resolved)
+                                                                     :project-line/id project-line-id
 
+                                                                     })
+                                 )
 
-                         (defmutation set-project-line-assignments [{:keys [id ident]}]
-                           (action [{:keys [state] :as env}]
-
-
-                                   (swap! state (fn [s]
-                                                  (-> s
-                                                      (assoc-in (conj ident :project-line/assignments) (:assignments s)))))
-                                   state))
+                             )
+                     )
+              (df/load! SPA :assignments Assignment
+                        {:params               {:resource/id (:resource/id resource-resolved)
+                                                :project/id (:project/id (last projects-resolved))}
+                         :target [:project-line/id project-line-id :project-line/assignments]
+                         :post-mutation `set-totals
+                         :post-mutation-params {:resource-line-id (:resource/id resource-resolved)}
+                         #_:post-mutation})
+              (swap! project-lines-ids conj project-line-id))
 
 
-                         (def asses (atom []))
-
+            
+            (swap! state assoc-in [:resource-line/id  resource-id  :resource-line/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
+            (swap! state update-in [:component/id :workplan :ui/loading] not))
 
 
 
+          ;; TODO move loading to the level of resource line
+            
+
+            
+            ))
+
+  
+
+
+
+(defmutation set-project-lines-for-resources [{:keys [project-lines-ids]}]
+  (action [{:keys [state] :as env}]
+
+
+          (swap! state (fn [s]
+
+                         (-> s
+
+                             (assoc-in [:component/id :resources :resources/project-lines] project-lines-ids)
+                             )
+
+                         ))
+          ))
+
+
+
+#_(defn set-project-line [{:keys [resource project ident id state]}]
+    (-> state
+        (assoc-in [:project-line/id id :project-line/resource]  resource)
+        (assoc-in [:project-line/id id :project-line/project]  project)
+        (assoc-in [:project-line/id id :project-line/id]  id)
+        (update-in [:component/id :resources :resources/project-lines] conj [:project-line/id id])
+        (df/load :assignments Assignment
+                 {:params               {:resource/id (:resource/id resource)
+                                         :project/id (:project/id project)}
+                  :target [:project-line/id id :project-line/assignments]
+
+                  })
+        ))
+
+
+(defmutation set-project-line-assignments [{:keys [id ident]}]
+  (action [{:keys [state] :as env}]
+
+
+          (swap! state (fn [s]
+                         (-> s
+                             (assoc-in (conj ident :project-line/assignments) (:assignments s)))))
+          state))
+
+
+(def asses (atom []))
 
 
 
 
 
-                         #_(defsc ProjectLine [this [{:project-line/keys [project resource] :as props}]]
-                             {:query [:project-line/project :project-line/resource]}
-                             (tr (td "Hi")))
 
-                         (defmutation set-resource [{:keys [resource]}]
-                           (action [{:keys [state] :as env}]
 
-                                   (swap! state assoc-in [:component/id :projects-table :projects-table/resource]
-                                          [:resource/id (:resource/id resource)])))
 
-                         (defsc ProjectsTable [this {:projects-table/keys [resource projects project-lines] :as props}]
-                           {:query [:projects-table/projects :projects-table/resource :projects-table/project-lines]
-                            :ident (fn [] [:component/id :projects-table])
+
+#_(defsc ProjectLine [this [{:project-line/keys [project resource] :as props}]]
+    {:query [:project-line/project :project-line/resource]}
+    (tr (td "Hi")))
+
+(defmutation set-resource [{:keys [resource]}]
+  (action [{:keys [state] :as env}]
+
+          (swap! state assoc-in [:component/id :projects-table :projects-table/resource]
+                 [:resource/id (:resource/id resource)])))
+
+(defsc ProjectsTable [this {:projects-table/keys [resource projects project-lines] :as props}]
+  {:query [:projects-table/projects :projects-table/resource :projects-table/project-lines]
+   :ident (fn [] [:component/id :projects-table])
                                         ;:componentDidMount (fn [this]
                                         ; )
-                            }
+   }
 
 
-                           (div {:style {:overflow-x "scroll" :width "1200px" :height "1000px" :overflowY "auto" }}
+  (div {:style {:overflow-x "scroll" :width "1200px" :height "1000px" :overflowY "auto" }}
 
 
 
-                                ))
+       ))
 
 
-                         (def ui-projects-table (comp/factory ProjectsTable))
+(def ui-projects-table (comp/factory ProjectsTable))
 
 
-                         (defmutation set-projects [{:keys [projects resource]}]
-                           (action [{:keys [state]}]
-                                   (swap! state merge/merge-component ProjectsTable {:projects-table/projects projects :project-table/resource resource})))
+(defmutation set-projects [{:keys [projects resource]}]
+  (action [{:keys [state]}]
+          (swap! state merge/merge-component ProjectsTable {:projects-table/projects projects :project-table/resource resource})))
 
-                         (defmutation set-workplan-date
-                           [{:keys [start end]}]
-                           (action [{:keys [state]}]
+(defmutation set-workplan-date
+  [{:keys [start end]}]
+  (action [{:keys [state]}]
 
-                                   (when start
-                                     (swap! state assoc-in [:ui/dates :start] start))
-                                   (when end
-                                     (swap! state assoc-in [:ui/dates :end] end))
-                                   ))
+          (when start
+            (swap! state assoc-in [:ui/dates :start] start))
+          (when end
+            (swap! state assoc-in [:ui/dates :end] end))
+          ))
 
 
-                         (defmutation set-resource-lines
-                           [{:keys [ids]}]
-                           (action [{:keys [state]}]
+(defmutation set-resource-lines
+  [{:keys [ids]}]
+  (action [{:keys [state]}]
 
-                                   (doseq [id ids]
-                                     (swap! state merge/merge-component ResourceLine
-                                            {:resource-line/resource [:resource/id id]
-                                             :resource-line/id id}
-                                            ))
-                                   (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
-                                                          ] (mapv (fn [id] [:resource-line/id id]) ids)))
+          (doseq [id ids]
+            (swap! state merge/merge-component ResourceLine
+                   {:resource-line/resource [:resource/id id]
+                    :resource-line/id id}
+                   ))
+          (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
+                                 ] (mapv (fn [id] [:resource-line/id id]) ids)))
 
-                           )
+  )
 
-                         (defsc WorkPlan [this {:workplan/keys [resource-lines]
-                                                :keys [ui/dates ui/loading]:as props}]
-                           {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
+(defsc WorkPlan [this {:workplan/keys [resource-lines]
+                       :keys [ui/dates ui/loading]:as props}]
+  {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
 
-                                            :ui/loading
+                   :ui/loading
                                         ;{:workplan/projects (comp/get-query Project)}
                                         ;{:workplan/project-lines (comp/get-query ProjectLine)}
-                                            [::uism/asm-id ::session/session]
+                   [::uism/asm-id ::session/session]
 
                                         ;{:workplan/selected (comp/get-query SelectedProject)}
 
-                                            [:resource/options '_]
-                                            [:ui/dates '_]
-                                            [df/marker-table :projects]]
-                            :ident         (fn [] [:component/id :workplan])
-                            :route-segment ["workplan"]
+                   [:resource/options '_]
+                   [:ui/dates '_]
+                   [df/marker-table :projects]]
+   :ident         (fn [] [:component/id :workplan])
+   :route-segment ["workplan"]
                                         ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
-                            :will-enter (fn [app route-params]
-                                          (dr/route-deferred
-                                           [:component/id :workplan]
-                                           (fn []
-                                             (df/load! app :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
-                                             (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
+   :will-enter (fn [app route-params]
+                 (dr/route-deferred
+                  [:component/id :workplan]
+                  (fn []
+                    (df/load! app :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
+                    (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
 
 
-                            :initial-state (fn [params]
-                                             {
+   :initial-state (fn [params]
+                    {
 
-                                              :ui/loading false
+                     :ui/loading false
 
-                                              ;; :workplan/resource-lines
+                     ;; :workplan/resource-lines
 
-                                              ;; [
-                                              ;;  {
-                                              ;;   :resource-line/id #uuid "d771d4d9-34de-e911-b085-00155de0a811"                                               :resource-line/resource
-                                              ;;   {:resource/id
-                                              ;;    #uuid "d771d4d9-34de-e911-b085-00155de0a811"}}]
+                     ;; [
+                     ;;  {
+                     ;;   :resource-line/id #uuid "d771d4d9-34de-e911-b085-00155de0a811"                                               :resource-line/resource
+                     ;;   {:resource/id
+                     ;;    #uuid "d771d4d9-34de-e911-b085-00155de0a811"}}]
 
                                         ;:resources/start (tf/unparse (tf/formatters :date) (tt/now))
                                         ;:resources/end
-                                              ;; (tf/unparse (tf/formatters :date)
-                                              ;;                             (tt/plus (tt/now) (tt/weeks 3)))
-                                              })
+                     ;; (tf/unparse (tf/formatters :date)
+                     ;;                             (tt/plus (tt/now) (tt/weeks 3)))
+                     })
 
-                            :initLocalState (fn [this props]
-                                              {:value [#uuid "d771d4d9-34de-e911-b085-00155de0a811"]})
-                            :componentDidMount (fn [this]
-                                                 (let [state-map (comp/component->state-map this)
-                                                       resource (get-in state-map [:component/id :session :account/resource])]
+   :initLocalState (fn [this props]
+                     {:value [#uuid "d771d4d9-34de-e911-b085-00155de0a811"]})
+   :componentDidMount (fn [this]
+                        (let [state-map (comp/component->state-map this)
+                              resource (get-in state-map [:component/id :session :account/resource])]
 
-                                                   (comp/transact! this [(set-workplan-date {:start
-                                                                                             (str (t/date))
+                          (comp/transact! this [(set-workplan-date {:start
+                                                                    (str (t/date))
 
-                                                                                             ;; (tf/unparse (tf/formatters :date) (tt/now))
-                                                                                             :end
-                                                                                             (str (t/+ (t/date) (t/new-period 3 :weeks)))
+                                                                    ;; (tf/unparse (tf/formatters :date) (tt/now))
+                                                                    :end
+                                                                    (str (t/+ (t/date) (t/new-period 3 :weeks)))
 
-                                                                                             ;; (tf/unparse (tf/formatters :date)
-                                                                                             ;;                  (tt/plus (tt/now) (tt/weeks 3)))
-                                                                                             })
+                                                                    ;; (tf/unparse (tf/formatters :date)
+                                                                    ;;                  (tt/plus (tt/now) (tt/weeks 3)))
+                                                                    })
 
-                                                                         ]))
-                                                 )
-                            }
-                           (let [resources-options (:resource/options (comp/props this))
-                                 marker (get props [df/marker-table :projects] )
-                                 current-state (uism/get-active-state this ::session/session)
-                                 logged-in? (= :state/logged-in current-state)]
+                                                ]))
+                        )
+   }
+  (let [resources-options (:resource/options (comp/props this))
+        marker (get props [df/marker-table :projects] )
+        current-state (uism/get-active-state this ::session/session)
+        logged-in? (= :state/logged-in current-state)]
 
                                         ;(js/console.log "resources " resources-options)
 
-                             (if (and dates logged-in?)
-                               (div
-                                {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
-                                (div
-                                 (ui-dropdown
-                                  { :button true
+    (if (and dates logged-in?)
+      (div
+       {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
+       (div
+        (ui-dropdown
+         { :button true
 
 
-                                   :labeled true
+          :labeled true
 
-                                   :multiple true
-                                   :selection true
-                                   :label "Resource"
-                                   :style {   :paddingLeft "8px" :paddingBottom "8px" :paddingTop "5px"
-                                           :position "relative" :top "-5px" :left "-8px" :paddingRight "20px" :border-radius "2px"}
+          :multiple true
+          :selection true
+          :label "Resource"
+          :style {   :paddingLeft "8px" :paddingBottom "8px" :paddingTop "5px"
+                  :position "relative" :top "-5px" :left "-8px" :paddingRight "20px" :border-radius "2px"}
 
-                                   :placeholder "Resource"
-                                   :options  resources-options
-                                   :search true
+          :placeholder "Resource"
+          :options  resources-options
+          :search true
 
-                                   :onChange (fn [evt data]
+          :onChange (fn [evt data]
 
                                         ;     (comp/set-state! this {:value (.-value data)})
-                                               (comp/transact! this [(set-resource-lines {:ids (.-value data)}) :workplan/resource-lines] )
-                                               )
+                      (comp/transact! this [(set-resource-lines {:ids (.-value data)}) :workplan/resource-lines] )
+                      )
 
-                                   :value (map #(:resource-line/id %) resource-lines)
-
-
-                                   }
-                                  )
-
-                                 (ui-input {:type "date" :size "mini" :label "Start"  :style {:border "2px solid LightGray" :border-radius "5px" :margin-right "5px"}
-                                            :onChange (fn [event data]
-
-                                                        (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))})])
+          :value (map #(:resource-line/id %) resource-lines)
 
 
-                                                        )
-                                            :value (:start dates)
-                                            :action true})
+          }
+         )
+
+        (ui-input {:type "date" :size "mini" :label "Start"  :style {:border "2px solid LightGray" :border-radius "5px" :margin-right "5px"}
+                   :onChange (fn [event data]
+
+                               (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))})])
 
 
-                                 (ui-input {:type "date" :size "mini" :label "End"
-                                            :value (:end dates)
-                                            :onChange (fn [event data]
-
-                                                        (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))})])
-
-                                                        )
-                                            :style {:marginRight "15px" :border "2px solid LightGray" :borderRadius "5px"}})
-                                 )
+                               )
+                   :value (:start dates)
+                   :action true})
 
 
-                                (if true ;loading
-                                        ;(ui-loader {:active true :inline "centered"})
-                                  (ui-table {:celled true}
-                                            (ui-table-header {:fullWidth true}
-                                                             (ui-table-row  {}
+        (ui-input {:type "date" :size "mini" :label "End"
+                   :value (:end dates)
+                   :onChange (fn [event data]
 
-                                                                            (map #(ui-table-header-cell {} %)  ["Resource" "Project" "Assignement "])
+                               (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))})])
 
-                                                                            (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
-                                                                            ))
-                                            (tbody (map ui-resource-line resource-lines))))
+                               )
+                   :style {:marginRight "15px" :border "2px solid LightGray" :borderRadius "5px"}})
+        )
+      
 
-                                )
-                               (ui-segment {:style {:textAlign "center"}}
-                                           (div  "Please login with Fluxym account")))
-                             ))
+       
+       (ui-table {:celled true}
+                 (ui-table-header {:fullWidth true}
+                                  (ui-table-row  {}
+
+                                                 (map #(ui-table-header-cell {} %)  ["Resource" "Project" "Assignement "])
+
+                                                 (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                                 ))
+                 (tbody (map ui-resource-line resource-lines)))
+
+       )
+      (ui-segment {:style {:textAlign "center"}}
+                  (div  "Please login with Fluxym account")))
+    ))
 
 
 
 
                                         ;(dr/change-route)
 
-                         (dr/defrouter TopRouter [this props]
-                           {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan]})
+(dr/defrouter TopRouter [this props]
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan]})
 
-                         (def ui-top-router (comp/factory TopRouter))
+(def ui-top-router (comp/factory TopRouter))
 
-                         (defsc Session
-                           "Session representation. Used primarily for server queries. On-screen representation happens in Login component."
-                           [this {:keys [:session/valid? :account/name] :as props}]
-                           {:query         [:session/valid? :account/name :account/resource]
-                            :ident         (fn [] [:component/id :session])
-                            :pre-merge     (fn [{:keys [data-tree]}]
-                                             (merge {:session/valid? false :account/name "" :account/resource nil}
-                                                    data-tree))
-                            :initial-state {:session/valid? false :account/name "" :account/resource nil}})
-
-
-
-
-                         (def ui-session (comp/factory Session))
+(defsc Session
+  "Session representation. Used primarily for server queries. On-screen representation happens in Login component."
+  [this {:keys [:session/valid? :account/name] :as props}]
+  {:query         [:session/valid? :account/name :account/resource]
+   :ident         (fn [] [:component/id :session])
+   :pre-merge     (fn [{:keys [data-tree]}]
+                    (merge {:session/valid? false :account/name "" :account/resource nil}
+                           data-tree))
+   :initial-state {:session/valid? false :account/name "" :account/resource nil}})
 
 
 
-                         (defsc TopChrome [this {:root/keys [router current-session login]}]
-                           {:query         [{:root/router (comp/get-query TopRouter)}
-                                            {:root/current-session (comp/get-query Session)}
-                                            [::uism/asm-id ::TopRouter]
-                                            {:root/login (comp/get-query Login)}]
-                            :ident         (fn [] [:component/id :top-chrome])
-                            :initial-state {:root/router          {}
-                                            :root/login           {}
-                                            :root/current-session {}}}
-                           (let [current-tab (some-> (dr/current-route this this) first keyword)]
-                             (div :.ui.container
-                                  (div :.ui.secondary.pointing.menu
-                                       (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
 
-                                       (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
-                                                      :onClick (fn [event]
+(def ui-session (comp/factory Session))
 
 
-                                                                 (dr/change-route this ["workplan"]))} "WorkPlan")
 
-                                       (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                                                      :onClick (fn []
+(defsc TopChrome [this {:root/keys [router current-session login]}]
+  {:query         [{:root/router (comp/get-query TopRouter)}
+                   {:root/current-session (comp/get-query Session)}
+                   [::uism/asm-id ::TopRouter]
+                   {:root/login (comp/get-query Login)}]
+   :ident         (fn [] [:component/id :top-chrome])
+   :initial-state {:root/router          {}
+                   :root/login           {}
+                   :root/current-session {}}}
+  (let [current-tab (some-> (dr/current-route this this) first keyword)]
+    (div :.ui.container
+         (div :.ui.secondary.pointing.menu
+              (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
+
+              (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
+                             :onClick (fn [event]
+
+
+                                        (dr/change-route this ["workplan"]))} "WorkPlan")
+
+              (dom/a :.item {:classes [(when (= :main current-tab) "active")]
+                             :onClick (fn []
                                         ;(m/load! this )
-                                                                 (dr/change-route this ["main"]))} "Calendar")
+                                        (dr/change-route this ["main"]))} "Calendar")
 
-                                       (div :.right.menu
-                                            (ui-login login)
+              (div :.right.menu
+                   (ui-login login)
 
-                                            ))
-                                  (div :.ui.centered
-                                       (ui-top-router router)
-                                       #_(ui-work-day)))))
+                   ))
+         (div :.ui.centered
+              (ui-top-router router)
+              #_(ui-work-day)))))
 
-                         (def ui-top-chrome (comp/factory TopChrome))
+(def ui-top-chrome (comp/factory TopChrome))
 
-                         (def secured-request-middleware
-                           ;; The CSRF token is embedded via server_components/html.clj
-                           (->
-                            (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
-                            (net/wrap-fulcro-request)))
+(def secured-request-middleware
+  ;; The CSRF token is embedded via server_components/html.clj
+  (->
+   (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
+   (net/wrap-fulcro-request)))
 
-                         #_(defsc Root [_ {:root/keys [work-day]}]
-                             {:query         [{:root/work-day (comp/get-query WorkDay)}]
-                              :initial-state {:root/work-day {}}}
+#_(defsc Root [_ {:root/keys [work-day]}]
+    {:query         [{:root/work-day (comp/get-query WorkDay)}]
+     :initial-state {:root/work-day {}}}
 
-                             (div :.ui.container.segment
-                                  (h3 "Inventory Items")
-                                  (ui-work-day work-day)))
+    (div :.ui.container.segment
+         (h3 "Inventory Items")
+         (ui-work-day work-day)))
 
-                         (defsc Root [this {:root/keys [top-chrome]}]
-                           {:query         [{:root/top-chrome (comp/get-query TopChrome)}]
-                            ;; :componentDidMount (fn [this] (df/load! this  :work-day/all-work-lines
-                            ;;                                         WorkLine
-                            ;;                                         {:target [:component/id :work-day :work-day/all-work-lines]
-                            ;;                                          :refresh [:work-day/all-work-lines]})
-                            ;;                                      ;(comp/transact! [()] :work-day/all-work-lines)
-                            ;;                      )
-                            :initial-state {:root/top-chrome {}}}
-
-
-                           (ui-top-chrome top-chrome)
-                           )
-
-                         ;; (defonce SPA (app/fulcro-app
-                         ;;               {;; This ensures your client can talk to a CSRF-protected server.
-                         ;;                ;; See middleware.clj to see how the token is embedded into the HTML
-                         ;;                :remotes {:remote (net/fulcro-http-remote
-                         ;;                                   {:url                "/api"
-                         ;;                                    :request-middleware secured-request-middleware})}
-
-                         ;;                :client-did-mount (let [;WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
-                         ;;                                        project-class (comp/registry-key->class :app.ui.root/Project)]
-
-                         ;;                                    (fn [app]
-                         ;;                                      (df/load app :work-day/all-work-lines
-                         ;;                                               WorkLine
-                         ;;                                               {:target [:component/id :work-day :work-day/all-work-lines]})
-
-                         ;;                                      (df/load app :project/all-projects
-                         ;;                                               project-class
-                         ;;                                               {:post-mutation `work-line/create-project-options})))}))
+(defsc Root [this {:root/keys [top-chrome]}]
+  {:query         [{:root/top-chrome (comp/get-query TopChrome)}]
+   ;; :componentDidMount (fn [this] (df/load! this  :work-day/all-work-lines
+   ;;                                         WorkLine
+   ;;                                         {:target [:component/id :work-day :work-day/all-work-lines]
+   ;;                                          :refresh [:work-day/all-work-lines]})
+   ;;                                      ;(comp/transact! [()] :work-day/all-work-lines)
+   ;;                      )
+   :initial-state {:root/top-chrome {}}}
 
 
+  (ui-top-chrome top-chrome)
+  )
+
+;; (defonce SPA (app/fulcro-app
+;;               {;; This ensures your client can talk to a CSRF-protected server.
+;;                ;; See middleware.clj to see how the token is embedded into the HTML
+;;                :remotes {:remote (net/fulcro-http-remote
+;;                                   {:url                "/api"
+;;                                    :request-middleware secured-request-middleware})}
+
+;;                :client-did-mount (let [;WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
+;;                                        project-class (comp/registry-key->class :app.ui.root/Project)]
+
+;;                                    (fn [app]
+;;                                      (df/load app :work-day/all-work-lines
+;;                                               WorkLine
+;;                                               {:target [:component/id :work-day :work-day/all-work-lines]})
+
+;;                                      (df/load app :project/all-projects
+;;                                               project-class
+;;                                               {:post-mutation `work-line/create-project-options})))}))
 
 
 
 
-                         (def r
-
-                           [#:assignment{:id 17592186055123,
-                                         :name "model domain",
-                                         :day #inst "2019-12-05T00:00:00.000-00:00",
-                                         :work 8.0}
-                            #:assignment{:id 17592186055138,
-                                         :name "model domain",
-                                         :day #inst "2019-12-10T00:00:00.000-00:00",
-                                         :work 8.0}
-                            #:assignment{:id 17592186055135,
-                                         :name "model domain",
-                                         :day #inst "2019-12-09T00:00:00.000-00:00",
-                                         :work 8.0}
-                            #:assignment{:id 17592186055126,
-                                         :name "model domain",
-                                         :day #inst "2019-12-06T00:00:00.000-00:00",
-                                         :work 8.0}
-                            #:assignment{:id 17592186055120,
-                                         :name "model domain",
-                                         :day #inst "2019-12-04T00:00:00.000-00:00",
-                                         :work 6.0}
-                            #:assignment{:id 17592186055141,
-                                         :name "model domain",
-                                         :day #inst "2019-12-11T00:00:00.000-00:00",
-                                         :work 2.0}
-                            #:assignment{:id 17592186055132,
-                                         :name "model domain",
-                                         :day #inst "2019-12-08T00:00:00.000-00:00",
-                                         :work 0.0}
-                            #:assignment{:id 17592186055129,
-                                         :name "model domain",
-                                         :day #inst "2019-12-07T00:00:00.000-00:00",
-                                         :work 0.0}])
-
-                         (comment
-                           (reduce (fn [r [k v]] (map (fn [date] ()) dates )) (group-by #(select-keys % [:assignment/name]) r))
 
 
+(def r
 
-                           (def v '[{:assignment/id 17592186053305, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-09T00:00:00.000-00:00", :assignment/work 8} {:assignment/id 17592186053284, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-02T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053296, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-06T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053287, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-03T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053293, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-05T00:00:00.000-00:00", :assignment/work 4}])
+  [#:assignment{:id 17592186055123,
+                :name "model domain",
+                :day #inst "2019-12-05T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055138,
+                :name "model domain",
+                :day #inst "2019-12-10T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055135,
+                :name "model domain",
+                :day #inst "2019-12-09T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055126,
+                :name "model domain",
+                :day #inst "2019-12-06T00:00:00.000-00:00",
+                :work 8.0}
+   #:assignment{:id 17592186055120,
+                :name "model domain",
+                :day #inst "2019-12-04T00:00:00.000-00:00",
+                :work 6.0}
+   #:assignment{:id 17592186055141,
+                :name "model domain",
+                :day #inst "2019-12-11T00:00:00.000-00:00",
+                :work 2.0}
+   #:assignment{:id 17592186055132,
+                :name "model domain",
+                :day #inst "2019-12-08T00:00:00.000-00:00",
+                :work 0.0}
+   #:assignment{:id 17592186055129,
+                :name "model domain",
+                :day #inst "2019-12-07T00:00:00.000-00:00",
+                :work 0.0}])
+
+(comment
+  (reduce (fn [r [k v]] (map (fn [date] ()) dates )) (group-by #(select-keys % [:assignment/name]) r))
 
 
 
-                           (map
+  (def v '[{:assignment/id 17592186053305, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-09T00:00:00.000-00:00", :assignment/work 8} {:assignment/id 17592186053284, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-02T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053296, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-06T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053287, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-03T00:00:00.000-00:00", :assignment/work 4} {:assignment/id 17592186053293, :assignment/name "Configuration of the solution", :assignment/day #inst "2019-12-05T00:00:00.000-00:00", :assignment/work 4}])
 
 
-                            (fn [r-reduce]
-                              (reduce (fn [r date]
-                                        (reduce (fn [r2 m]
-                                                  (if (=  date (first (keys m)))
-                                                    (conj r m)
-                                                    (conj r {date 0 :assignment/name (:assignment/name m)}))) [] r-reduce))   [] (map #(js/Date. %) dates)))
+
+  (map
 
 
-                            (map
-                             (fn [[k vals]]
-                               (reduce (fn [r x] (let [day (:assignment/day x)
-                                                       work (:assignment/work x)
-                                                       m {day work :assignment/name k}]
-                                                   (conj r m)
+   (fn [r-reduce]
+     (reduce (fn [r date]
+               (reduce (fn [r2 m]
+                         (if (=  date (first (keys m)))
+                           (conj r m)
+                           (conj r {date 0 :assignment/name (:assignment/name m)}))) [] r-reduce))   [] (map #(js/Date. %) dates)))
 
-                                                   )) [] vals)) (group-by :assignment/name r)))
+
+   (map
+    (fn [[k vals]]
+      (reduce (fn [r x] (let [day (:assignment/day x)
+                              work (:assignment/work x)
+                              m {day work :assignment/name k}]
+                          (conj r m)
+
+                          )) [] vals)) (group-by :assignment/name r)))
 
                                         ;{#inst .... 3}
 
 
 
 
-                           (map (fn [r [k v]] (conj r "s")) (group-by :assignment/name r))
+  (map (fn [r [k v]] (conj r "s")) (group-by :assignment/name r))
 
-                           ;; (reduce (fn [r m]
-                           ;;           (concat r (reduce (fn [_ date]
-                           ;;                               (if (not (= date (first (keys m))))
-                           ;;                                 (conj r {date 0})
-                           ;;                                 (conj r {date (first (vals m))})))
-                           ;;                             [] (map #(js/Date. %) dates))))    [] r-reduce)
-
-
-                           )
+  ;; (reduce (fn [r m]
+  ;;           (concat r (reduce (fn [_ date]
+  ;;                               (if (not (= date (first (keys m))))
+  ;;                                 (conj r {date 0})
+  ;;                                 (conj r {date (first (vals m))})))
+  ;;                             [] (map #(js/Date. %) dates))))    [] r-reduce)
 
 
+  )
 
 
 
 
 
 
-                         (def r-reduce '({#inst "2019-12-09T00:00:00.000-00:00" 8} {#inst "2019-12-02T00:00:00.000-00:00" 4} {#inst "2019-12-06T00:00:00.000-00:00" 4} {#inst "2019-12-03T00:00:00.000-00:00" 4} {#inst "2019-12-05T00:00:00.000-00:00" 4}))
-
-                         (def step-r (map
-                                      (fn [[k vals]]
-                                        (reduce (fn [r x] (let [day (:assignment/day x)
-                                                                work (:assignment/work x)
-                                                                m {day work :assignment/name k}]
-                                                            (conj r m)
-
-                                                            )) [] vals)) (group-by :assignment/name r)))
 
 
+(def r-reduce '({#inst "2019-12-09T00:00:00.000-00:00" 8} {#inst "2019-12-02T00:00:00.000-00:00" 4} {#inst "2019-12-06T00:00:00.000-00:00" 4} {#inst "2019-12-03T00:00:00.000-00:00" 4} {#inst "2019-12-05T00:00:00.000-00:00" 4}))
 
+(def step-r (map
+             (fn [[k vals]]
+               (reduce (fn [r x] (let [day (:assignment/day x)
+                                       work (:assignment/work x)
+                                       m {day work :assignment/name k}]
+                                   (conj r m)
 
-
-
-                         (reduce (fn [works date] (if (not (contains? (map (comp first keys) (first step-r)) date))
-                                                    (conj r {date 0} )) ) (first step-r) dates2)
+                                   )) [] vals)) (group-by :assignment/name r)))
 
 
 
 
-                         #_(map (comp first keys) (first step-r))
+
+
+(reduce (fn [works date] (if (not (contains? (map (comp first keys) (first step-r)) date))
+                           (conj r {date 0} )) ) (first step-r) dates2)
+
+
+
+
+#_(map (comp first keys) (first step-r))
 
 
 
