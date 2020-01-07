@@ -20,6 +20,12 @@
    [clojure.core :refer :all])
   (:import datomic.Util))
 
+
+                                        ;(def conn2 (d/connect "datomic:dev://localhost:4334/one2"))
+
+
+
+
 (def project-keys [:project/id
                    :project/finish-date
                    #_:project/author-name  :project/start-date
@@ -27,12 +33,12 @@
                    :project/created-date
                    ])
 
-;(def db-url "datomic:dev://localhost:4334/one2")
+                                        ;(def db-url "datomic:dev://localhost:4334/one2")
 
                                         ;(d/create-database "datomic:dev://localhost:4334/one2")
-;(d/delete-database db-url)
+                                        ;(d/delete-database db-url)
 
-;(def conn2 (d/connect db-url))
+                                        ;(def conn2 (d/connect db-url))
 
 ;; DB stuff
 
@@ -422,7 +428,7 @@
 ;; To repeat
 
 ;(def conn (scratch-conn))
-;(transact-all  conn2 "resources/edn/schema.edn")
+                                        ;(transact-all  conn2 "resources/edn/schema.edn")
 
 
 

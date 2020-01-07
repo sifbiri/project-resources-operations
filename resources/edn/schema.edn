@@ -116,7 +116,7 @@
 
   :db/valueType :db.type/instant
   :db/cardinality :db.cardinality/one
-  :db/unique :db.unique/value
+  ;:db/unique :db.unique/value           
   
   }
 
