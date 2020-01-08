@@ -62,6 +62,7 @@
    [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
+   ["semantic-ui-react/dist/commonjs/collections/Menu/Menu" :default Menu]
    
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
@@ -772,7 +773,7 @@
 
 
     ;; TODO when totoal is 0 don't show it
-    (js/console.log "transformed" transformed)
+    
     (when (> total 0 )
       (comp/fragment
 
@@ -837,7 +838,7 @@
    #_#_:getDerivedStateFromProps
    (fn [props state]
      (when (= (:count state) 0)
-       (js/console.log "PROPS" props)
+       
        ())
      (let [ 
            id (:resource-line/id
@@ -856,7 +857,7 @@
            (fn [pl]
              (let [asses (:project-line/assignments pl)
                    asses-resolved]
-               (js/console.log "ASA" asses)
+               
                (map
                 (fn [r]
                   
@@ -882,7 +883,7 @@
              )
            
            ]
-       (js/console.log "TOTALSIII" project-lines-r))
+       )
      nil
      )
 
@@ -927,7 +928,7 @@
                                                        (comp/component->state-map this))]
 
 
-                            (js/console.log "PROJECT-LINES" (:resource-line/id (comp/component->state-map this))))
+                            )
 
 
 
@@ -944,23 +945,30 @@
 
 
 
-  (comp/fragment
-   (tr
-    {:style {}
-     :onClick (fn []
-                (m/toggle! this :ui/selected)
-                )}
+  (let [color (fn [n] (cond
+                  (= n 0) "white"
+                  (and (> n 0) (<= n 8)) "lightGreen"
+                  (and (> n 8) (<= n 10)) "orange"
+                  (> n 10) "red"))] (comp/fragment
+    (tr
+     {:style {}
+      :onClick (fn []
+                 (m/toggle! this :ui/selected)
+                 )}
 
-    (td (str (:resource/name resource) " ")
-        (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
+     (td (str (:resource/name resource) " ")
+         (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-    (td "") (td "") (when totals (map #(td (goog.string.format "%.2f" %)) totals))
+     (td "") (td "") (when totals (map #(td {:style {:backgroundColor (color %)}}
+
+                                         
+                                         (goog.string.format "%.2f" %)) totals))
 
 
-    )
+     )
 
-   (when selected
-     (map ui-project-line project-lines))))
+    (when selected
+      (map ui-project-line project-lines)))))
 (def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id}))
 
 
@@ -1014,7 +1022,7 @@
                               (map #(first (vals %)) line))
                             (mapcat #(transform-pl % start end) project-lines-r)))]
 
-
+            
             (swap! state assoc-in [:resource-line/id resource-line-id :resource-line/totals] totals))))
 
 
@@ -1269,7 +1277,7 @@
                      :ui/loading false
 
                      ;; :workplan/resource-lines
-
+                     
                      ;; [
                      ;;  {
                      ;;   :resource-line/id #uuid "d771d4d9-34de-e911-b085-00155de0a811"                                               :resource-line/resource
@@ -1332,7 +1340,8 @@
           :onChange (fn [evt data]
 
                                         ;     (comp/set-state! this {:value (.-value data)})
-                      (comp/transact! this [(set-resource-lines {:ids (.-value data)}) :workplan/resource-lines] )
+                      (comp/transact! this [(set-resource-lines {:ids (.-value data)})
+                                            :workplan/resource-lines] )
                       )
 
           :value (map #(:resource-line/id %) resource-lines)
@@ -1344,7 +1353,7 @@
         (ui-input {:type "date" :size "mini" :label "Start"  :style {:border "2px solid LightGray" :border-radius "5px" :margin-right "5px"}
                    :onChange (fn [event data]
 
-                               (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))})])
+                               (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
 
 
                                )
@@ -1356,21 +1365,23 @@
                    :value (:end dates)
                    :onChange (fn [event data]
 
-                               (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))})])
+                               (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
+                               (doseq [resource resource-lines]
+                                 (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
 
                                )
                    :style {:marginRight "15px" :border "2px solid LightGray" :borderRadius "5px"}})
         )
       
        #_(ui-accordion
-        {:as ui-menu :vertical true}
+        {:as Menu  :vertical true}
         (ui-menu-item {} (ui-accordion-title
                           {:active true
-                           :content "Size"
+                           :content "Resource"
                            :index 0
                            :onClick #(js/console.log "accordion" %1 %2)})))
        
-       (ui-table {:celled true}
+       (ui-table {:celled true }
                  (ui-table-header {:fullWidth true}
                                   (ui-table-row  {}
 
@@ -1378,7 +1389,7 @@
 
                                                  (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
                                                  ))
-                 (tbody (map ui-resource-line resource-lines)))
+                 (ui-table-body {} (map ui-resource-line resource-lines)))
 
        )
       (ui-segment {:style {:textAlign "center"}}

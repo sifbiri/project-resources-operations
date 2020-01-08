@@ -22,6 +22,8 @@ is a ref to a task/name for example...
 * Feautres2
 ** move to 3.1.2 and try using input buffered types
 ** show total per resource
+** fix a bug for when changing dates
+** add color code
 ** implement the dropdown componenet
 * Export to excel
 ** https://github.com/SheetJS/sheetjs

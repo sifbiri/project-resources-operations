@@ -15,7 +15,7 @@
                                         ;[clojure.data.generators :as gen]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [app.model.database :as db :refer [conn]]
+   ;[app.model.database :as db :refer [conn]]
    [clj-time.core :as t]
    [clojure.core :refer :all])
   (:import datomic.Util))

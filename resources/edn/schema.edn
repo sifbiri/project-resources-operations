@@ -135,8 +135,8 @@
 
   :db/valueType :db.type/uuid
 
-  :db/unique :db.unique/identity
-  :db/index true
+  ;:db/unique :db.unique/identity
+  ;:db/index true
   :db/cardinality :db.cardinality/one
 
   
