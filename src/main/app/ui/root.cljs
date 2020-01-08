@@ -63,6 +63,8 @@
    [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
    ["semantic-ui-react/dist/commonjs/collections/Menu/Menu" :default Menu]
+   [com.fulcrologic.semantic-ui.collections.form.ui-form-group :refer [ui-form-group]]
+   [com.fulcrologic.semantic-ui.collections.form.ui-form-field :refer [ui-form-field]]
    
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
@@ -785,10 +787,11 @@
                     (m/toggle! this :ui/selected)
                     )}
 
-        (td "") (td (str (:project/name project) " ")
+        (td {:style {:backgroundColor  "#3281b9"}} "") (td {:colspan 2}
+                    (str (:project/name project) " ")
                     (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-        (td "")
+        
 
         (map #(td {:style {:backgroundColor (color %)}}
                   (goog.string.format "%.2f" %))
@@ -806,7 +809,7 @@
                  ;; hide assignment line with 0 work load
 
                  (when (> (reduce (fn [r m] (+ r (first (vals m)))) 0 asses) 0)
-                   (tr (concat [(td "")(td "") (td (:assignment/name (first asses)))]
+                   (tr (concat [(td  {:colspan 2 :style {:backgroundColor  "#3281b9"}} "") (ui-table-cell {:singleLine true} (:assignment/name (first asses)))]
                                (map #(td {:style {:background-color (color (first (vals %)))}}
                                          (goog.string.format "%.2f" (first (vals %)))) asses))))
                  )
@@ -956,10 +959,11 @@
                  (m/toggle! this :ui/selected)
                  )}
 
-     (td (str (:resource/name resource) " ")
+     (td {:colspan 3}
+         (str (:resource/name resource) " ")
          (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-     (td "") (td "") (when totals (map #(td {:style {:backgroundColor (color %)}}
+       (when totals (map #(td {:style {:backgroundColor (color %)}}
 
                                          
                                          (goog.string.format "%.2f" %)) totals))
@@ -1291,7 +1295,7 @@
                      })
 
    :initLocalState (fn [this props]
-                     {:value [#uuid "d771d4d9-34de-e911-b085-00155de0a811"]})
+                     {:active-index -1})
    :componentDidMount (fn [this]
                         (let [state-map (comp/component->state-map this)
                               resource (get-in state-map [:component/id :session :account/resource])]
@@ -1313,10 +1317,14 @@
   (let [resources-options (:resource/options (comp/props this))
         marker (get props [df/marker-table :projects] )
         current-state (uism/get-active-state this ::session/session)
-        logged-in? (= :state/logged-in current-state)]
+        logged-in? (= :state/logged-in current-state)
+        active-index (comp/get-state this :active-index)]
+
 
                                         ;(js/console.log "resources " resources-options)
 
+
+    (js/console.log "ACTIVE INDEX" active-index)
     (if (and dates logged-in?)
       (div
        {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
@@ -1375,19 +1383,67 @@
       
        #_(ui-accordion
         {:as Menu  :vertical true}
-        (ui-menu-item {} (ui-accordion-title
-                          {:active true
+        (ui-menu-item {}
+                      (ui-accordion-title
+                          {:active (= active-index 0)
                            :content "Resource"
                            :index 0
-                           :onClick #(js/console.log "accordion" %1 %2)})))
+                           :onClick (fn [e v]
+                                      (let [active-index (comp/get-state this :active-index)
+                                            index (.-index  v)
+                                            new-index (if (= active-index index) -1 index)]
+                                        (comp/set-state! this {:active-index new-index})
+                                        ))})
+                      (ui-accordion-content {:active (= active-index 0)
+                                             :content
+                                             (ui-form {}
+                                                      (ui-form-group {:grouped true}
+
+                                                                     (ui-form-field {}
+                                                                                    (dom/label "Start")
+                                                                                    (dom/input {:type "date" :size "mini"  
+                                                                                               :onChange (fn [event data]
+
+                                                                                                           (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
+                                                                                                           (doseq [resource resource-lines]
+                                                                                                             (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
+
+
+                                                                                                           )
+                                                                                               :value (:start dates)
+                                                                                               :action true
+                                                                                               :style {:border "0px solid lightGray"}}))
+
+
+                                                                     
+
+                                                                     (ui-form-field {}
+                                                                                    (dom/label "End")
+                                                                                    (dom/input {:type "date" :size "mini" 
+                                                                                               :value (:end dates)
+                                                                                               :onChange (fn [event data]
+
+                                                                                                           (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
+                                                                                                           (doseq [resource resource-lines]
+                                                                                                             (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
+
+                                                                                                           )
+                                                                                               :style {}})
+                                                                                    ))
+
+                                                      )
+                                              
+                                              
+                                              
+                                              } )))
        
-       (ui-table {:celled true }
-                 (ui-table-header {:fullWidth true}
-                                  (ui-table-row  {}
+       (ui-table {:style {:fontSize "85%"} :celled true }
+                 (thead {:fullWidth true :style {:backgroundColor "red"}}
+                                  (tr  {:style {:backgroundColor "red"}}
 
-                                                 (map #(ui-table-header-cell {} %)  ["Resource" "Project" "Assignement "])
+                                       (map #(th {:style {:backgroundColor "#3281b9" :color "#ffffff"}} %)  ["Resource" "Project" "Assignement "])
 
-                                                 (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                       (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
                                                  ))
                  (ui-table-body {} (map ui-resource-line resource-lines)))
 

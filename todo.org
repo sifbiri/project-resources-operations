@@ -25,5 +25,14 @@ is a ref to a task/name for example...
 ** fix a bug for when changing dates
 ** add color code
 ** implement the dropdown componenet
+** merge td of resource with project & assignment {colspan 3}
+** merge td  project & assignment {colspan 2}
+** merge td resource & project  for assignment lines
+*** apply color for empty cells  (3 first colomns)
+** reduire font size du tableau
+** apply colors for headers & rest ...
+** fix resource / project / columns
 * Export to excel
 ** https://github.com/SheetJS/sheetjs
+https://securedeveloper.github.io/react-data-export/
+https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
