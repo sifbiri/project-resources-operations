@@ -52,6 +52,8 @@
    [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]
    [com.fulcrologic.semantic-ui.elements.segment.ui-segment :refer [ui-segment]]
 
+   [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
+
 
 
    ;; semantic comoponents 
@@ -65,6 +67,10 @@
    ["semantic-ui-react/dist/commonjs/collections/Menu/Menu" :default Menu]
    [com.fulcrologic.semantic-ui.collections.form.ui-form-group :refer [ui-form-group]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form-field :refer [ui-form-field]]
+
+   [com.fulcrologic.semantic-ui.collections.grid.ui-grid :refer [ui-grid]]
+   [com.fulcrologic.semantic-ui.collections.grid.ui-grid-column :refer [ui-grid-column]]
+   [com.fulcrologic.semantic-ui.collections.grid.ui-grid-row :refer [ui-grid-row]]
    
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
@@ -1211,11 +1217,7 @@
    }
 
 
-  (div {:style {:overflow-x "scroll" :width "1200px" :height "1000px" :overflowY "auto" }}
-
-
-
-       ))
+  )
 
 
 (def ui-projects-table (comp/factory ProjectsTable))
@@ -1318,136 +1320,128 @@
         marker (get props [df/marker-table :projects] )
         current-state (uism/get-active-state this ::session/session)
         logged-in? (= :state/logged-in current-state)
-        active-index (comp/get-state this :active-index)]
+        active-index (comp/get-state this :active-index)
+        handleClick (fn [e v]
+                      (let [active-index (comp/get-state this :active-index)
+                            index (.-index  v)
+                            new-index (if (= active-index index) -1 index)]
+                        (comp/set-state! this {:active-index new-index})
+                        ))]
 
 
                                         ;(js/console.log "resources " resources-options)
 
 
-    (js/console.log "ACTIVE INDEX" active-index)
+    
     (if (and dates logged-in?)
-      (div
-       {:style {:overflowX "auto" :width  "1200px" :height "1000px" :overflowY "auto" }}
-       (div
-        (ui-dropdown
-         { :button true
+            
+      [
+
+       (ui-grid-column {:width 3 }
+                       (ui-accordion
+                        {:as Menu  :vertical true}
+                        (ui-menu-item {}
+                                      (ui-accordion-title
+                                       {:active (= active-index 0)
+                                        :content "Dates"
+                                        :index 0
+                                        :onClick handleClick})
+                                      (ui-accordion-content {:active (= active-index 0)
+                                                             :content
+                                                             (ui-form {}
+                                                                      (ui-form-group {:grouped true}
+
+                                                                                     (ui-form-field {}
+                                                                                                    (dom/label "Start")
+                                                                                                    (dom/input {:type "date" :size "mini"  
+                                                                                                                :onChange (fn [event data]
+
+                                                                                                                            (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
+                                                                                                                            (doseq [resource resource-lines]
+                                                                                                                              (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
 
 
-          :labeled true
+                                                                                                                            )
+                                                                                                                :value (:start dates)
+                                                                                                                :action true
+                                                                                                                :style {}}))
 
-          :multiple true
-          :selection true
-          :label "Resource"
-          :style {   :paddingLeft "8px" :paddingBottom "8px" :paddingTop "5px"
-                  :position "relative" :top "-5px" :left "-8px" :paddingRight "20px" :border-radius "2px"}
 
-          :placeholder "Resource"
-          :options  resources-options
-          :search true
+                                                                                     
 
-          :onChange (fn [evt data]
+                                                                                     (ui-form-field {}
+                                                                                                    (dom/label "End")
+                                                                                                    (dom/input {:type "date" :size "mini" 
+                                                                                                                :value (:end dates)
+                                                                                                                :onChange (fn [event data]
+
+                                                                                                                            (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
+                                                                                                                            (doseq [resource resource-lines]
+                                                                                                                              (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
+
+                                                                                                                            )
+                                                                                                                :style {}})
+                                                                                                    ))
+
+                                                                      )
+                                                             
+                                                             
+                                                             
+                                                             } ))
+                        (ui-menu-item {} (ui-accordion-title
+                                          {:active (= active-index 1)
+                                           :content "Resources"
+                                           :index 1
+                                           :onClick handleClick })
+                                      (ui-accordion-content {:active (= active-index 1)
+                                                             :content (ui-form {}
+                                                                               (ui-form-group {:grouped true}
+                                                                                              (ui-form-field {}
+
+                                                                                                             (ui-dropdown
+                                                                                                              { 
+
+
+                                                                                                               :labeled true
+                                                                                                               
+                                                                                                               :multiple true
+                                                                                                               :selection true
+                                                                                                               :label "Resource"
+                                                                                                               :style {  :padding "0px"
+                                                                                                                       :position "relative" :top "-5px" :left "-15px" :border "0px" }
+
+                                                                                                               :placeholder "Resource"
+                                                                                                               :options  resources-options
+                                                                                                               :search true
+
+                                                                                                               :onChange (fn [evt data]
 
                                         ;     (comp/set-state! this {:value (.-value data)})
-                      (comp/transact! this [(set-resource-lines {:ids (.-value data)})
-                                            :workplan/resource-lines] )
-                      )
+                                                                                                                           (comp/transact! this [(set-resource-lines {:ids (.-value data)})
+                                                                                                                                                 :workplan/resource-lines] )
+                                                                                                                           )
 
-          :value (map #(:resource-line/id %) resource-lines)
-
-
-          }
-         )
-
-        (ui-input {:type "date" :size "mini" :label "Start"  :style {:border "2px solid LightGray" :border-radius "5px" :margin-right "5px"}
-                   :onChange (fn [event data]
-
-                               (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
+                                                                                                               :value (map #(:resource-line/id %) resource-lines)
 
 
-                               )
-                   :value (:start dates)
-                   :action true})
-
-
-        (ui-input {:type "date" :size "mini" :label "End"
-                   :value (:end dates)
-                   :onChange (fn [event data]
-
-                               (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
-                               (doseq [resource resource-lines]
-                                 (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
-
-                               )
-                   :style {:marginRight "15px" :border "2px solid LightGray" :borderRadius "5px"}})
-        )
-      
-       #_(ui-accordion
-        {:as Menu  :vertical true}
-        (ui-menu-item {}
-                      (ui-accordion-title
-                          {:active (= active-index 0)
-                           :content "Resource"
-                           :index 0
-                           :onClick (fn [e v]
-                                      (let [active-index (comp/get-state this :active-index)
-                                            index (.-index  v)
-                                            new-index (if (= active-index index) -1 index)]
-                                        (comp/set-state! this {:active-index new-index})
-                                        ))})
-                      (ui-accordion-content {:active (= active-index 0)
-                                             :content
-                                             (ui-form {}
-                                                      (ui-form-group {:grouped true}
-
-                                                                     (ui-form-field {}
-                                                                                    (dom/label "Start")
-                                                                                    (dom/input {:type "date" :size "mini"  
-                                                                                               :onChange (fn [event data]
-
-                                                                                                           (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
-                                                                                                           (doseq [resource resource-lines]
-                                                                                                             (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
-
-
-                                                                                                           )
-                                                                                               :value (:start dates)
-                                                                                               :action true
-                                                                                               :style {:border "0px solid lightGray"}}))
-
-
-                                                                     
-
-                                                                     (ui-form-field {}
-                                                                                    (dom/label "End")
-                                                                                    (dom/input {:type "date" :size "mini" 
-                                                                                               :value (:end dates)
-                                                                                               :onChange (fn [event data]
-
-                                                                                                           (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
-                                                                                                           (doseq [resource resource-lines]
-                                                                                                             (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
-
-                                                                                                           )
-                                                                                               :style {}})
-                                                                                    ))
-
-                                                      )
-                                              
-                                              
-                                              
-                                              } )))
+                                                                                                               }
+                                                                                                              )
+                                                                                                             
+                                                                                                             #_(ui-form-checkbox {:label "red" :name "red" :value "red" :onClick #(js/console.log "clicked" %2)}))))}))))
        
-       (ui-table {:style {:fontSize "85%"} :celled true }
-                 (thead {:fullWidth true :style {:backgroundColor "red"}}
-                                  (tr  {:style {:backgroundColor "red"}}
+       (ui-grid-column {:width 13}
+                       (when (seq resource-lines)
+                             (div {:style {:overflowX "auto"  :overflowY "auto"}}
+                                  (ui-table {:style {:fontSize "90%"} :celled true }
+                                        (thead {:fullWidth true :style {:backgroundColor "red"}}
+                                               (tr  {:style {:backgroundColor "red"}}
 
-                                       (map #(th {:style {:backgroundColor "#3281b9" :color "#ffffff"}} %)  ["Resource" "Project" "Assignement "])
+                                                    (map #(th {:style {:backgroundColor "#3281b9" :color "#ffffff"}} %)  ["Resource" "Project" "Assignement "])
 
-                                       (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
-                                                 ))
-                 (ui-table-body {} (map ui-resource-line resource-lines)))
+                                                    (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                                    ))
+                                        (ui-table-body {} (map ui-resource-line resource-lines))))))]
 
-       )
       (ui-segment {:style {:textAlign "center"}}
                   (div  "Please login with Fluxym account")))
     ))
@@ -1489,28 +1483,28 @@
                    :root/login           {}
                    :root/current-session {}}}
   (let [current-tab (some-> (dr/current-route this this) first keyword)]
-    (div :.ui.container
-         (div :.ui.secondary.pointing.menu
-              (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
+    (ui-grid { :container true  :divided false :columns 2 } 
+             (ui-grid-row  {:strechted true} 
+                           (div :.ui.secondary.pointing.menu {:style {:width "100%"}}
+                                (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
 
-              (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
-                             :onClick (fn [event]
+                            (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
+                                           :onClick (fn [event]
 
 
-                                        (dr/change-route this ["workplan"]))} "WorkPlan")
+                                                      (dr/change-route this ["workplan"]))} "WorkPlan")
 
-              (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                             :onClick (fn []
+                            (dom/a :.item {:classes [(when (= :main current-tab) "active")]
+                                           :onClick (fn []
                                         ;(m/load! this )
-                                        (dr/change-route this ["main"]))} "Calendar")
+                                                      (dr/change-route this ["main"]))} "Calendar")
 
-              (div :.right.menu
-                   (ui-login login)
+                            (div :.right.menu
+                                 (ui-login login)
 
-                   ))
-         (div :.ui.centered
-              (ui-top-router router)
-              #_(ui-work-day)))))
+                                 )))
+         (ui-grid-row {}
+                      (ui-top-router router)))))
 
 (def ui-top-chrome (comp/factory TopChrome))
 

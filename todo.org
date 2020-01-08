@@ -32,6 +32,7 @@ is a ref to a task/name for example...
 ** reduire font size du tableau
 ** apply colors for headers & rest ...
 ** fix resource / project / columns
+** show 10 first resources / add more / add check all
 * Export to excel
 ** https://github.com/SheetJS/sheetjs
 https://securedeveloper.github.io/react-data-export/
