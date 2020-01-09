@@ -33,6 +33,13 @@ is a ref to a task/name for example...
 ** apply colors for headers & rest ...
 ** fix resource / project / columns
 ** show 10 first resources / add more / add check all
+
+** sort  the names of resources alphabetically
+
+** change menu colors to color blue
+
+** include last date
+
 * Export to excel
 ** https://github.com/SheetJS/sheetjs
 https://securedeveloper.github.io/react-data-export/

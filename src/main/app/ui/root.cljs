@@ -2,6 +2,9 @@
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
 
+
+
+
    [com.fulcrologic.semantic-ui.elements.input.ui-input :refer [ui-input]]
    [com.fulcrologic.semantic-ui.elements.icon.ui-icon :refer [ui-icon]]
    [com.fulcrologic.semantic-ui.elements.loader.ui-loader :refer [ui-loader]]
@@ -13,10 +16,7 @@
    ["react-table" :as react-table]
    ["react-world-flags" :as Flag]
    ["react-flag-kit" :as FlagIcon ]
-
-   
-
-   [app.model.project :as project]
+   ["react-sticky-table" :as StickyTable]
    [app.model.resource :as resource]
    [com.fulcrologic.fulcro.networking.http-remote :as net]
    [com.fulcrologic.fulcro.data-fetch :as df]
@@ -71,6 +71,8 @@
    [com.fulcrologic.semantic-ui.collections.grid.ui-grid :refer [ui-grid]]
    [com.fulcrologic.semantic-ui.collections.grid.ui-grid-column :refer [ui-grid-column]]
    [com.fulcrologic.semantic-ui.collections.grid.ui-grid-row :refer [ui-grid-row]]
+   [com.fulcrologic.semantic-ui.modules.checkbox.ui-checkbox :refer [ui-checkbox]]
+   [com.fulcrologic.semantic-ui.elements.divider.ui-divider :refer [ui-divider]]
    
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
@@ -97,6 +99,11 @@
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
 
    ))
+
+
+(def ui-sticky-table (interop/react-factory StickyTable/StickyTable))
+(def ui-sticky-row (interop/react-factory StickyTable/Row))
+(def ui-sticky-cell (interop/react-factory StickyTable/Cell))
 
 (def ui-dropdown2 (interop/react-factory Dropdown))
 (def dates
@@ -793,9 +800,9 @@
                     (m/toggle! this :ui/selected)
                     )}
 
-        (td {:style {:backgroundColor  "#3281b9"}} "") (td {:colspan 2}
-                    (str (:project/name project) " ")
-                    (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
+        (td {:style {:backgroundColor  "#3281b9"}} "") (td {:colSpan 2}
+                                                           (str (:project/name project) " ")
+                                                           (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
         
 
@@ -815,7 +822,7 @@
                  ;; hide assignment line with 0 work load
 
                  (when (> (reduce (fn [r m] (+ r (first (vals m)))) 0 asses) 0)
-                   (tr (concat [(td  {:colspan 2 :style {:backgroundColor  "#3281b9"}} "") (ui-table-cell {:singleLine true} (:assignment/name (first asses)))]
+                   (tr (concat [(td  {:colSpan 2 :style {:backgroundColor  "#3281b9"}} "") (ui-table-cell {:singleLine true} (:assignment/name (first asses)))]
                                (map #(td {:style {:background-color (color (first (vals %)))}}
                                          (goog.string.format "%.2f" (first (vals %)))) asses))))
                  )
@@ -955,30 +962,30 @@
 
 
   (let [color (fn [n] (cond
-                  (= n 0) "white"
-                  (and (> n 0) (<= n 8)) "lightGreen"
-                  (and (> n 8) (<= n 10)) "orange"
-                  (> n 10) "red"))] (comp/fragment
-    (tr
-     {:style {}
-      :onClick (fn []
-                 (m/toggle! this :ui/selected)
-                 )}
+                        (= n 0) "white"
+                        (and (> n 0) (<= n 8)) "lightGreen"
+                        (and (> n 8) (<= n 10)) "orange"
+                        (> n 10) "red"))] (comp/fragment
+                                           (tr
+                                            {:style {}
+                                             :onClick (fn []
+                                                        (m/toggle! this :ui/selected)
+                                                        )}
 
-     (td {:colspan 3}
-         (str (:resource/name resource) " ")
-         (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
+                                            (td {:colspan 3}
+                                                (str (:resource/name resource) " ")
+                                                (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-       (when totals (map #(td {:style {:backgroundColor (color %)}}
+                                            (when totals (map #(td {:style {:backgroundColor (color %)}}
 
-                                         
-                                         (goog.string.format "%.2f" %)) totals))
+                                                                   
+                                                                   (goog.string.format "%.2f" %)) totals))
 
 
-     )
+                                            )
 
-    (when selected
-      (map ui-project-line project-lines)))))
+                                           (when selected
+                                             (map ui-project-line project-lines)))))
 (def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id}))
 
 
@@ -1001,30 +1008,30 @@
   (action [{:keys [state] :as env}]
 
           (let [project-lines (get-in @state [:resource-line/id resource-line-id :resource-line/project-lines])
-                  project-lines-r (map (fn [ident] (get-in @state ident)) project-lines)
-                  start (get-in @state [:ui/dates :start])
-                  end (get-in @state [:ui/dates :end])
+                project-lines-r (map (fn [ident] (get-in @state ident)) project-lines)
+                start (get-in @state [:ui/dates :start])
+                end (get-in @state [:ui/dates :end])
                 ;; TODO abstract duplication see project line
-                  transform-pl 
-                  (fn [pl start end]
+                transform-pl 
+                (fn [pl start end]
 
 
-                    (let [asses (map (fn [ident] (get-in @state ident))
-                                     (:project-line/assignments pl))]
-                      (map
-                       (fn [r]
-                         (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
-                                                                         (generate-row-dates start end))))
-                       
-                       (map
-                        (fn [[k vals]]
-                          (reduce (fn [r x] (let [day (:assignment/day x)
-                                                  work (:assignment/work x)
-                                                  m {day work :assignment/name k}]
-                                              (conj r m)
+                  (let [asses (map (fn [ident] (get-in @state ident))
+                                   (:project-line/assignments pl))]
+                    (map
+                     (fn [r]
+                       (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
+                                                                       (generate-row-dates start end))))
+                     
+                     (map
+                      (fn [[k vals]]
+                        (reduce (fn [r x] (let [day (:assignment/day x)
+                                                work (:assignment/work x)
+                                                m {day work :assignment/name k}]
+                                            (conj r m)
 
-                                              )) [] vals)) (group-by :assignment/name asses))))
-                    )
+                                            )) [] vals)) (group-by :assignment/name asses))))
+                  )
 
                 totals
                 (apply map +
@@ -1139,12 +1146,12 @@
 
 
           ;; TODO move loading to the level of resource line
-            
+          
 
-            
-            ))
+          
+          ))
 
-  
+
 
 
 
@@ -1252,6 +1259,100 @@
 
   )
 
+(defmutation check-all-resource-boxes [{:keys []}]
+  (action [{:keys [state] :as env}]
+          (let [ids  (map first (:checkbox/id @state))]
+            (doseq [id ids]
+              (swap! state update-in [:checkbox/id id :checkbox/checked?] not)
+              )
+            (comp/transact! SPA  [(set-resource-lines {:ids ids})]))
+          
+          ))
+
+(defmutation remove-resource-line [{:keys [id]}]
+  (action [{:keys [state] :as env}]
+
+          (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines]))
+  )
+
+(defmutation uncheck-all-resource-boxes [{:keys []}]
+  (action [{:keys [state] :as env}]
+          (let [ids  (map first (:checkbox/id @state))]
+            (doseq [id ids]
+              (swap! state update-in [:checkbox/id id :checkbox/checked?] not)
+              (comp/transact! SPA  [(remove-resource-line {:id id})])
+              )
+            )
+          
+          ))
+
+
+
+(defn item-checked? [item] (:ui/checked? item))
+
+
+
+
+
+(defsc ResourceCheckboxItem [this {:keys []
+                                   :checkbox/keys [label value checked?]
+                                   :as props}]
+
+  
+  {:query [:checkbox/checked?  :checkbox/value :checkbox/label ]
+   :initial-state {:checkbox/checked? false}
+   :ident (fn [] [:checkbox/id (:checkbox/value props)])
+   }
+
+  
+  (let [ ]
+    (dom/div :.ui.checkbox
+     (dom/input   {
+                                :type "checkbox"
+                   :checked checked?
+                   :style {:padding "10px"}
+                                
+                                :onChange (fn [_ d]
+                                            (m/toggle! this :checkbox/checked?)
+                                            (if (not checked?)
+                                              (merge/merge-component! SPA  ResourceLine
+                                                                      {:resource-line/resource [:resource/id value]
+                                                                       :resource-line/id value}
+                                                                      :append [:component/id :workplan :workplan/resource-lines])
+                                              (comp/transact! this [(remove-resource-line {:id value})]))
+                                            )})
+     (dom/label {:style {:color "#3281b9" }} label))))
+
+
+(def ui-resource-checkbox-item  (comp/factory ResourceCheckboxItem))
+
+(defsc ResourcesCheckboxes [this {:list/keys [items]}]
+  {:query [{:list/items (comp/get-query ResourceCheckboxItem)}]
+   :ident (fn [] [:component/id :checkboxes])}
+  (let [all-checked? (every? item-checked? items)]
+
+    (div :.ui.checkbox
+         (dom/input {:label "Check all"
+                     :type "checkbox"
+                        :style {:color "#3281b9"}
+                        :onChange (fn [a b]
+                                    (let [checked? (.-checked b)]
+
+                                      (if checked?
+                                        (comp/transact! this [(check-all-resource-boxes )])
+                                        (comp/transact! this [(uncheck-all-resource-boxes )]))))})
+     (ui-divider {})
+     (map ui-resource-checkbox-item items))))
+
+(def ui-resources-checkboxes  (comp/factory ResourcesCheckboxes))
+
+
+
+
+
+
+
+
 (defsc WorkPlan [this {:workplan/keys [resource-lines]
                        :keys [ui/dates ui/loading]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
@@ -1297,9 +1398,11 @@
                      })
 
    :initLocalState (fn [this props]
-                     {:active-index -1})
+                     {:active-index -1
+                      :all? false})
    :componentDidMount (fn [this]
                         (let [state-map (comp/component->state-map this)
+                              resource-options (:resource/options state-map )
                               resource (get-in state-map [:component/id :session :account/resource])]
 
                           (comp/transact! this [(set-workplan-date {:start
@@ -1313,7 +1416,14 @@
                                                                     ;;                  (tt/plus (tt/now) (tt/weeks 3)))
                                                                     })
 
-                                                ]))
+                                                ])
+                          (doseq [v (:resource/options (comp/props this))]
+                            (merge/merge-component! SPA ResourceCheckboxItem v
+                                                    ) )
+                          (js/console.log "resourceoptions"
+                                          state-map))
+
+                        
                         )
    }
   (let [resources-options (:resource/options (comp/props this))
@@ -1325,7 +1435,7 @@
                       (let [active-index (comp/get-state this :active-index)
                             index (.-index  v)
                             new-index (if (= active-index index) -1 index)]
-                        (comp/set-state! this {:active-index new-index})
+                        (comp/update-state! this assoc  :active-index new-index)
                         ))]
 
 
@@ -1334,113 +1444,92 @@
 
     
     (if (and dates logged-in?)
-            
+      
       [
 
-       (ui-grid-column {:width 3 }
-                       (ui-accordion
-                        {:as Menu  :vertical true}
-                        (ui-menu-item {}
-                                      (ui-accordion-title
-                                       {:active (= active-index 0)
-                                        :content "Dates"
-                                        :index 0
-                                        :onClick handleClick})
-                                      (ui-accordion-content {:active (= active-index 0)
-                                                             :content
-                                                             (ui-form {}
-                                                                      (ui-form-group {:grouped true}
+       (ui-grid-column {:width 3 :style {:color "#3281b9"}}
+                       (div {:style {:color "red"}}
+                            (ui-accordion
+                             {:as Menu  :vertical true :style {:color "#3281b9"}}
+                             (ui-menu-item {}
+                                           (ui-accordion-title
+                                            {:active (= active-index 0)
+                                             :content "Dates"
+                                             :index 0
+                                             :style {:color  "#3281b9"}
+                                             :onClick handleClick})
+                                           (ui-accordion-content {:active (= active-index 0)
+                                                                  :content
+                                                                  (ui-form {}
+                                                                           (ui-form-group {:grouped true}
 
-                                                                                     (ui-form-field {}
-                                                                                                    (dom/label "Start")
-                                                                                                    (dom/input {:type "date" :size "mini"  
-                                                                                                                :onChange (fn [event data]
+                                                                                          (ui-form-field {}
+                                                                                                         (dom/label {:style {:color "#3281b9"}}
+                                                                                                                    "Start")
+                                                                                                         (dom/input {:type "date" :size "mini"  
+                                                                                                                     :onChange (fn [event data]
 
-                                                                                                                            (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
-                                                                                                                            (doseq [resource resource-lines]
-                                                                                                                              (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
-
-
-                                                                                                                            )
-                                                                                                                :value (:start dates)
-                                                                                                                :action true
-                                                                                                                :style {}}))
+                                                                                                                                 (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
+                                                                                                                                 (doseq [resource resource-lines]
+                                                                                                                                   (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
 
 
-                                                                                     
-
-                                                                                     (ui-form-field {}
-                                                                                                    (dom/label "End")
-                                                                                                    (dom/input {:type "date" :size "mini" 
-                                                                                                                :value (:end dates)
-                                                                                                                :onChange (fn [event data]
-
-                                                                                                                            (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
-                                                                                                                            (doseq [resource resource-lines]
-                                                                                                                              (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
-
-                                                                                                                            )
-                                                                                                                :style {}})
-                                                                                                    ))
-
-                                                                      )
-                                                             
-                                                             
-                                                             
-                                                             } ))
-                        (ui-menu-item {} (ui-accordion-title
-                                          {:active (= active-index 1)
-                                           :content "Resources"
-                                           :index 1
-                                           :onClick handleClick })
-                                      (ui-accordion-content {:active (= active-index 1)
-                                                             :content (ui-form {}
-                                                                               (ui-form-group {:grouped true}
-                                                                                              (ui-form-field {}
-
-                                                                                                             (ui-dropdown
-                                                                                                              { 
+                                                                                                                                 )
+                                                                                                                     :value (:start dates)
+                                                                                                                     :style {:fontSize "85%" :color "#3281b9"}}))
 
 
-                                                                                                               :labeled true
-                                                                                                               
-                                                                                                               :multiple true
-                                                                                                               :selection true
-                                                                                                               :label "Resource"
-                                                                                                               :style {  :padding "0px"
-                                                                                                                       :position "relative" :top "-5px" :left "-15px" :border "0px" }
+                                                                                          
 
-                                                                                                               :placeholder "Resource"
-                                                                                                               :options  resources-options
-                                                                                                               :search true
+                                                                                          (ui-form-field {}
+                                                                                                         (dom/label {:style {:color "#3281b9"}}"End")
+                                                                                                         (dom/input {:type "date" :size "mini" 
+                                                                                                                     :value (:end dates)
+                                                                                                                     :onChange (fn [event data]
 
-                                                                                                               :onChange (fn [evt data]
+                                                                                                                                 (comp/transact! this [(set-workplan-date {:end (.-value (.-target event))}):workplan/resource-lines])
+                                                                                                                                 (doseq [resource resource-lines]
+                                                                                                                                   (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
 
-                                        ;     (comp/set-state! this {:value (.-value data)})
-                                                                                                                           (comp/transact! this [(set-resource-lines {:ids (.-value data)})
-                                                                                                                                                 :workplan/resource-lines] )
-                                                                                                                           )
+                                                                                                                                 )
+                                                                                                                     :style {:fontSize "85%" :color "#3281b9"}})
+                                                                                                         ))
 
-                                                                                                               :value (map #(:resource-line/id %) resource-lines)
-
-
-                                                                                                               }
-                                                                                                              )
-                                                                                                             
-                                                                                                             #_(ui-form-checkbox {:label "red" :name "red" :value "red" :onClick #(js/console.log "clicked" %2)}))))}))))
+                                                                           )
+                                                                  
+                                                                  
+                                                                  
+                                                                  } ))
+                             (ui-menu-item {} (ui-accordion-title
+                                               {:active (= active-index 1)
+                                                :content "Resources"
+                                                :index 1
+                                                :onClick handleClick
+                                                :style {:color "#3281b9"}})
+                                           (ui-accordion-content {:active (= active-index 1)
+                                                                  :content (ui-form {}
+                                                                                    (ui-form-group {:grouped true}
+                                                                                                   (ui-form-field {}                                                                                                                                                                                                                         
+                                                                                                                  (ui-resources-checkboxes {:list/items resources-options})  )))})))))
        
        (ui-grid-column {:width 13}
                        (when (seq resource-lines)
-                             (div {:style {:overflowX "auto"  :overflowY "auto"}}
-                                  (ui-table {:style {:fontSize "90%"} :celled true }
-                                        (thead {:fullWidth true :style {:backgroundColor "red"}}
+                         (div  
+                               {:style {:overflowX "auto"  :overflowY "auto"}}
+                               (ui-table {:style {:fontSize "90%"
+                                                  
+                                                  
+                                                  } :celled true }
+                                        (thead 
+                                               {:fullWidth true :style {:backgroundColor "red"}}
                                                (tr  {:style {:backgroundColor "red"}}
 
-                                                    (map #(th {:style {:backgroundColor "#3281b9" :color "#ffffff"}} %)  ["Resource" "Project" "Assignement "])
+                                                    (map #(th {:style {:backgroundColor "#3281b9" :color "#ffffff"
+                                                                       :width "100px"}} %)  ["Resource" "Project" "Assignement "])
 
                                                     (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"}} %) (generate-row-dates-readable (:start dates) (:end dates)))
                                                     ))
-                                        (ui-table-body {} (map ui-resource-line resource-lines))))))]
+                                        (ui-table-body {} (map ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines)))))))]
 
       (ui-segment {:style {:textAlign "center"}}
                   (div  "Please login with Fluxym account")))
@@ -1488,23 +1577,23 @@
                            (div :.ui.secondary.pointing.menu {:style {:width "100%"}}
                                 (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
 
-                            (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
-                                           :onClick (fn [event]
+                                (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
+                                               :onClick (fn [event]
 
 
-                                                      (dr/change-route this ["workplan"]))} "WorkPlan")
+                                                          (dr/change-route this ["workplan"]))} "WorkPlan")
 
-                            (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                                           :onClick (fn []
+                                (dom/a :.item {:classes [(when (= :main current-tab) "active")]
+                                               :onClick (fn []
                                         ;(m/load! this )
-                                                      (dr/change-route this ["main"]))} "Calendar")
+                                                          (dr/change-route this ["main"]))} "Calendar")
 
-                            (div :.right.menu
-                                 (ui-login login)
+                                (div :.right.menu
+                                     (ui-login login)
 
-                                 )))
-         (ui-grid-row {}
-                      (ui-top-router router)))))
+                                     )))
+             (ui-grid-row {}
+                          (ui-top-router router)))))
 
 (def ui-top-chrome (comp/factory TopChrome))
 

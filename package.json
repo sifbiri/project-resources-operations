@@ -6,6 +6,7 @@
     "dependencies": {
         "@js-joda/locale_en-us": "2.0.1",
         "big.js": "^5.2.2",
+        "fixed-data-table-2": "^1.0.2",
         "highlight.js": "^9.13.1",
         "interactjs": "^1.7.3",
         "js-joda": "^1.11.0",
@@ -21,6 +22,7 @@
         "react-icons": "^2.2.7",
         "react-number-format": "^4.3.1",
         "react-select": "^3.0.8",
+        "react-sticky-table": "^4.1.0",
         "react-table": "^7.0.0-rc.15",
         "react-timeline-9000": "^1.0.15",
         "react-virtualized": "^9.21.2",
