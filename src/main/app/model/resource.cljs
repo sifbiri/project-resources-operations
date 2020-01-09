@@ -25,7 +25,14 @@
             
             (swap! state assoc :resource/options r)
             
-            (let [class (comp/registry-key->class :app.ui.root/ResourceCheckboxItem)]
+
+            
+
+            (let [ResourceCheckboxItem (comp/registry-key->class :app.ui.root/ResourceCheckboxItem)
+                  ResourcesCheckboxes (comp/registry-key->class :app.ui.root/ResourcesCheckboxes)]
+
+              (swap! state merge/merge-component  ResourcesCheckboxes {:list/items r :list/all-checked? false})
+
               (doseq [v r]
                 
-                (swap! state merge/merge-component class (assoc v :checkbox/checked? false)) )))))
+                (swap! state merge/merge-component ResourceCheckboxItem (assoc v :checkbox/checked? false)) )))))

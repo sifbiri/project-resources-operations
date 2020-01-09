@@ -20,21 +20,21 @@ is a ref to a task/name for example...
 ** link: http://ec2-3-14-70-230.us-east-2.compute.amazonaws.com:3000/
 
 * Feautres2
-** move to 3.1.2 and try using input buffered types
-** show total per resource
+** [x] move to 3.1.2 and try using input buffered types
+** [x]  show total per resource
 ** fix a bug for when changing dates
 ** add color code
-** implement the dropdown componenet
-** merge td of resource with project & assignment {colspan 3}
-** merge td  project & assignment {colspan 2}
-** merge td resource & project  for assignment lines
+** [x] implement the dropdown componenet
+** [x] merge td of resource with project & assignment {colspan 3}
+** [x]  merge td  project & assignment {colspan 2}
+** [x] merge td resource & project  for assignment lines
 *** apply color for empty cells  (3 first colomns)
-** reduire font size du tableau
+** [x] reduire font size du tableau
 ** apply colors for headers & rest ...
 ** fix resource / project / columns
 ** show 10 first resources / add more / add check all
 
-** sort  the names of resources alphabetically
+** [x] sort  the names of resources alphabetically
 
 ** change menu colors to color blue
 
