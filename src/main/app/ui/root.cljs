@@ -1581,7 +1581,7 @@
                                      (ui-table-body {} (map ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
 
       (ui-segment {:style {:textAlign "center"}}
-                  (div  "Please login with Fluxym account")))
+                  (div :.ui.container  "Please login with Fluxym account")))
     ))
 
 
