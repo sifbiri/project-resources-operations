@@ -1559,7 +1559,7 @@
                                              :overflowX "scroll"
                                              :overflowY "visible"
                                              :paddingBottom "5px"
-                                             :width "900px"
+                                             :width "920px"
                                              :height "900px"}}
                                     
                            #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
@@ -1567,12 +1567,13 @@
                                               :position "relative"
                                               
                                               
-                                              } :celled true }
-                                     (thead 
-                                      {:fullWidth true :style {:backgroundColor "red" :position "sticky" :top 0}}
-                                      (tr  {:style {:backgroundColor "red"}}
+                                              } :celled true :striped true}
+                                     (ui-table-header
+                                      {:fullWidth true :style {:position "sticky" :top 0}}
+                                      (ui-table-row
+                                       {:style {:backgroundColor "red"}}
 
-                                           (map #(th {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0
+                                           (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0
                                                               }} %) ["Resource" "Project" "Assignement "])
 
                                            (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"
