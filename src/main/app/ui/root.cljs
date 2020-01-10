@@ -53,6 +53,8 @@
    [com.fulcrologic.semantic-ui.elements.segment.ui-segment :refer [ui-segment]]
 
    [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
+   [app.ui.users :as users]
+   [app.ui.teams :as teams]
 
 
 
@@ -73,6 +75,9 @@
    [com.fulcrologic.semantic-ui.collections.grid.ui-grid-row :refer [ui-grid-row]]
    [com.fulcrologic.semantic-ui.modules.checkbox.ui-checkbox :refer [ui-checkbox]]
    [com.fulcrologic.semantic-ui.elements.divider.ui-divider :refer [ui-divider]]
+
+   [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown-menu :refer [ui-dropdown-menu]]
+   [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown-item :refer [ui-dropdown-item]]
 
    [com.fulcrologic.semantic-ui.collections.menu.ui-menu-menu :refer [ui-menu-menu]]
    
@@ -101,6 +106,10 @@
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
 
    ))
+
+
+
+
 
 
 (def ui-sticky-table (interop/react-factory StickyTable/StickyTable))
@@ -561,8 +570,8 @@
                     {:onClick #(uism/trigger! this ::session/session :event/logout)}
                     (dom/span current-user) ent/nbsp "Log out")
 
-        (dom/div {:style   {:position "relative"}
-                         :onClick #(uism/trigger! this ::session/session :event/toggle-modal)}
+        (dom/div {:style {}
+                  :onClick #(uism/trigger! this ::session/session :event/toggle-modal)}
                  "Login"
                  (when open?
                    (dom/div :.four.wide.ui.raised.blue.segment {:onClick (fn [e]
@@ -634,31 +643,7 @@
 
   )
 
-(defsc Resource
-  [this {:resource/keys [id name email-address]}]
-  {:query [:resource/id :resource/name :resource/email-address ]
-   :ident :resource/id}
-  #_(let
-        [resources-options (:resource/options (comp/props this))]
 
-
-
-      (dom/div
-       (ui-dropdown {:placeholder "Select Resource"
-                     :options  options
-                     :search   true
-                     :onChange (fn [evt data] (println (.-value data)
-                                                       )
-                                 (m/set-value! this :resource/id  (.-value data))
-
-
-
-                                 )
-                     :value id})
-       ;;
-
-       #_(when (:resource/id resource)
-           (p "hello there")))))
 
 
 
@@ -670,7 +655,7 @@
 (defsc SelectedProject
   [this {:selected/keys [project]}]
   {:query [:selected/project (comp/get-query Project)
-           {:selected/resource (comp/get-query Resource)}]
+           {:selected/resource (comp/get-query users/Resource)}]
    :ident (fn [] [:component/id :selected])}
 
 
@@ -685,7 +670,7 @@
   (dom/p (:project/name project)))
 
 
-(def ui-resource (comp/factory Resource))
+
 
 
 
@@ -746,7 +731,7 @@
   {:query [:project-line/id
            [:ui/dates '_]
            {:project-line/project (comp/get-query Project)}
-           {:project-line/resource (comp/get-query Resource)}
+           {:project-line/resource (comp/get-query users/Resource)}
            {:project-line/assignments (comp/get-query Assignment)}
            :ui/selected ]
    :ident (fn [] [:project-line/id id])
@@ -846,7 +831,7 @@
                            :as props}]
   {:query
    [:ui/selected
-    {:resource-line/resource (comp/get-query Resource)
+    {:resource-line/resource (comp/get-query users/Resource)
      }
     :resource-line/totals
     [:ui/dates '_]
@@ -994,7 +979,8 @@
 
                                            (when selected
                                              (map ui-project-line project-lines)))))
-(def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id}))
+(def ui-resource-line (comp/factory ResourceLine))
+
 
 
 (defmutation set-project-line [{:keys [resource project  id]}]
@@ -1403,7 +1389,7 @@
                  (dr/route-deferred
                   [:component/id :workplan]
                   (fn []
-                    (df/load! app :resource/all-resources Resource {:post-mutation `resource/create-resource-options})
+                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target (targeting/append-to [:component/id :admin-users :admin-users/resources])})
                     (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
 
 
@@ -1561,7 +1547,7 @@
                                              :overflowY "visible"
                                              :paddingBottom "5px"
                                              :width "920px"
-                                             :height "900px"}}
+                                             :height "800px"}}
                                     
                            #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
                            (ui-table {:style {:fontSize "90%"
@@ -1574,8 +1560,7 @@
                                       (ui-table-row
                                        {:style {:backgroundColor "red"}}
 
-                                           (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0
-                                                              }} %) ["Resource" "Project" "Assignement "])
+                                           (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
 
                                            (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"
                                                                                 :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
@@ -1592,7 +1577,7 @@
                                         ;(dr/change-route)
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan]})
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams]})
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -1629,41 +1614,21 @@
                                     (ui-menu-item {}
                                                   (dom/img {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} ))
                                     (ui-menu-item {:name "WorkPlan" :active (= :workplan current-tab) :onClick (fn [event]
-                                                                                                                 (dr/change-route this ["workplan"]))} )
+                                                                                                                 (dr/change-route this (dr/path-to  WorkPlan)))} )
                                     
                                     (ui-menu-item {:name "Calendar" :active (= :main current-tab) :onClick (fn [event] (dr/change-route this ["main"]))} )
                                     
-                                    
-                                    (ui-menu-menu {:position :right }
-                                                  (ui-menu-item {:style {}:name "Admin"} )
+                                    (ui-menu-item {:position :right :content (ui-dropdown {:item true :text "Admin"}
+                                                                                          (ui-dropdown-menu {}
+                                                                                                            (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
+                                                                                                            (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")))}
                                                   )
 
                                     
-                                    (ui-menu-item {:name "Login"}
+                                    (ui-menu-item {:style {:borderLeft "1px solid #e8e9e9"} :name "Login"}
                                                   (ui-login login))
                                     )
-                           #_(div :.ui.secondary.pointing.menu {:style {:width "100%"}}
-                                (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
-
-                                (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
-                                               :onClick (fn [event]
-
-
-                                                          (dr/change-route this ["workplan"]))} "WorkPlan")
-
-                                (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                                               :onClick (fn []
-                                        ;(m/load! this )
-                                                          (dr/change-route this ["main"]))} "Calendar")
-
-                                (div :.right.menu
-                                     (dom/a :.item {:classes [(when (= :main current-tab) "active")]
-                                                    :onClick (fn []
-                                        ;(m/load! this )
-                                                               (dr/change-route this ["main"]))} "Calendar")
-                                     (ui-login login)
-
-                                     ))
+                           
                            )
              (ui-grid-row {}
                           (ui-top-router router)))))

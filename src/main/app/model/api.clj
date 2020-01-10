@@ -143,6 +143,9 @@
 
     (map (fn [x] (update x :resource/id #(uuid %))) response)
     
+    (map (fn [x] (assoc x :resource/active? true :resource/profile :profile/user)) response)
+    
+    
     ))
 
 

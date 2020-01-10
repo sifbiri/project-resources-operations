@@ -25,7 +25,7 @@
 
 
             fulcrologic/fulcro
-           {:git/url "https://github.com/fulcrologic/fulcro" :sha "ec0a79c0a70c34d1065b3fb97bc137025c96e6d2"
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "8bebdbaac48309c7dd44bff0a8ff0b75b672697b"
             
             }
 

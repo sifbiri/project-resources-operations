@@ -273,6 +273,9 @@
   
   }
 
+
+ 
+
  {:db/id #db/id[:db.part/db]
 
   :db/ident :resource/modified-date
@@ -281,4 +284,47 @@
   :db/cardinality :db.cardinality/one
   
   }
+
+
+
+ ;; local 
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :resource/active?
+
+  :db/valueType :db.type/boolean
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :resource/active?
+
+  :db/valueType :db.type/boolean
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :resource/profile
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+ 
+
+ {:db/ident :profile/admin}
+ {:db/ident :profile/team-leader}
+ {:db/ident :profile/project-manager}
+ {:db/ident :profile/user}
+
+ 
  ]
