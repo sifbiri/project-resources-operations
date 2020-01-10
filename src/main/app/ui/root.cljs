@@ -73,6 +73,8 @@
    [com.fulcrologic.semantic-ui.collections.grid.ui-grid-row :refer [ui-grid-row]]
    [com.fulcrologic.semantic-ui.modules.checkbox.ui-checkbox :refer [ui-checkbox]]
    [com.fulcrologic.semantic-ui.elements.divider.ui-divider :refer [ui-divider]]
+
+   [com.fulcrologic.semantic-ui.collections.menu.ui-menu-menu :refer [ui-menu-menu]]
    
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
@@ -553,48 +555,46 @@
 
 
 
-    (dom/div
-     (when-not initial?
-       (dom/div :.right.menu
-                (if logged-in?
-                  (dom/button :.item
-                              {:onClick #(uism/trigger! this ::session/session :event/logout)}
-                              (dom/span current-user) ent/nbsp "Log out")
+    (when-not initial?
+      (if logged-in?
+        (dom/button :.item
+                    {:onClick #(uism/trigger! this ::session/session :event/logout)}
+                    (dom/span current-user) ent/nbsp "Log out")
 
-                  (dom/div :.item {:style   {:position "relative"}
-                                   :onClick #(uism/trigger! this ::session/session :event/toggle-modal)}
-                           "Login"
-                           (when open?
-                             (dom/div :.four.wide.ui.raised.teal.segment {:onClick (fn [e]
-                                                                                     ;; Stop bubbling (would trigger the menu toggle)
-                                                                                     (evt/stop-propagation! e))
-                                                                          :classes [floating-menu]}
-                                      (dom/h3 :.ui.header "Login")
-                                      (div :.ui.form {:classes [(when (seq error) "error")]}
-                                           (field {:label    "Email"
-                                                   :value    email
-                                                   :onChange #(m/set-string! this :account/email :event %)})
-                                           (field {:label    "Password"
-                                                   :type     "password"
-                                                   :value    password
-                                                   :onChange #(comp/set-state! this {:password (evt/target-value %)})})
-                                           (div :.ui.error.message error)
-                                           (div :.ui.field
-                                                (dom/button :.ui.button
-                                                            {:onClick (fn [] (uism/trigger! this ::session/session :event/login {:username email
-                                                                                                                                 :password password}))
-                                                             :classes [(when loading? "loading")]} "Login"))
+        (dom/div {:style   {:position "relative"}
+                         :onClick #(uism/trigger! this ::session/session :event/toggle-modal)}
+                 "Login"
+                 (when open?
+                   (dom/div :.four.wide.ui.raised.blue.segment {:onClick (fn [e]
+                                                                           ;; Stop bubbling (would trigger the menu toggle)
+                                                                           (evt/stop-propagation! e))
+                                                                :classes [floating-menu]}
+                            (dom/h3 :.ui.header "Login")
+                            (div :.ui.form {:classes [(when (seq error) "error")]}
+                                 (field {:label    "Email"
+                                         :value    email
+                                         :onChange #(m/set-string! this :account/email :event %)})
+                                 (field {:label    "Password"
+                                         :type     "password"
+                                         :value    password
+                                         :onChange #(comp/set-state! this {:password (evt/target-value %)})})
+                                 (div :.ui.error.message error)
+                                 (div :.ui.field
+                                      (dom/button :.ui.button
+                                                  {:onClick (fn [] (uism/trigger! this ::session/session :event/login {:username email
+                                                                                                                       :password password}))
+                                                   :classes [(when loading? "loading")]} "Login"))
 
 
 
 
 
-                                           #_(div :.ui.message
-                                                  (dom/p "Don't have an account?")
-                                                  (dom/a {:onClick (fn []
-                                                                     (uism/trigger! this ::session/session :event/toggle-modal {})
-                                                                     (dr/change-route this ["signup"]))}
-                                                         ))))))))))))
+                                 #_(div :.ui.message
+                                        (dom/p "Don't have an account?")
+                                        (dom/a {:onClick (fn []
+                                                           (uism/trigger! this ::session/session :event/toggle-modal {})
+                                                           (dr/change-route this ["signup"]))}
+                                               ))))))))))
 
 (def ui-login (comp/factory Login))
 
@@ -1320,6 +1320,7 @@
      (dom/input   {
                    :type "checkbox"
                    :checked checked?
+                   :indeterminate true
                    :style {:padding "10px"}
                                 
                                 :onChange (fn [_ d]
@@ -1623,8 +1624,25 @@
                    :root/current-session {}}}
   (let [current-tab (some-> (dr/current-route this this) first keyword)]
     (ui-grid { :container true  :divided false :columns 2 } 
-             (ui-grid-row  {:strechted true} 
-                           (div :.ui.secondary.pointing.menu {:style {:width "100%"}}
+             (ui-grid-row  {:strechted true}
+                           (ui-menu {:style {:width "100%"} :stackable true :size "tiny" :floated true}
+                                    (ui-menu-item {}
+                                                  (dom/img {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} ))
+                                    (ui-menu-item {:name "WorkPlan" :active (= :workplan current-tab) :onClick (fn [event]
+                                                                                                                 (dr/change-route this ["workplan"]))} )
+                                    
+                                    (ui-menu-item {:name "Calendar" :active (= :main current-tab) :onClick (fn [event] (dr/change-route this ["main"]))} )
+                                    
+                                    
+                                    (ui-menu-menu {:position :right }
+                                                  (ui-menu-item {:style {}:name "Admin"} )
+                                                  )
+
+                                    
+                                    (ui-menu-item {:name "Login"}
+                                                  (ui-login login))
+                                    )
+                           #_(div :.ui.secondary.pointing.menu {:style {:width "100%"}}
                                 (ui-image {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} )
 
                                 (dom/a :.item {:classes [(when (= :workplan current-tab) "active")]
@@ -1639,9 +1657,14 @@
                                                           (dr/change-route this ["main"]))} "Calendar")
 
                                 (div :.right.menu
+                                     (dom/a :.item {:classes [(when (= :main current-tab) "active")]
+                                                    :onClick (fn []
+                                        ;(m/load! this )
+                                                               (dr/change-route this ["main"]))} "Calendar")
                                      (ui-login login)
 
-                                     )))
+                                     ))
+                           )
              (ui-grid-row {}
                           (ui-top-router router)))))
 
