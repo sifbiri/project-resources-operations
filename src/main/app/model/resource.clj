@@ -12,15 +12,21 @@
 (pc/defresolver resource-resolver [env {:resource/keys [id]}]
   {::pc/input  #{:resource/id}
    ::pc/output [:resource/name :resource/email-address]}
-  (first (d/q '[:find ?name ?ea
+  (first (d/q '[:find ?name ?ea ?profile ?active
                 :in $ ?id
-                :keys :resource/name :resource/email-address
+                :keys :resource/name :resource/email-address :resource/profile :resource/active?
                 :where
                 [?r :resource/id ?id]
                 [?r :resource/name ?name]
                 [?r :resource/email-address ?ea]
-                ] (d/db conn) id)
-))
+
+                [?r :resource/profile ?profile]
+                [?r :resource/active? ?active]
+
+                
+                ] (d/db conn) id)))
+
+
 
 (pc/defresolver all-resources-resolver [env _]
   {::pc/output [{:resource/all-resources [:resource/id]}]}
