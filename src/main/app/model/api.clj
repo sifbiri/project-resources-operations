@@ -143,7 +143,10 @@
 
     (map (fn [x] (update x :resource/id #(uuid %))) response)
     
-    (map (fn [x] (assoc x :resource/active? true :resource/profile :profile/user)) response)
+    (map (fn [x] (assoc x
+                   ;:resource/active? true
+                        ;:resource/profile :profile/user
+                        )) response)
     
     
     ))
@@ -409,7 +412,8 @@
 
                                         ;(transact-all  conn "resources/edn/schema.edn")
                                         ;(transact-all2 conn (reduce (fn [r x] (conj r [x] )) [] assignement-phased))
-(def all-projects (butlast (get-all-projects)))
+
+#_(def all-projects (butlast (get-all-projects)))
 
 (defn project-by-name
   [name]
@@ -482,3 +486,12 @@
        (reduce (fn [r [{:keys [:user-id :a]} :as k] v] (update r a conj {k v}))) {}))
 
 
+
+;; (d/transact {:db/id 17592186048985 :resource/profile}
+;;             (d/connect "datomic:dev://localhost:4334/one2"))
+
+
+
+
+
+#_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))

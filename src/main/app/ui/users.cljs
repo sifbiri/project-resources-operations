@@ -113,6 +113,13 @@
    ))
 
 
+
+
+
+
+
+
+
 (defsc Resource
   [this {:resource/keys [id name email-address profile]}]
   {:query [:resource/id :resource/name :resource/email-address :resource/active? :resource/profile]
@@ -143,7 +150,7 @@
                                         ;)
 
   
-  (js/console.log "PROFILE" profile)
+  #_(js/console.log "PROFILE" profile)
   (ui-list-item {}
                 (ui-list-content {:floated :right}
                                  (ui-form {}
@@ -158,8 +165,10 @@
                                                                                                    {:text "User" :value :profile/user}]
                                                :value profile
                                                :onChange (fn [event data]
-                                                           (println (keyword (str "profile/" (.-value data)))))}))
-
+                                                           (comp/transact! this [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
+                                                           
+                                                           (js/console.log "profile" profile))}))
+                
                 (ui-list-content {:floated :right}
                                  email-address)
                 (ui-list-content {} name)

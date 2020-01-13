@@ -27,7 +27,7 @@
                                     #_(has-reader-error? body)
                                     (not= 200 status-code)))
 
-           ;:optimized-render! kr/render!
+               ;:optimized-render! kr/render!
                :client-did-mount
                (fn [app]
                  (let [WorkLine (comp/registry-key->class :app.ui.root/WorkLine)

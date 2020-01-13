@@ -1,5 +1,5 @@
 (ns app.model.resource
-  (:require [com.fulcrologic.fulcro.mutations :refer [defmutation]]
+  (:require [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
             [clojure.set :as set]
@@ -7,6 +7,7 @@
             [app.math :as math]
             [com.fulcrologic.fulcro.algorithms.form-state :as fs]
             [com.fulcrologic.fulcro.algorithms.denormalize :as fdn]
+            ;[app.ui.users :as users]
             [taoensso.timbre :as log]))
 
 
@@ -36,3 +37,14 @@
               (doseq [v r]
                 
                 (swap! state merge/merge-component ResourceCheckboxItem (assoc v :checkbox/checked? false)) )))))
+
+
+
+(defmutation set-resource-profile [{:keys [id value]}]
+  (action [{:keys [state]}]
+          (let [tasks (vals (get @state :task/id))]
+            (swap! state assoc-in [:resource/id id :resource/profile] value)))
+
+  (remote [env]
+          (let [Resource (comp/registry-key->class :app.ui.users/Resource)]
+            true)))

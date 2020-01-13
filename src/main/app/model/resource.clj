@@ -9,7 +9,7 @@
 
 
 
-(pc/defresolver resource-resolver [env {:resource/keys [id]}]
+(pc/defresolver resource-resolver [{:keys [db]} {:resource/keys [id]}]
   {::pc/input  #{:resource/id}
    ::pc/output [:resource/name :resource/email-address]}
   (first (d/q '[:find ?name ?ea ?profile ?active
@@ -24,16 +24,27 @@
                 [?r :resource/active? ?active]
 
                 
-                ] (d/db conn) id)))
+                ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id)))
 
 
 
-(pc/defresolver all-resources-resolver [env _]
-  {::pc/output [{:resource/all-resources [:resource/id]}]}
-  {:resource/all-resources (flatten (seq (d/q  '[:find ?f
-                                                 :keys resource/id
-                                                 :where
-                                                 [?e :resource/id ?f]
-                                                 ] (d/db conn))))})
+(pc/defmutation set-resource-profile [{:keys [db connection]} {:keys [id value]}]
+  {::pc/sym `set-resource-profile
+   ::pc/params [:id :val]
+   ::pc/output [:resource/id]}
+  (d/transact (d/connect "datomic:dev://localhost:4334/one2")
+              [{:db/id [:resource/id id] :resource/profile value}])
+  
+  {:resource/id id})
 
-(def resolvers  [resource-resolver all-resources-resolver])
+
+(pc/defresolver all-resources-resolver [{:keys [db connection]} _]
+  {::pc/output [{:resource/all-resources [:resource/id :resource/name :resource/email-address]}]}
+  {:resource/all-resources (map #(d/touch (d/entity  (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id (:resource/id %)]))
+                                (flatten (seq (d/q  '[:find ?f
+                                                      :keys resource/id
+                                                      :where
+                                                      [?e :resource/id ?f]
+                                                      ] db))))})
+
+(def resolvers  [set-resource-profile resource-resolver all-resources-resolver ])

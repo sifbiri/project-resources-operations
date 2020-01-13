@@ -1298,6 +1298,7 @@
   {:query [:checkbox/checked?  :checkbox/value :checkbox/label ]
    :initial-state {:checkbox/checked? false}
    :ident (fn [] [:checkbox/id (:checkbox/value props)])
+   ;:shouldComponentUpdate (fn [_ _ _] true)
    }
 
   
@@ -1311,8 +1312,9 @@
                                 
                                 :onChange (fn [_ d]
                                            
-                                           (m/toggle! this :checkbox/checked?)
-                                            (if (not checked?)
+                                            (m/toggle! this :checkbox/checked?)
+                                            (js/console.log "checked" (comp/props this))
+                                           (if (not checked?)
                                               
                                               (merge/merge-component! SPA  ResourceLine
                                                                       {:resource-line/resource [:resource/id value]
@@ -1351,9 +1353,10 @@
                                         
                                         )))})
          (dom/label {:style {:color "#3281b9"}} "Check all")
-     (ui-divider {})
-     (map ui-resource-checkbox-item (take (if show-more? 100 10) items))
-     (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
+         (ui-divider {})
+         (js/console.log "ITEMS" items)
+         (map #(ui-resource-checkbox-item (assoc % :checkbox/checked? false)) (take (if show-more? 100 10) items))
+         (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
                  :onClick (fn []
                             (m/toggle! this :list/show-more?)
                             )}
@@ -1392,7 +1395,7 @@
                     (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target (targeting/append-to [:component/id :admin-users :admin-users/resources])})
                     (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
 
-
+   ;:shouldComponentUpdate (fn [_ _ _] true)
    :initial-state (fn [params]
                     {
 
@@ -1435,17 +1438,15 @@
 
                                                 ])
 
-                          
-
-
-                          (merge/merge-component! SPA ResourcesCheckboxes
+                          #_(merge/merge-component! SPA ResourcesCheckboxes
                                                   {:list/items (:resource/options (comp/props this))
                                                    :list/all-checked? false})
 
                           
-                          (doseq [v (:resource/options (comp/props this))]
-                            (merge/merge-component! SPA ResourceCheckboxItem v
-                                                    ) ))
+                          #_(doseq [v (:resource/options (comp/props this))]
+                            (do(js/console.log "VALUE" v)
+                               (merge/merge-component! SPA ResourceCheckboxItem v
+                                                       )) ))
 
                         
                         )
@@ -1606,7 +1607,9 @@
    :ident         (fn [] [:component/id :top-chrome])
    :initial-state {:root/router          {}
                    :root/login           {}
-                   :root/current-session {}}}
+                   :root/current-session {}}
+                                        ;:shouldComponentUpdate (fn [_ _ _] true)
+   }
   (let [current-tab (some-> (dr/current-route this this) first keyword)]
     (ui-grid { :container true  :divided false :columns 2 } 
              (ui-grid-row  {:strechted true}
@@ -1658,7 +1661,7 @@
    ;;                                      ;(comp/transact! [()] :work-day/all-work-lines)
    ;;                      )
    :initial-state {:root/top-chrome {}}}
-
+  
 
   (ui-top-chrome top-chrome)
   )
