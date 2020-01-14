@@ -20,11 +20,19 @@
                                                       (conj r m))) [] resources)
                 r (into []
                         (map #(set/rename-keys % {:resource/id   :checkbox/value
-                                                  ;:resource/email-address :checkbox/key
+                                        ;:resource/email-address :checkbox/key
                                                   :resource/name :checkbox/label})
-                             resources-reduced))]
+                             resources-reduced))
+
+
+                r2 (into []
+                         (map #(set/rename-keys % {:resource/id   :value
+                                        ;:resource/email-address :checkbox/key
+                                                :resource/name :text})
+                           resources-reduced))]
             
             (swap! state assoc :resource/options r)
+            (swap! state assoc :resource/options2 r2)
             
 
             
@@ -48,3 +56,12 @@
   (remote [env]
           (let [Resource (comp/registry-key->class :app.ui.users/Resource)]
             true)))
+
+
+(defmutation set-resource-active? [{:keys [id value]}]
+  (action [{:keys [state]}]
+          (let [tasks (vals (get @state :task/id))]
+            (swap! state assoc-in [:resource/id id :resource/active?] value)))
+
+  (remote [env]
+          true))

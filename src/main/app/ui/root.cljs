@@ -1621,7 +1621,8 @@
                                     
                                     (ui-menu-item {:name "Calendar" :active (= :main current-tab) :onClick (fn [event] (dr/change-route this ["main"]))} )
                                     
-                                    (ui-menu-item {:position :right :content (ui-dropdown {:item true :text "Admin"}
+                                    (ui-menu-item {:position :right :active (or (= current-tab :admin-teams)
+                                                                                (= current-tab :admin-users)) :content (ui-dropdown {:item true :text "Admin"}
                                                                                           (ui-dropdown-menu {}
                                                                                                             (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
                                                                                                             (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")))}
@@ -1806,7 +1807,6 @@
 
                                         ;(tt/plus (tf/parse (tf/formatter "yyyy-mm-dd") "2019-12-10") (tt/days 1))
                                         ;(tf/unparse (tf/formatter "yyyy-mm-dd") r)
-
 
 
 

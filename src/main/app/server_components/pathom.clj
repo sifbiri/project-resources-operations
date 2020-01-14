@@ -15,6 +15,7 @@
     [app.model.session :as session]
     [app.model.resource :as resource]
     [app.model.item :as item]
+    [app.model.team :as team]
     [datomic.api :as d]
     [app.server-components.config :refer [config]]
     [app.model.database :as db]))
@@ -27,7 +28,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [acct/resolvers session/resolvers resource/resolvers project/resolvers index-explorer wol/resolvers #_project/resolvers item/resolvers])
+(def all-resolvers [acct/resolvers session/resolvers resource/resolvers project/resolvers index-explorer wol/resolvers #_project/resolvers item/resolvers team/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.

@@ -287,7 +287,7 @@
 
 
 
- ;; local 
+ ;; local Resources
 
  {:db/id #db/id[:db.part/db]
 
@@ -326,5 +326,55 @@
  {:db/ident :profile/project-manager}
  {:db/ident :profile/user}
 
+
+ ;; local Teams
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :team/name
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+
+  :db/unique  :db.unique/identity
+  }
+
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :team/type
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :team/resources
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/many
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :team/lead
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
  
  ]
+

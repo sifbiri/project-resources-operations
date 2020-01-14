@@ -121,7 +121,7 @@
 
 
 (defsc Resource
-  [this {:resource/keys [id name email-address profile]}]
+  [this {:resource/keys [id name email-address profile active?]}]
   {:query [:resource/id :resource/name :resource/email-address :resource/active? :resource/profile]
    :ident :resource/id}
  ;; (let
@@ -154,8 +154,12 @@
   (ui-list-item {}
                 (ui-list-content {:floated :right}
                                  (ui-form {}
-                                          (ui-form-field {:control Checkbox
-                                                          :label (dom/label "Enable")})))
+                                          (ui-form-field {} (ui-form-checkbox {:label "Enable"
+                                                                               :checked active?
+                                                                               :onChange
+                                                                               (fn [e d]
+                                                                                 (m/toggle! this :resource/active?)
+                                                                                 (comp/transact! this [(resource/set-resource-active? {:value  (.-checked d) :id id})]))}))))
 
                 (ui-list-content {:floated :right}
                                  (ui-dropdown {:compact true :basic true 

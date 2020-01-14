@@ -38,6 +38,17 @@
   {:resource/id id})
 
 
+
+(pc/defmutation set-resource-active? [{:keys [db connection]} {:keys [id value]}]
+  {::pc/sym `set-resource-active?
+   ::pc/params [:id :val]
+   ::pc/output [:resource/id]}
+  (d/transact (d/connect "datomic:dev://localhost:4334/one2")
+              [{:db/id [:resource/id id] :resource/active? value}])
+  
+  {:resource/id id})
+
+
 (pc/defresolver all-resources-resolver [{:keys [db connection]} _]
   {::pc/output [{:resource/all-resources [:resource/id :resource/name :resource/email-address]}]}
   {:resource/all-resources (map #(d/touch (d/entity  (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id (:resource/id %)]))
@@ -47,4 +58,4 @@
                                                       [?e :resource/id ?f]
                                                       ] db))))})
 
-(def resolvers  [set-resource-profile resource-resolver all-resources-resolver ])
+(def resolvers  [set-resource-profile resource-resolver all-resources-resolver set-resource-active? ])
