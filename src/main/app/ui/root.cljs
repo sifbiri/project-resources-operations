@@ -1256,12 +1256,14 @@
 (defmutation check-all-resource-boxes [{:keys []}]
   (action [{:keys [state] :as env}]
           
-          (let [ids  (map first (:checkbox/id @state))]
-            (doseq [id ids]
-              (js/console.log "ID" id)
+          (let [active-checkboxes (filter #(and (:resource/active? %) (:resource/email-address %)) (vals (:checkbox/id @state)))
+                active-ids  (map :checkbox/value active-checkboxes)]
+            (doseq [id active-ids]
+              
               (swap! state assoc-in [:checkbox/id id :checkbox/checked?] true)
               )
-            (comp/transact! SPA  [(set-resource-lines {:ids ids})]))
+            (js/console.log "active ids" active-ids)
+            (comp/transact! SPA  [(set-resource-lines {:ids active-ids})]))
           
           ))
 
@@ -1332,8 +1334,10 @@
   {:query [{:list/items (comp/get-query ResourceCheckboxItem)  } :list/all-checked? :list/show-more?]
    :ident (fn [] [:component/id :checkboxes])
    :initLocalState (fn [_] {:all-checked? false :list/show-more? false})}
-  (let [#_#_all-checked? (every? item-checked? items)]
+  (let [#_#_all-checked? (every? item-checked? items)
+        show-more? (comp/get-state this :list/show-more?)]
 
+    (js/console.log "item2s" show-more?)
     (dom/div :.ui.checkbox
          (dom/input {
                      :type "checkbox"
@@ -1355,11 +1359,12 @@
          (dom/label {:style {:color "#3281b9"}} "Check all")
          (ui-divider {})
          (js/console.log "ITEMS" items)
-         (map #(ui-resource-checkbox-item (assoc % :checkbox/checked? false)) (take (if show-more? 100 10) items))
+         (map #(ui-resource-checkbox-item  % )
+              (take (if show-more? 100 10) items))
          (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
-                 :onClick (fn []
-                            (m/toggle! this :list/show-more?)
-                            )}
+                 :onClick (fn [e]
+                            #_(m/toggle! this :list/show-more?)
+                            (comp/set-state! this  {:list/show-more? (not show-more?)}))}
                 (if show-more? "Show less" "Show more")))))
 
 (def ui-resources-checkboxes  (comp/factory ResourcesCheckboxes))
@@ -1383,6 +1388,7 @@
                                         ;{:workplan/selected (comp/get-query SelectedProject)}
 
                    [:resource/options '_]
+                   [:checkbox/id '_]
                    [:ui/dates '_]
                    [df/marker-table :projects]]
    :ident         (fn [] [:component/id :workplan])
@@ -1416,7 +1422,7 @@
                      ;; (tf/unparse (tf/formatters :date)
                      ;;                             (tt/plus (tt/now) (tt/weeks 3)))
                      })
-
+   
    :initLocalState (fn [this props]
                      {:active-index -1
                       :all? false})
@@ -1440,7 +1446,8 @@
 
                           #_(merge/merge-component! SPA ResourcesCheckboxes
                                                   {:list/items (:resource/options (comp/props this))
-                                                   :list/all-checked? false})
+                                                   :list/all-checked? false
+                                                   :list/show-more? false})
 
                           
                           #_(doseq [v (:resource/options (comp/props this))]
@@ -1450,9 +1457,12 @@
 
                         
                         )
+  
    }
   (let [resources-options (:resource/options (comp/props this))
         marker (get props [df/marker-table :projects] )
+        active-resources (vec (filter (fn [m] (and (:resource/email-address m) (:resource/active? m)))
+                                      (vals (:checkbox/id (comp/props this)))))
         current-state (uism/get-active-state this ::session/session)
         logged-in? (= :state/logged-in current-state)
         active-index (comp/get-state this :active-index)
@@ -1466,8 +1476,8 @@
 
                                         
 
-
     
+    (js/console.log "active" active-resources)
     (if (and dates logged-in?)
       
       [
@@ -1535,7 +1545,8 @@
                                                                   :content (ui-form {}
                                                                                     (ui-form-group {:grouped true}
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
-                                                                                                                  (ui-resources-checkboxes {:list/items (take  (if show-more? 100 10) resources-options) :list/all-checked? false})  )
+                                                                                                                  (ui-resources-checkboxes {:list/items active-resources
+                                                                                                                                            :list/all-checked? false})  )
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
                                                                                                                     )))})))))
        

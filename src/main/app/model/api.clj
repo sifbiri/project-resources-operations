@@ -493,7 +493,4 @@
 #_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
 
-[{:team/name "Desjardins"
-  :team/type :organization
-  :team/lead 17592186048933
-  :team/resources [17592186050715 17592186050592]}]
+

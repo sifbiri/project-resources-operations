@@ -40,7 +40,8 @@
             (let [ResourceCheckboxItem (comp/registry-key->class :app.ui.root/ResourceCheckboxItem)
                   ResourcesCheckboxes (comp/registry-key->class :app.ui.root/ResourcesCheckboxes)]
 
-              (swap! state merge/merge-component  ResourcesCheckboxes {:list/items r :list/all-checked? false})
+              (swap! state merge/merge-component  ResourcesCheckboxes {:list/show-more? true :list/items (filter #(and (:resource/active? %) (:resource/email-address %))
+                                                                                                                 (vals (:resource/id @state))) :list/all-checked? false})
 
               (doseq [v r]
                 
@@ -61,7 +62,8 @@
 (defmutation set-resource-active? [{:keys [id value]}]
   (action [{:keys [state]}]
           (let [tasks (vals (get @state :task/id))]
-            (swap! state assoc-in [:resource/id id :resource/active?] value)))
+            (swap! state assoc-in [:resource/id id :resource/active?] value)
+            (swap! state assoc-in [:checkbox/id id :resource/active?] value)))
 
   (remote [env]
           true))

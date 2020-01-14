@@ -4,6 +4,9 @@
 
 
    [com.fulcrologic.fulcro.dom.inputs :as inputs]
+   [app.model.team :as team]
+   [com.fulcrologic.fulcro.dom.events :as evt]
+   
 
    [com.fulcrologic.semantic-ui.elements.input.ui-input :refer [ui-input]]
    [com.fulcrologic.semantic-ui.elements.icon.ui-icon :refer [ui-icon]]
@@ -120,20 +123,7 @@
 
 
 
-(defmutation add-team-member [{:keys [team-id team-member-id]}]
-  (action [{:keys [state]}]
-          (js/console.log "ID" team-member-id)
-          (swap! state (fn [state]
-                         (-> state
-                             (update-in [:team/id team-id :team/resources] conj [:resource/id team-member-id] ))))))
 
-
-(defmutation delete-team-member [{:keys [team-id team-member-id]}]
-  (action [{:keys [state]}]
-          (js/console.log "ID" team-member-id)
-          (swap! state (fn [state]
-                         (-> state
-                             (merge/remove-ident* [:resource/id team-member-id] [:team/id team-id :team/resources]))))))
 
 
 (defsc Team [this {:team/keys [name type lead resources] :keys [resource/options2 resource/options db/id] :as props}]
@@ -147,7 +137,7 @@
    
 
    }
-  (js/console.log "options" (comp/props this))
+  (js/console.log "options" name)
   (let [filtered-resources (filterv #(not= (:resource/profile %) :profile/user) options2)]
     (js/console.log "RRR" )
     (ui-modal {:trigger (ui-table-row {:onClick (fn [e] (js/console.log "Clicked"))}
@@ -164,14 +154,21 @@
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Team Name")
                                                                                      (ui-input {:placeholder "Team Name"
-                                                                                                :onChange (fn [e d] (m/set-string! this :team/name :event e))
-                                                                                                :value name}))
+                                                                                                :onChange
+                                                                                                (fn [e d]
+                                                                                                 #_(m/set-string!)
+                                                                                                 (comp/transact! this [(team/set-team-name {:name (evt/target-value e) :team-id id})])
+                                                                                                 )
+                                                                                               :value name
+                                                                                                }))
                                                                       (div {:style {:margin "20px"}})
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Type")
                                                                                      (ui-dropdown
-                                                                                      {:placeholder "Team Name"
-                                                                                       :onChange (fn [e d] (m/set-value! this :team/type (keyword (.-value d))))
+                                                                                      {:placeholder "Team Type"
+                                                                                       :onChange (fn [e d]
+                                                                                                   
+                                                                                                   (comp/transact! this [(team/set-team-type {:type (keyword (.-value d)) :team-id id})]))
                                                                                        :value type
                                                                                        :options [{:text "Organization" :value :organization}
                                                                                                  {:text "Project" :value :project}]}))
@@ -183,16 +180,17 @@
                                                                                      (ui-dropdown {:placeholder "Team Lead"
                                                                                                    :options filtered-resources
                                                                                                    :value (:resource/id lead)
-                                                                                                   :onChange #(m/set-value! this :team/lead [:resource/id (.-value %2)])})
+                                                                                                   
+                                                                                                   :onChange #(comp/transact! this [(team/set-team-lead {:lead-id (.-value %2) :team-id id})])})
                                                                                      
                                                                                      ))
                                                        (ui-form-group {}
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Add Member")
                                                                                      (ui-dropdown {:placeholder "Team Member" 
-                                                                                                   :options (map #(select-keys % [:value :text]) options)                                                                                                   
+                                                                                                   :options options                                                                                                   
                                                                                                    :selection true
-                                                                                                   :onChange #(comp/transact! this [ (add-team-member {:team-member-id (.-value %2) :team-id id})])
+                                                                                                   :onChange #(comp/transact! this [ (team/add-team-member {:team-member-id (.-value %2) :team-id id})])
                                                                                                    :search true
                                                                                                    :item true})
                                                                                      
@@ -209,7 +207,7 @@
                                                         (ui-table-header {}
                                                                          (ui-table-row {} (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) [ "Name" "Action"])))
                                                         (ui-table-body {}
-                                                                       (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(delete-team-member {:team-id id :team-member-id (:resource/id %)})]))} "Delete")) ) resources)
+                                                                       (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})]))} "Delete")) ) resources)
                                                                        ))
                                               )
                                 
