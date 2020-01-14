@@ -125,7 +125,7 @@
           (js/console.log "ID" team-member-id)
           (swap! state (fn [state]
                          (-> state
-                             (update-in   [:team/id team-id :team/resources] conj [:resource/id team-member-id] ))))))
+                             (update-in [:team/id team-id :team/resources] conj [:resource/id team-member-id] ))))))
 
 
 (defmutation delete-team-member [{:keys [team-id team-member-id]}]
@@ -190,10 +190,11 @@
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Add Member")
                                                                                      (ui-dropdown {:placeholder "Team Member" 
-                                                                                                   :options options                                                                                                   
+                                                                                                   :options (map #(select-keys % [:value :text]) options)                                                                                                   
                                                                                                    :selection true
                                                                                                    :onChange #(comp/transact! this [ (add-team-member {:team-member-id (.-value %2) :team-id id})])
-                                                                                                   :search true})
+                                                                                                   :search true
+                                                                                                   :item true})
                                                                                      
                                                                                      ))
                                                        )
