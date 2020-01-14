@@ -1398,7 +1398,7 @@
                  (dr/route-deferred
                   [:component/id :workplan]
                   (fn []
-                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target (targeting/append-to [:component/id :admin-users :admin-users/resources])})
+                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target [:component/id :admin-users :admin-users/resources]})
                     (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
 
    ;:shouldComponentUpdate (fn [_ _ _] true)

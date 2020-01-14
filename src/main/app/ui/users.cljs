@@ -208,7 +208,7 @@
                 (dom/h3 {:style {:textAlign "center"}} "Users" )
 
                 (ui-list {:divided true :verticalAlign "middle"}
-                         (map ui-resource (filter #(seq (:resource/email-address %)) resources))
+                         (map ui-resource (filter #(:resource/email-address %) resources))
                          
                          )))
 
