@@ -233,7 +233,8 @@
 
 
 (defsc Teams [this {:teams/keys [teams]}]
-  {:query         [{:teams/teams (comp/get-query Team)}]
+  {:query         [{:teams/teams (comp/get-query Team)}
+                   [::uism/asm-id ::session/session]]
    :ident         (fn [] [:component/id :admin-teams])
    :route-segment ["admin-teams"]
    :souldComponentUpdate (fn [_ _ _ ] true)
@@ -249,53 +250,58 @@
    }
   
   (js/console.log "teams " teams)
-  (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
-    (ui-container {:style {:width "80%"}}
-                 (dom/h3 {:style {:textAlign "center"}} "Teams" )
+  (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)
+        current-state (uism/get-active-state this ::session/session)
+        logged-in? (= :state/logged-in current-state)]
+    (if logged-in?
+      (ui-container {:style {:width "80%"}}
+                   (dom/h3 {:style {:textAlign "center"}} "Teams" )
 
 
-                 
+                   
 
-                 
+                   
 
-                 
-                 (ui-table {:style {:fontSize "90%"
-                                    :position "relative"
-                                    
-                                    
-                                    }
-                            :celled true
-                            :striped true
-                            :selectable true}
-                           (ui-table-header
-                            {:fullWidth true :style {:position "sticky" :top 0}}
-                            (ui-table-row
-                             {:style {:backgroundColor "red"}}
+                   
+                   (ui-table {:style {:fontSize "90%"
+                                      :position "relative"
+                                      
+                                      
+                                      }
+                              :celled true
+                              :striped true
+                              :selectable true}
+                             (ui-table-header
+                              {:fullWidth true :style {:position "sticky" :top 0}}
+                              (ui-table-row
+                               {:style {:backgroundColor "red"}}
 
-                             (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Action"])
+                               (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Action"])
 
+                               
+                               ))
                              
-                             ))
-                           
-                           (ui-table-body {}
-                                          (map ui-team (remove nil? teams)))
-                           (ui-table-footer {} (ui-table-row {}
-                                                             (ui-table-header-cell {:colSpan 5} (ui-button {:basic true :onClick
-                                                                                                            (fn [e]
-                                                                                                              (merge/merge-component! this Team
-                                                                                                                                      {:db/id (tempid/tempid) :team/name ""}
-                                                                                                                                      :append [:component/id :admin-teams :teams/teams]
-                                                                                                                                      ;:append [:component/id :workplan :workplan/team-checkboxes]
-                                                                                                                                      )
+                             (ui-table-body {}
+                                            (map ui-team (remove nil? teams)))
+                             (ui-table-footer {} (ui-table-row {}
+                                                               (ui-table-header-cell {:colSpan 5} (ui-button {:basic true :onClick
+                                                                                                              (fn [e]
+                                                                                                                (merge/merge-component! this Team
+                                                                                                                                        {:db/id (tempid/tempid) :team/name "" :team/resources []}
+                                                                                                                                        :append [:component/id :admin-teams :teams/teams]
+                                        ;:append [:component/id :workplan :workplan/team-checkboxes]
+                                                                                                                                        )
 
-                                                                                                              #_(merge/merge-component! this  TeamCheckbox
-                                                                                                                                        {:db/id (tempid/tempid) :team/name "" :team/lead nil :team/resources [] }
-                                                                                                                                        
-                                                                                                                                        ))}
-                                                                                                           (ui-icon {:name "plus"} )))
+                                                                                                                #_(merge/merge-component! this  TeamCheckbox
+                                                                                                                                          {:db/id (tempid/tempid) :team/name "" :team/lead nil :team/resources [] }
+                                                                                                                                          
+                                                                                                                                          ))}
+                                                                                                             (ui-icon {:name "plus"} )))
                                         ;(ui-table-header-cell {})
                                         ;(ui-table-header-cell {})
-                                                             ))))))
+                                                               ))))
+      (ui-segment {:style {:textAlign "center"}}
+                  (div :.ui.container  "Please login with Fluxym account")))))
 
 
 

@@ -192,7 +192,7 @@
           
 
 (defsc AdminUsers [this {:admin-users/keys [resources] :as props}]
-  {:query         [{:admin-users/resources (comp/get-query Resource)}]
+  {:query         [{:admin-users/resources (comp/get-query Resource)} [::uism/asm-id ::session/session]]
    :ident         (fn [] [:component/id :admin-users])
    :route-segment ["admin-users"]
                                         ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
@@ -203,14 +203,19 @@
    }
 
   (js/console.log "USERS1" (comp/props this))
-  (ui-container {:style {:width "60%"}}
-                
-                (dom/h3 {:style {:textAlign "center"}} "Users" )
+  (let [current-state (uism/get-active-state this ::session/session)
+        logged-in? (= :state/logged-in current-state)]
+    (if logged-in?
+      (ui-container {:style {:width "60%"}}
+                   
+                   (dom/h3 {:style {:textAlign "center"}} "Users" )
 
-                (ui-list {:divided true :verticalAlign "middle"}
-                         (map ui-resource (filter #(:resource/email-address %) resources))
-                         
-                         )))
+                   (ui-list {:divided true :verticalAlign "middle"}
+                            (map ui-resource (filter #(:resource/email-address %) resources))
+                            
+                            ))
+      (ui-segment {:style {:textAlign "center"}}
+                  (div :.ui.container  "Please login with Fluxym account")))))
 
 
 
