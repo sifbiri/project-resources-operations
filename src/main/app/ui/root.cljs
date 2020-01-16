@@ -1,3 +1,4 @@
+
 (ns app.ui.root
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
@@ -54,7 +55,7 @@
 
    [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
    [app.ui.users :as users]
-   [app.ui.teams :as teams]
+   [app.ui.teams :as teams :refer []]
 
 
 
@@ -419,53 +420,53 @@
    (ui-grid-row {:stretch true}
                 (dom/div :.ui.container
 
-                 (ui-date-input  {:inline true :name "Date"
-                                  :value (log/spy :info selected-day)
-                                  :marked  ["15-11-2019" "16-11-2019" "14-11-2019"]
-                                  :markColor "grey"
-                                  
-                                  
+                         (ui-date-input  {:inline true :name "Date"
+                                          :value (log/spy :info selected-day)
+                                          :marked  ["15-11-2019" "16-11-2019" "14-11-2019"]
+                                          :markColor "grey"
+                                          
+                                          
                                         ;  :componentDidMount
 
-                                  ;; (fn [this props state]
-                                  ;;   (df/load! this :work-day/all-work-lines
-                                  ;;             WorkLine
-                                  ;;             {:target [:component/id :work-day :work-day/all-work-lines]
-                                  ;;              :params {:work-day 2}
-                                  ;;              }
-                                  ;;             ))
-                                  :onChange (fn [x y]
-                                              (let [current-date (:value (clojure.walk/keywordize-keys (js->clj y)))
+                                          ;; (fn [this props state]
+                                          ;;   (df/load! this :work-day/all-work-lines
+                                          ;;             WorkLine
+                                          ;;             {:target [:component/id :work-day :work-day/all-work-lines]
+                                          ;;              :params {:work-day 2}
+                                          ;;              }
+                                          ;;             ))
+                                          :onChange (fn [x y]
+                                                      (let [current-date (:value (clojure.walk/keywordize-keys (js->clj y)))
 
-                                                    custom-formatter (tf/formatter "dd-mm-yyyy")
+                                                            custom-formatter (tf/formatter "dd-mm-yyyy")
 
 
 
-                                                    date-instant
-                                                    (js/Date. (tf/unparse (tf/formatters :date-hour-minute-second)(tf/parse custom-formatter current-date)))
+                                                            date-instant
+                                                            (js/Date. (tf/unparse (tf/formatters :date-hour-minute-second)(tf/parse custom-formatter current-date)))
 
-                                                    {username :account/name} (get props [:component/id :session])
+                                                            {username :account/name} (get props [:component/id :session])
 
-                                                    ]
+                                                            ]
 
-                                                (df/load! this  :work-day/all-work-lines
-                                                          WorkLine
-                                                          {:target [:component/id :work-day :work-day/all-work-lines]
-                                                           :params {:by-day (format-date current-date) :username username}
-                                                           }
+                                                        (df/load! this  :work-day/all-work-lines
+                                                                  WorkLine
+                                                                  {:target [:component/id :work-day :work-day/all-work-lines]
+                                                                   :params {:by-day (format-date current-date) :username username}
+                                                                   }
 
                                         ;:post-mutation work-line/add-form-config
-                                                          ))
+                                                                  ))
 
-                                              (dr/change-route this ["work-day"])
-                                              ;; TODO using parameters?
-                                              ;;TODO  we load all data for that  instance of time
+                                                      (dr/change-route this ["work-day"])
+                                                      ;; TODO using parameters?
+                                                      ;;TODO  we load all data for that  instance of time
 
 
                                         ;                               (comp/transact! this [(load-all-work-lines)])
-                                              )
+                                                      )
                                         ;(fn [evnt data] (js/console.log data))
-                                  })))
+                                          })))
    )
 
 
@@ -694,7 +695,7 @@
       (comp/set-state! this payload)
       (df/load! this :assignments Assignment
                 { ;:post-mutation        `project/populate-projects
-                 :target [:component/id :resources :resources/assignments]})))
+                 :append [:component/id :resources :resources/assignments]})))
 
 
 (defn generate-row-dates [start end]
@@ -841,7 +842,7 @@
     ]
    :initLocalState (fn [this props] {:count 0})
    :ident :resource-line/id
-
+   :shouldComponentUpdate (fn [_ _ _] true)
    
    #_#_:getDerivedStateFromProps
    (fn [props state]
@@ -987,16 +988,16 @@
   (action [{:keys [state] :as env}]
 
 
-          (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
-          (swap! state assoc-in [:project-line/id id :project-line/project] project)
-          (swap! state assoc-in [:project-line/id id :project-line/id] id)
+          (when (swap! state assoc-in [:project-line/id id :project-line/resource] resource)
+           (swap! state assoc-in [:project-line/id id :project-line/project] project)
+           (swap! state assoc-in [:project-line/id id :project-line/id] id)
 
-          (swap! state (df/load   :assignments Assignment
-                                  {:params               {:resource/id (:resource/id resource)
-                                                          :project/id (:project/id project)}
-                                   :target [:project-line/id id :project-line/assignments]
-                                   
-                                   })) ))
+           (swap! state (df/load   :assignments Assignment
+                                   {:params               {:resource/id (:resource/id resource)
+                                                           :project/id (:project/id project)}
+                                    :target [:project-line/id id :project-line/assignments]
+                                    
+                                    }))) ))
 
 (defmutation set-totals [{:keys [resource-line-id] :as params}]
   (action [{:keys [state] :as env}]
@@ -1012,6 +1013,7 @@
 
                   (let [asses (map (fn [ident] (get-in @state ident))
                                    (:project-line/assignments pl))]
+                    (js/console.log "asses" (:project-line/assignments pl))
                     (map
                      (fn [r]
                        (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
@@ -1040,102 +1042,103 @@
 (defmutation set-projects-lines [{:keys [projects resource-id]}]
   (action [{:keys [state] :as env}]
 
-          (let
-              [projects-s (get-in @state [:resource-line/id resource-id  :resource-line/projects])
-               resource-s (get-in @state [:resource-line/id resource-id  :resource-line/resource])
+          (when resource-id
+            (let
+               [projects-s (get-in @state [:resource-line/id resource-id  :resource-line/projects])
+                resource-s (get-in @state [:resource-line/id resource-id  :resource-line/resource])
 
-               projects-resolved (map (fn [[_ project-id]]
-                                        (get-in @state [:project/id project-id]))
-                                      projects-s)
-               resource-resolved (get-in @state [:resource/id resource-id])
-               project-lines-ids (atom [])]
-
-
-
-            (doseq [c-project (butlast projects-resolved)]
+                projects-resolved (map (fn [[_ project-id]]
+                                         (get-in @state [:project/id project-id]))
+                                       projects-s)
+                resource-resolved (get-in @state [:resource/id resource-id])
+                project-lines-ids (atom [])]
 
 
 
-              (let [project-line-id (random-uuid)
+             (doseq [c-project (butlast projects-resolved)]
+
+
+
+               (let [project-line-id (random-uuid)
                                         ;state-map (comp/component->state-map this)
-                    ]
+                     ]
 
                                         ;(swap! state project-lines-ids conj [:project-line/id project-line-id])
 
 
 
 
-                #_(df/load! SPA :assignments Assignment
-                            {:params               {:resource/id (:resource/id resource-resolved)
-                                                    :project/id (:project/id c-project)}
-                             :target (:project-line/id project-line-id :project-line/assignments)})
+                 #_(df/load! SPA :assignments Assignment
+                             {:params               {:resource/id (:resource/id resource-resolved)
+                                                     :project/id (:project/id c-project)}
+                              :target (:project-line/id project-line-id :project-line/assignments)})
 
 
-                (swap! state (fn[state]
+                 (swap! state (fn[state]
 
-                               (-> state
+                                (-> state
 
-                                   (merge/merge-component ProjectLine {:project-line/resource resource-resolved
-                                                                       :project-line/project c-project
-                                                                       :project-line/id project-line-id
+                                    (merge/merge-component ProjectLine {:project-line/resource resource-resolved
+                                                                        :project-line/project c-project
+                                                                        :project-line/id project-line-id
 
-                                                                       })
+                                                                        })
 
-                                   
-
-
-                                   )
+                                    
 
 
-                               )
-
-                       )
+                                    )
 
 
-                
-                (df/load! SPA :assignments Assignment
-                          {:params               {:resource/id (:resource/id resource-resolved)
-                                                  :project/id (:project/id c-project)}
-                           :target [:project-line/id project-line-id :project-line/assignments]
-                           #_:post-mutation})
+                                )
+
+                        )
 
 
-                
-                (swap! project-lines-ids conj project-line-id)
-
-                
-                )
-              
-              )
-
-
-            (let [project-line-id (random-uuid)]
-              (swap! state (fn[state]
-
-                             (-> state
-
-                                 (merge/merge-component ProjectLine {:project-line/resource resource-resolved
-                                                                     :project-line/project (last projects-resolved)
-                                                                     :project-line/id project-line-id
-
-                                                                     })
-                                 )
-
-                             )
-                     )
-              (df/load! SPA :assignments Assignment
-                        {:params               {:resource/id (:resource/id resource-resolved)
-                                                :project/id (:project/id (last projects-resolved))}
-                         :target [:project-line/id project-line-id :project-line/assignments]
-                         :post-mutation `set-totals
-                         :post-mutation-params {:resource-line-id (:resource/id resource-resolved)}
-                         #_:post-mutation})
-              (swap! project-lines-ids conj project-line-id))
+                 
+                 (df/load! SPA :assignments Assignment
+                           {:params               {:resource/id (:resource/id resource-resolved)
+                                                   :project/id (:project/id c-project)}
+                            :target [:project-line/id project-line-id :project-line/assignments]
+                            #_:post-mutation})
 
 
-            
-            (swap! state assoc-in [:resource-line/id  resource-id  :resource-line/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
-            (swap! state update-in [:component/id :workplan :ui/loading] not))
+                 
+                 (swap! project-lines-ids conj project-line-id)
+
+                 
+                 )
+               
+               )
+
+
+             (let [project-line-id (random-uuid)]
+               (swap! state (fn[state]
+
+                              (-> state
+
+                                  (merge/merge-component ProjectLine {:project-line/resource resource-resolved
+                                                                      :project-line/project (last projects-resolved)
+                                                                      :project-line/id project-line-id
+
+                                                                      })
+                                  )
+
+                              )
+                      )
+               (df/load! SPA :assignments Assignment
+                         {:params               {:resource/id (:resource/id resource-resolved)
+                                                 :project/id (:project/id (last projects-resolved))}
+                          :target [:project-line/id project-line-id :project-line/assignments]
+                          :post-mutation `set-totals
+                          :post-mutation-params {:resource-line-id (:resource/id resource-resolved)}
+                          #_:post-mutation})
+               (swap! project-lines-ids conj project-line-id))
+
+
+             
+             (swap! state assoc-in [:resource-line/id  resource-id  :resource-line/project-lines] (mapv (fn [id] [:project-line/id id])@project-lines-ids))
+             (swap! state update-in [:component/id :workplan :ui/loading] not)))
 
 
 
@@ -1270,7 +1273,8 @@
 (defmutation remove-resource-line [{:keys [id]}]
   (action [{:keys [state] :as env}]
           
-          (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines]))
+          (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines])
+          (swap! state update-in [:team/id] dissoc  id ))
   )
 
 (defmutation uncheck-all-resource-boxes [{:keys []}]
@@ -1292,40 +1296,43 @@
 
 
 
-(defsc ResourceCheckboxItem [this {:keys []
-                                   :checkbox/keys [label value checked?]
+(defsc ResourceCheckboxItem [this {:keys [resource/name ui/checked?]
+                                   :checkbox/keys [label value]
                                    :as props}]
 
   
-  {:query [:checkbox/checked?  :checkbox/value :checkbox/label ]
-   :initial-state {:checkbox/checked? false}
+  {:query [:checkbox/value :checkbox/label :resource/name :ui/checked?]
+   
    :ident (fn [] [:checkbox/id (:checkbox/value props)])
+   ;:initLocalState (fn [this] {:ui/checked? false})
    ;:shouldComponentUpdate (fn [_ _ _] true)
+   :initLocalState (fn [this props]
+                     {:checked false})
    }
 
   
-  (let [ ]
+  (let []
     (dom/div :.ui.checkbox
-     (dom/input   {
-                   :type "checkbox"
-                   :checked checked?
-                   :indeterminate true
-                   :style {:padding "10px"}
-                                
-                                :onChange (fn [_ d]
-                                           
-                                            (m/toggle! this :checkbox/checked?)
-                                            (js/console.log "checked" (comp/props this))
-                                           (if (not checked?)
-                                              
-                                              (merge/merge-component! SPA  ResourceLine
-                                                                      {:resource-line/resource [:resource/id value]
-                                                                       :resource-line/id value}
-                                                                      :append [:component/id :workplan :workplan/resource-lines])
-                                              (comp/transact! this [(remove-resource-line {:id value})])
-                                              )
-                                            )})
-     (dom/label {:style {:color "#3281b9" }} label))))
+             (dom/input   {
+                           :type "checkbox"
+                           :checked checked?
+                           :indeterminate true
+                           :style {:padding "10px"}
+                           
+                           :onChange (fn [_ d]
+                                       ;(comp/set-state! this {:checked (not (comp/get-state this :checked))})
+                                       (m/toggle! this :ui/checked?)
+                                       
+                                       (if (not checked?)
+                                         ;(comp/transact! SPA  [(set-resource-lines {:ids [value]})])
+                                         (merge/merge-component! SPA  ResourceLine
+                                                                 {:resource-line/resource [:resource/id value]
+                                                                  :resource-line/id value}
+                                                                 :append [:component/id :workplan :workplan/resource-lines])
+                                         (comp/transact! this [(remove-resource-line {:id value})])
+                                         )
+                                       )})
+             (dom/label {:style {:color "#3281b9" }} label))))
 
 
 (def ui-resource-checkbox-item  (comp/factory ResourceCheckboxItem {:keyfn :checkbox/value}))
@@ -1339,45 +1346,140 @@
 
     (js/console.log "item2s" show-more?)
     (dom/div :.ui.checkbox
-         (dom/input {
-                     :type "checkbox"
-                     :style {:color "#3281b9"}
-                     :checked (comp/get-state this :all-checked?)
-                     :onClick (fn [a b]
-                                 
-                                 (comp/set-state! this {:all-checked? (not (comp/get-state this :all-checked?))} )
-                                 (m/toggle! this :all-checked?)
-                                 
-                                 (let [{:keys [all-checked?]}(comp/get-state this)]
-                                   
+             (dom/input {
+                         :type "checkbox"
+                         :style {:color "#3281b9"}
+                         :checked (comp/get-state this :all-checked?)
+                         :onClick (fn [a b]
+                                    
+                                    (comp/set-state! this {:all-checked? (not (comp/get-state this :all-checked?))} )
+                                    (m/toggle! this :all-checked?)
+                                    
+                                    (let [{:keys [all-checked?]}(comp/get-state this)]
+                                      
                                       (if all-checked?
                                         (comp/transact! this [(uncheck-all-resource-boxes )])
                                         (comp/transact! this [(check-all-resource-boxes )])
                                         
                                         
                                         )))})
-         (dom/label {:style {:color "#3281b9"}} "Check all")
-         (ui-divider {})
-         (js/console.log "ITEMS" items)
-         (map #(ui-resource-checkbox-item  % )
-              (take (if show-more? 100 10) items))
-         (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
-                 :onClick (fn [e]
-                            #_(m/toggle! this :list/show-more?)
-                            (comp/set-state! this  {:list/show-more? (not show-more?)}))}
-                (if show-more? "Show less" "Show more")))))
+             (dom/label {:style {:color "#3281b9"}} "Check all")
+             (ui-divider {})
+             (js/console.log "ITEMS" items)
+             (map #(ui-resource-checkbox-item  % )
+                  (take (if show-more? 100 10) items))
+             (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
+                         :onClick (fn [e]
+                                    #_(m/toggle! this :list/show-more?)
+                                    (comp/set-state! this  {:list/show-more? (not show-more?)}))}
+                        (if show-more? "Show less" "Show more")))))
 
 (def ui-resources-checkboxes  (comp/factory ResourcesCheckboxes))
 
 
 
 
+(defmutation set-resource-line-for-team [{:keys [team-id]}]
+  (action [{:keys [state] :as env}]
+
+          (let [team (get-in @state [:team/id team-id])
+                resource-lines (get-in @state [:component/id :workplan :workplan/resource-lines])
+                new-resource-lines (mapv (fn [[_ id]] [:resource-line/id id]) (:team/resources team))
+                combined-resource-lines (vec (distinct (concat resource-lines new-resource-lines)))]
+            ;; todo add team lead
+            (js/console.log "HIIIII" combined-resource-lines)
+            (doseq [[_ id] (:team/resources team)]
+              (swap! state merge/merge-component ResourceLine
+                     {:resource-line/resource [:resource/id id]
+                      :resource-line/id id}
+                     :append [:component/id :workplan :workplan/resource-lines
+                              ]
+                     ))
+
+            ;; (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
+            ;;                        ] combined-resource-lines)
+            ;; (swap! state (fn [s]
+
+            ;;                (-> s
+                               
+                               
+            ;;                    )
+
+            ;;                ))
+            )
+          ))
 
 
 
 
-(defsc WorkPlan [this {:workplan/keys [resource-lines]
-                       :keys [ui/dates ui/loading ui/show-more?]:as props}]
+(defmutation remove-resource-line-for-team [{:keys [team-id]}]
+  (action [{:keys [state] :as env}]
+
+          (let [team (get-in @state [:team/id team-id])
+                team-resources (:team/resources team)
+                team-resources-ids (set (map second team-resources))
+
+                
+                ]
+            (doseq [id team-resources-ids]
+              (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines]))
+            ;; todo add team lead
+            
+            
+
+            
+            )
+          ))
+
+
+(defsc TeamCheckbox [this {:keys [db/id ui/checked?] :as team}]
+  {:query (fn []
+            [:team/name
+             :ui/checked?
+            :db/id
+            ])
+;   :initial-state (fn [p] {:ui/checked? true})
+   
+   :ident (fn [] [:team-checkbox/id id])}
+ ; :shouldComponentUpdate (fn [_ _ _] true)
+  (let []
+    (dom/div {}
+            (dom/div :.ui.checkbox (dom/input  {:style {}
+                                                :type "checkbox"
+                                                :checked checked?
+                                        ;:indeterminate true
+                                        ;:style {:padding "10px"}
+                                                
+                                                :onChange (fn [e]
+                                                            
+
+                                                            (m/toggle! this :ui/checked?)
+
+                                                            (js/console.log "checked" checked?)
+                                                            
+                                                            
+                                                            (if  checked?
+                                                              (comp/transact! this [(remove-resource-line-for-team {:team-id (:db/id team)})])
+                                                              ;; TAG
+
+                                                              ;; (merge/merge-component! SPA  ResourceLine
+                                                              ;;                         {:resource-line/resource [:resource/id value]
+                                                              ;;                          :resource-line/id value}
+                                                              ;;                         :append [:component/id :workplan :workplan/resource-lines])
+                                                              (comp/transact! this [(set-resource-line-for-team {:team-id (:db/id team)})])
+                                                              
+                                                              )
+                                                            
+                                                            
+                                                            )})
+                     (dom/label {:style {:color "#3281b9"}} (:team/name team))
+                     (dom/br {})))))
+
+
+(def ui-team-checkbox (comp/factory TeamCheckbox))
+
+(defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
 
                    :ui/loading :ui/show-more?
@@ -1388,20 +1490,37 @@
                                         ;{:workplan/selected (comp/get-query SelectedProject)}
 
                    [:resource/options '_]
+                   {:workplan/teams (comp/get-query teams/Team)}  
                    [:checkbox/id '_]
+                   [:team/id '_]
+                   {:workplan/team-checkboxes (comp/get-query TeamCheckbox)}
                    [:ui/dates '_]
                    [df/marker-table :projects]]
    :ident         (fn [] [:component/id :workplan])
    :route-segment ["workplan"]
+   :shouldComponentUpdate (fn [_ _ _] true)
                                         ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
    :will-enter (fn [app route-params]
                  (dr/route-deferred
                   [:component/id :workplan]
                   (fn []
                     (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target [:component/id :admin-users :admin-users/resources]})
-                    (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
+                    (df/load! app :teams teams/Team
 
-   ;:shouldComponentUpdate (fn [_ _ _] true)
+                              {:target 
+
+
+                               (targeting/multiple-targets
+                                        ;(targeting/append-to [:component/id :admin-teams :teams/teams])
+                                (targeting/replace-at [:component/id :workplan :workplan/teams])
+                                (targeting/replace-at [:component/id :admin-teams :teams/teams])
+                                  )
+                               
+                               :post-mutation `app.ui.teams/merge-team-checkboxes
+                               })
+                    (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
+   
+                                        ;:shouldComponentUpdate (fn [_ _ _] true)
    :initial-state (fn [params]
                     {
 
@@ -1429,7 +1548,9 @@
    :componentDidMount (fn [this]
                         (let [state-map (comp/component->state-map this)
                               resource-options (:resource/options state-map )
-                              resource (get-in state-map [:component/id :session :account/resource])]
+                              resource (get-in state-map [:component/id :session :account/resource])
+                              teams (vec (vals (:team/id (comp/props this))))]
+                          (js/console.log "teams " (comp/props this))
 
                           (comp/transact! this [(set-workplan-date {:start
                                                                     (str (t/date))
@@ -1450,19 +1571,19 @@
                                                    :list/show-more? false})
 
                           
-                          #_(doseq [v (:resource/options (comp/props this))]
-                            (do(js/console.log "VALUE" v)
-                               (merge/merge-component! SPA ResourceCheckboxItem v
-                                                       )) ))
+                          #_(doseq [team teams]
+                            (do (js/console.log "VALUE" team)
+                                (merge/merge-component! SPA TeamCheckbox (assoc team :ui/checked? false))) ))
 
                         
                         )
-  
+   
    }
   (let [resources-options (:resource/options (comp/props this))
         marker (get props [df/marker-table :projects] )
         active-resources (vec (filter (fn [m] (and (:resource/email-address m) (:resource/active? m)))
                                       (vals (:checkbox/id (comp/props this)))))
+        teams (vec (vals (:team/id (comp/props this))))
         current-state (uism/get-active-state this ::session/session)
         logged-in? (= :state/logged-in current-state)
         active-index (comp/get-state this :active-index)
@@ -1474,16 +1595,16 @@
                         ))]
 
 
-                                        
+    
 
     
-    (js/console.log "active" active-resources)
+    (js/console.log "active" team-checkboxes)
     (if (and dates logged-in?)
       
       [
 
        (ui-grid-column {:width 3 :style {:color "#3281b9"}}
-                       (div {:style {:color "red"}}
+                       (div {:style {}}
                             (ui-accordion
                              {:as Menu  :vertical true :style {:color "#3281b9"}}
                              (ui-menu-item {}
@@ -1548,7 +1669,19 @@
                                                                                                                   (ui-resources-checkboxes {:list/items active-resources
                                                                                                                                             :list/all-checked? false})  )
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
-                                                                                                                    )))})))))
+                                                                                                                  )))}))
+                             (ui-menu-item {} (ui-accordion-title
+                                               {:active (= active-index 2)
+                                                :content "Teams"
+                                                :index 2
+                                                :onClick handleClick
+                                                :style {:color "#3281b9"}})
+                                           (ui-accordion-content {:active (= active-index 2)
+                                                                  :content (ui-form {}
+                                                                                    (ui-form-group {:grouped true}
+                                                                                                   (ui-form-field {}                                                                                                                                                                                                                         
+                                                                                                                  (map #(ui-team-checkbox  %) (remove #(nil? (:team/name %)) team-checkboxes)))
+                                                                                                   ))})))))
        
        (ui-grid-column {:width 13}
                        (when (seq resource-lines)
@@ -1561,23 +1694,23 @@
                                              :width "920px"
                                              :height "800px"}}
                                     
-                           #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
-                           (ui-table {:style {:fontSize "90%"
-                                              :position "relative"
-                                              
-                                              
-                                              } :celled true :striped true}
-                                     (ui-table-header
-                                      {:fullWidth true :style {:position "sticky" :top 0}}
-                                      (ui-table-row
-                                       {:style {:backgroundColor "red"}}
+                                    #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
+                                    (ui-table {:style {:fontSize "90%"
+                                                       :position "relative"
+                                                       
+                                                       
+                                                       } :celled true :striped true}
+                                              (ui-table-header
+                                               {:fullWidth true :style {:position "sticky" :top 0}}
+                                               (ui-table-row
+                                                {:style {:backgroundColor "red"}}
 
-                                           (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
+                                                (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
 
-                                           (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"
-                                                                                :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
-                                           ))
-                                     (ui-table-body {} (map ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
+                                                (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"
+                                                                                     :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                                ))
+                                              (ui-table-body {} (map ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
 
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))
@@ -1634,9 +1767,9 @@
                                     
                                     (ui-menu-item {:position :right :active (or (= current-tab :admin-teams)
                                                                                 (= current-tab :admin-users)) :content (ui-dropdown {:item true :text "Admin"}
-                                                                                          (ui-dropdown-menu {}
-                                                                                                            (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
-                                                                                                            (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")))}
+                                                                                                                                    (ui-dropdown-menu {}
+                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
+                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")))}
                                                   )
 
                                     

@@ -45,7 +45,7 @@
 
               (doseq [v r]
                 
-                (swap! state merge/merge-component ResourceCheckboxItem (assoc v :checkbox/checked? false)) )))))
+                (swap! state merge/merge-component ResourceCheckboxItem v) )))))
 
 
 

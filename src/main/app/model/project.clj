@@ -77,3 +77,18 @@
 
 
 
+#_(map (fn [row] (zipmap [:assignment/id :assignment/name :assignment/day :assignment/work] row))
+     (seq (d/q '[:find ?a ?tn ?bd ?w
+                 :in $ ?ri ?pid
+                 :where
+                 [?p :project/id ?pid]
+                 [?r :resource/id ?ri]
+                 [?a :assignment/resource ?r]
+                 [?a :assignment/work ?w]
+                 [?p :project/assignments ?a]
+                 [?a :assignment/task ?t]
+                 [?t :task/name ?tn]
+                 [?a :assignment/by-day ?bd]
+                 ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))
+                   #uuid "68045544-f9d3-e911-b092-00155de43b0b"
+                   #uuid "a99daadf-92e0-e911-b08a-00155de4a60d")))

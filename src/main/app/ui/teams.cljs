@@ -2,8 +2,9 @@
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
 
-
+   ;[app.ui.root :as root]
    [com.fulcrologic.fulcro.dom.inputs :as inputs]
+   [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [app.model.team :as team]
    [com.fulcrologic.fulcro.dom.events :as evt]
    
@@ -105,6 +106,7 @@
 
 
    [com.fulcrologic.semantic-ui.collections.table.ui-table-row :refer [ui-table-row]]
+   [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table :refer [ui-table]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-header-cell :refer [ui-table-header-cell]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-header :refer [ui-table-header]]
@@ -116,35 +118,40 @@
    ))
 
 
+
+
+
+
 ;; TODO make it remote
 
 
-
-
-
-
-
-
-
-(defsc Team [this {:team/keys [name type lead resources] :keys [resource/options2 resource/options db/id] :as props}]
+(defsc Team [this {:team/keys [name type lead resources] :keys [resource/options2 resource/options db/id ] :as props}]
   {:query [:team/name :team/type
            :db/id
+           
            {:team/lead (comp/get-query users/Resource)}
            {:team/resources (comp/get-query users/Resource)}
            [:resource/options2 '_]
            [:resource/options '_]]
    :ident (fn [] [:team/id (:db/id props)])
+   :initial-state (fn [params] {})
    
 
    }
-  (js/console.log "options" name)
+  
   (let [filtered-resources (filterv #(not= (:resource/profile %) :profile/user) options2)]
-    (js/console.log "RRR" )
-    (ui-modal {:trigger (ui-table-row {:onClick (fn [e] (js/console.log "Clicked"))}
+    
+    (ui-modal {:trigger (ui-table-row {:onClick #(m/toggle! this :modal/open?)}
                                       (ui-table-cell {} name)
                                       (ui-table-cell {} (clojure.string/capitalize (apply str (rest (str type)))))
                                       (ui-table-cell {} (:resource/name lead))
-                                      (ui-table-cell {} (count resources))) :size :small}
+                                      (ui-table-cell {} (count resources))
+                                      (ui-table-cell {} (ui-button {:onClick (fn [e] (comp/transact! this  [(team/delete-team {:team-id id}) :teams/teams :workplan/team-checkboxes]))} "Delete"))
+                                      
+                                      )
+               :size :small
+                                        ;:open open?
+               }
               
               (ui-modal-content {}
 
@@ -153,12 +160,18 @@
                                                        (ui-form-group {}
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Team Name")
-                                                                                     (ui-input {:placeholder "Team Name"
+                                                                                     (dom/input {:placeholder "Team Name"
                                                                                                 :onChange
                                                                                                 (fn [e d]
-                                                                                                 #_(m/set-string!)
-                                                                                                 (comp/transact! this [(team/set-team-name {:name (evt/target-value e) :team-id id})])
-                                                                                                 )
+                                                                                                  #_(m/set-string!)
+                                                                                                 ;(m/set-string! this :team/name :event e)
+                                                                                                  ;(m/toggle! this :modal/open?)
+                                        ;(comp/transact! this [(team/set-team-name {:name (evt/target-value e) :team-id id})])
+                                                                                                  )
+                                                                                                 :onBlur (fn [e]
+                                                                                                           ;(js/console.log "blur" (evt/target-value e))
+                                                                                                           (comp/transact! this [(team/set-team-name {:name (evt/target-value e) :team-id id})]))
+                                                                                                 
                                                                                                :value name
                                                                                                 }))
                                                                       (div {:style {:margin "20px"}})
@@ -208,7 +221,8 @@
                                                                          (ui-table-row {} (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) [ "Name" "Action"])))
                                                         (ui-table-body {}
                                                                        (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})]))} "Delete")) ) resources)
-                                                                       ))
+                                                                       )
+                                                        )
                                               )
                                 
                                 ))
@@ -222,50 +236,80 @@
   {:query         [{:teams/teams (comp/get-query Team)}]
    :ident         (fn [] [:component/id :admin-teams])
    :route-segment ["admin-teams"]
+   :souldComponentUpdate (fn [_ _ _ ] true)
    :will-enter (fn [app route-params]
                  (dr/route-deferred
                   [:component/id :admin-teams]
                   (fn []
-                    (df/load! app :teams Team
-                              {:target [:component/id :admin-teams :teams/teams]})
+                    
                     (comp/transact! app [(dr/target-ready {:target [:component/id :admin-teams]})]))))
    
                                         ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
    
    }
   
-
-  (ui-container {:style {:width "80%"}}
-                (dom/h3 {:style {:textAlign "center"}} "Teams" )
-
-
-                
-
-                
-
-                
-                (ui-table {:style {:fontSize "90%"
-                                   :position "relative"
-                                   
-                                   
-                                   }
-                           :celled true
-                           :striped true
-                           :selectable true}
-                          (ui-table-header
-                           {:fullWidth true :style {:position "sticky" :top 0}}
-                           (ui-table-row
-                            {:style {:backgroundColor "red"}}
-
-                            (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource"])
-
-                            
-                            ))
-                          (js/console.log "TEAMS" teams)
-                          (ui-table-body {}
-                                         (map ui-team teams)))))
+  (js/console.log "teams " teams)
+  (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
+    (ui-container {:style {:width "80%"}}
+                 (dom/h3 {:style {:textAlign "center"}} "Teams" )
 
 
+                 
+
+                 
+
+                 
+                 (ui-table {:style {:fontSize "90%"
+                                    :position "relative"
+                                    
+                                    
+                                    }
+                            :celled true
+                            :striped true
+                            :selectable true}
+                           (ui-table-header
+                            {:fullWidth true :style {:position "sticky" :top 0}}
+                            (ui-table-row
+                             {:style {:backgroundColor "red"}}
+
+                             (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Action"])
+
+                             
+                             ))
+                           
+                           (ui-table-body {}
+                                          (map ui-team (remove nil? teams)))
+                           (ui-table-footer {} (ui-table-row {}
+                                                             (ui-table-header-cell {:colSpan 5} (ui-button {:basic true :onClick
+                                                                                                            (fn [e]
+                                                                                                              (merge/merge-component! this Team
+                                                                                                                                      {:db/id (tempid/tempid) :team/name ""}
+                                                                                                                                      :append [:component/id :admin-teams :teams/teams]
+                                                                                                                                      ;:append [:component/id :workplan :workplan/team-checkboxes]
+                                                                                                                                      )
+
+                                                                                                              #_(merge/merge-component! this  TeamCheckbox
+                                                                                                                                        {:db/id (tempid/tempid) :team/name "" :team/lead nil :team/resources [] }
+                                                                                                                                        
+                                                                                                                                        ))}
+                                                                                                           (ui-icon {:name "plus"} )))
+                                        ;(ui-table-header-cell {})
+                                        ;(ui-table-header-cell {})
+                                                             ))))))
 
 
 
+
+
+
+
+
+(defmutation merge-team-checkboxes [_]
+  (action [{:keys [state app]}]
+          (js/console.log "MERGE" (vals (get @state :team/id)))
+          (let [teams (vals (get @state :team/id))
+                TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
+            (doseq [team teams]
+              (do
+                (swap! state merge/merge-component TeamCheckbox  (select-keys team [:db/id  :team/name]
+                                                                              ) :append [:component/id :workplan :workplan/team-checkboxes])) ))))

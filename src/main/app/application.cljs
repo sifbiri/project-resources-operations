@@ -1,9 +1,13 @@
 (ns app.application
   (:require [com.fulcrologic.fulcro.networking.http-remote :as net]
             [com.fulcrologic.fulcro.application :as app]
+            [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.data-fetch :as df]
+            ;[app.ui.teams :as teams]
+            [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]
             [com.fulcrologic.fulcro.components :as comp]
-           [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
+            [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
+            [com.fulcrologic.fulcro.algorithms.merge :as merge]
             [app.model.work-line :as work-line]))
                                         ;[app.ui.root :as root]))
 
@@ -12,6 +16,7 @@
   (->
    (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
    (net/wrap-fulcro-request)))
+
 
 
 
@@ -32,7 +37,26 @@
                (fn [app]
                  (let [WorkLine (comp/registry-key->class :app.ui.root/WorkLine)
                        Project (comp/registry-key->class :app.ui.root/Project)
-                       Resource (comp/registry-key->class :app.ui.root/Resource)]
+                       Resource (comp/registry-key->class :app.ui.root/Resource)
+                       Team (comp/registry-key->class :app.ui.teams/Team)]
+
+
+                   
+                   
+                    
+                   
+                   ))}))
+
+
+
+
+
+
+
+
+
+
+                   
                    ;; (df/load app :work-line/all-projects
                    ;;          Project
                    ;;          {:post-mutation `work-line/create-project-options}
@@ -44,7 +68,7 @@
                    
                             
                    
-                   ))}))
+                   
 
 (comment
   (-> SPA (::app/runtime-atom) deref ::app/indexes))

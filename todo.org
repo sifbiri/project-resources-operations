@@ -44,3 +44,12 @@ is a ref to a task/name for example...
 ** https://github.com/SheetJS/sheetjs
 https://securedeveloper.github.io/react-data-export/
 https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
+
+
+* features3
+- add team lead to resource lines
+- Don't show table of admin teams when no teams
+- Add button to add a team
+- You have to login to be able to see
+- when changing the name of team, the popup closes
+- add a way to delte team

@@ -3,6 +3,7 @@
    [com.wsscode.pathom.connect :as pc]
    [app.model.database :refer [conn]]
    [clojure.set :as set]
+   [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    
    [datomic.api :as d]))
 
@@ -23,10 +24,15 @@
   {::pc/sym`set-team-name
    ::pc/params [:team-id :team-member-id]
    ::pc/output [:team/name]}
-  (let [ ]
-    (d/transact connection [{:db/id team-id
-                             :team/name name}])
-    {:team/name name}))
+  (if (tempid/tempid? team-id)
+    (let [tx @(d/transact connection [{:db/id "new"
+                                       :team/name name}])
+          new-id (get-in tx [:tempids "new"])]
+      {:tempids {team-id new-id}})
+    (do (d/transact connection [{:db/id team-id
+                                 :team/name name}]
+                    )
+        {})))
 
 
 
@@ -88,8 +94,37 @@
 
 
 
+(pc/defmutation delete-team [{:keys [db connection]} {:keys [team-id]}]
+  {::pc/sym`delete-team
+   ::pc/params [:team-id]
+   ::pc/output []}
+  (let [
+        ]
+    (d/transact connection [[:db/retractEntity team-id]])
+    {}))
+
+
 (pc/defresolver all-teams-resolver [{:keys [db connection]} _]
-  {::pc/output [{:teams [:team/name]}]}
+  {::pc/output [{:teams
+                 [:team/name
+                  :team/type
+                  :db/id
+                  
+                  {:team/lead
+                   [:resource/id
+                    :resource/name
+                    :resource/email-address
+                    :resource/active?
+                    :resource/profile]}
+                  {:team/resources
+                   [:resource/id
+                    :resource/name
+                    :resource/email-address
+                    :resource/active?
+                    :resource/profile]}
+                   
+                  ]}]
+}
   {:teams (d/q  '[:find ?name
                   :keys team/name
                   :where
@@ -98,4 +133,4 @@
 
 
 
-(def resolvers  [team-resolver all-teams-resolver add-team-member delete-team-member set-team-name set-team-type set-team-lead])
+(def resolvers  [team-resolver all-teams-resolver add-team-member delete-team-member set-team-name set-team-type set-team-lead delete-team])

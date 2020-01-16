@@ -30,11 +30,42 @@
 
 (defmutation set-team-name [{:keys [team-id name]}]
   (action [{:keys [state]}]
+          (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
+            (js/console.log "LOG" team-id)
+           (swap! state (fn [state]
+                          (-> state
+                              (assoc-in [:team/id team-id :team/name] name)
+                              )))
+           ;; (swap! state  merge/merge-component TeamCheckbox
+           ;;        {:db/id team-id :team/name name }
+                  
+           ;;        )
+           ))
+  (remote [env] true))
+
+
+
+(defmutation merge-team-checkboxes [_]
+  (action [{:keys [state app]}]
+          (js/console.log "MERGE" (vals (get @state :team/id)))
+          (let [teams (vals (get @state :team/id))
+                TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
+            (doseq [team teams]
+              (do
+                (swap! state merge/merge-component TeamCheckbox  (select-keys (assoc team :ui/checked? false) [:db/id :ui/checked? :team/name]
+                                                                              ) :target [:component/id :workplan :workplan/team-checkboxes])) ))))
+
+(defmutation delete-team [{:keys [team-id]}]
+  (action [{:keys [state]}]
           
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:team/id team-id :team/name] name)))))
+                             (merge/remove-ident* [:team/id team-id] [:component/id :admin-teams :teams/teams])
+                             (merge/remove-ident* [:team-checkbox/id team-id] [:component/id :workplan :workplan/team-checkboxes])
+                             (update :team/id dissoc team-id)
+                             ))))
   (remote [env] true))
+
 
 
 

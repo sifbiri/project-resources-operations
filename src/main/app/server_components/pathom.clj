@@ -33,7 +33,7 @@
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.
 
-  f - (fn [{:keys [env tx]}] {:env new-env :tx new-tx})
+  f - (fn [{:keys [env tx]}] {:env new-enbasv :tx new-tx})
 
   If the function returns no env or tx, then the parser will not be called (aborts the parse)"
   [f]
