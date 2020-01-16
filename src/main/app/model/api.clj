@@ -497,12 +497,14 @@
 
 
 
-
+;(println "Test")
 
 ;; steps
 
 
 ;; delete projects
+(println "delete projects")
+
 (d/transact
    (d/connect "datomic:dev://localhost:4334/one2")
 
@@ -520,12 +522,12 @@
 
 ;; seed projects
 
+(println "seed projects")
 (d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
+(println "Done")
 
+(System/exit 0)
 ;; restart
 ;(user/restart)
 
-
-
-                                        ;#uuid "65045544-f9d3-e911-b092-00155de43b0b"

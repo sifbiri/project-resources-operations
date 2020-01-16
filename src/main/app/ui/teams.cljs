@@ -134,6 +134,7 @@
            [:resource/options2 '_]
            [:resource/options '_]]
    :ident (fn [] [:team/id (:db/id props)])
+   :souldComponentUpdate (fn [_ _ _ ] true)
    :initial-state (fn [params] {})
    
 
