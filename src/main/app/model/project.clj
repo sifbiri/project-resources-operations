@@ -39,6 +39,10 @@
                             [?a :assignment/resource ?r]
                             [?r :resource/id ?id]] (d/db conn) id))}))
 
+
+
+
+;; TODO fix this
 (pc/defresolver assignment-resolver [evn {:assignment/keys [id]}]
   {::pc/input #{:assignment/id}
    ::pc/output [:assignement/id :assignment/day :assignement/name :assignment/work]}
@@ -54,7 +58,7 @@
          [?id :assignment/id ?id]
          ] (d/db conn) id))
 
-(pc/defresolver assignments-resolver [env _]
+(pc/defresolver assignments-resolver [{:keys [connection db] :as env} _]
   {::pc/output [{:assignments [:assignment/id]}]}
   (let [resource-id (get-in env [:ast :params :resource/id])
         project-id (get-in env [:ast :params :project/id])]
@@ -70,7 +74,7 @@
                                    [?a :assignment/task ?t]
                                    [?t :task/name ?tn]
                                    [?a :assignment/by-day ?bd]
-                                   ] (d/db conn2) resource-id project-id)))}))
+                                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) resource-id project-id)))}))
 
 (def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver])
 
@@ -78,17 +82,62 @@
 
 
 #_(map (fn [row] (zipmap [:assignment/id :assignment/name :assignment/day :assignment/work] row))
-     (seq (d/q '[:find ?a ?tn ?bd ?w
-                 :in $ ?ri ?pid
-                 :where
-                 [?p :project/id ?pid]
-                 [?r :resource/id ?ri]
-                 [?a :assignment/resource ?r]
-                 [?a :assignment/work ?w]
-                 [?p :project/assignments ?a]
-                 [?a :assignment/task ?t]
-                 [?t :task/name ?tn]
-                 [?a :assignment/by-day ?bd]
-                 ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))
-                   #uuid "68045544-f9d3-e911-b092-00155de43b0b"
-                   #uuid "a99daadf-92e0-e911-b08a-00155de4a60d")))
+       (seq (d/q '[:find ?a ?tn ?bd ?w
+                   :in $ ?ri ?pid
+                   :where
+                   [?p :project/id ?pid]
+                   [?r :resource/id ?ri]
+                   [?a :assignment/resource ?r]
+                   [?a :assignment/work ?w]
+                   [?p :project/assignments ?a]
+                   [?a :assignment/task ?t]
+                   [?t :task/name ?tn]
+                   [?a :assignment/by-day ?bd]
+                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))
+                     
+                     )))
+
+;; (d/q  '[:find ?pn ?pi
+;;         :in $ ?id
+        
+;;         :where
+;;         [?p :project/name ?pn]
+;;         [?p :project/id ?pi]
+;;         [?p :project/assignments ?a]
+;;         [?a :assignment/resource ?r]
+;;         [?r :resource/id ?id]] (d/db (d/connect "datomic:dev://localhost:4334/one2")) #uuid "65045544-f9d3-e911-b092-00155de43b0b")
+
+
+
+
+;; delete projects
+;; (d/transact
+;;    (d/connect "datomic:dev://localhost:4334/one2")
+
+;;    (mapv
+;;     (fn [id]
+
+;;       [:db/retractEntity id])
+
+;;     (d/q '[:find [?e ...]
+
+;;            :where
+;;            [?e :project/name ?n]
+
+;;            ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+
+;; seed projects
+;(d/transact (d/connect "datomic:dev://localhost:4334/one2") all-projects)
+
+
+;; restart
+;(user/restart)
+
+
+
+                                        ;#uuid "65045544-f9d3-e911-b092-00155de43b0b"
+
+
+            
+            
+

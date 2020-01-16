@@ -14,7 +14,6 @@
    [camel-snake-kebab.extras :as cske]
                                         ;[clojure.data.generators :as gen]
    [clojure.java.io :as io]
-   [user :as user]
    [clojure.pprint :as pp]
    ;[app.model.database :as db :refer [conn]]
    [clj-time.core :as t]
@@ -45,7 +44,7 @@
 
                                         ;(def db-uri-base "datomic:mem://")
 
-;(def resource io/resource)
+(def resource io/resource)
 
 
 ;; (defn scratch-conn
@@ -156,7 +155,9 @@
 
 (defn get-resource
   [id]
-  (first (filter #(= (:resource/id %)  id) resources)))
+  (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
+        {:keys [db/id]}  (d/entity (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id  id])]
+    (if id id resource-server)))
 
 
 
@@ -212,7 +213,8 @@
     (map (fn [x] (let [task-name (:task/name x)
                        task-id (:task/id x)
                        task-is-active (:task/is-active x )
-                       resource (remove-nils (get-resource (:resource/id x)))]
+                       resource-before (get-resource (:resource/id x))
+                       resource (if (number? resource-before ) resource-before (remove-nils resource-before))]
                    
                    (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id)
                                   :assignment/task (remove-nils {:task/name task-name
@@ -221,7 +223,7 @@
                                   :assignment/resource resource)))) response)
     ))
 
-#_(def all-project-names '("LeFrak"
+(def all-project-names '("LeFrak"
                          "RBC - IVALUA - S2C"
                          "Louboutin US"
                          "Boys & Girls Club of America"
@@ -308,8 +310,8 @@
   )
 
 
-(def all-projects (get-all-projects))
-(def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
+;(def all-projects (get-all-projects))
+;(def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
 
 
 (defn get-projects
@@ -414,7 +416,6 @@
                                         ;(transact-all  conn "resources/edn/schema.edn")
                                         ;(transact-all2 conn (reduce (fn [r x] (conj r [x] )) [] assignement-phased))
 
-#_(def all-projects (butlast (get-all-projects)))
 
 (defn project-by-name
   [name]
@@ -445,19 +446,19 @@
 
 
 #_(d/q '[:find ?day ?a ?pn ?n ?w
-         :keys day id project task work
-         :where
-         [?a :assignment/by-day ?day]
-         [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
-         [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
-         [?a :assignment/task ?t]
-         [?t :task/name ?n]
-         [?pr :project/assignments ?a]
-         [?pr :project/name ?pn]
-         [?a :assignment/resource ?r]
-         [?r :resource/name "Newsha Neishaboory"]
-         [?a :assignment/work ?w]
-         ] (d/db conn2))
+       :keys day id project task work
+       :where
+       [?a :assignment/by-day ?day]
+       [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
+       [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
+       [?a :assignment/task ?t]
+       [?t :task/name ?n]
+       [?pr :project/assignments ?a]
+       [?pr :project/name ?pn]
+       [?a :assignment/resource ?r]
+       [?r :resource/name "Newsha Neishaboory"]
+       [?a :assignment/work ?w]
+       ] (d/db conn2))
 
 
 
@@ -495,33 +496,36 @@
 
 
 
-;[:db/retractEntity id-of-jane]
-
-;; steps 
 
 
-;; delete projects 
+
+;; steps
+
+
+;; delete projects
 (d/transact
-  (d/connect "datomic:dev://localhost:4334/one2")
+   (d/connect "datomic:dev://localhost:4334/one2")
 
-  (mapv
-   (fn [id]
+   (mapv
+    (fn [id]
 
-     [:db/retractEntity id])
+      [:db/retractEntity id])
 
-   (d/q '[:find [?e ...]
-         
-          :where
-          [?e :project/name ?n]
-        
-          ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+    (d/q '[:find [?e ...]
+
+           :where
+           [?e :project/name ?n]
+
+           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
 
 ;; seed projects
 
-(d/transact (d/connect "datomic:dev://localhost:4334/one2") all-projects)
+(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
 
 ;; restart
-(user/restart)
+;(user/restart)
 
 
+
+                                        ;#uuid "65045544-f9d3-e911-b092-00155de43b0b"
