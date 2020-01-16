@@ -1344,7 +1344,7 @@
   (let [#_#_all-checked? (every? item-checked? items)
         show-more? (comp/get-state this :list/show-more?)]
 
-    (js/console.log "item2s" show-more?)
+    (js/console.log "item2s" items)
     (dom/div :.ui.checkbox
              (dom/input {
                          :type "checkbox"
@@ -1504,7 +1504,9 @@
                  (dr/route-deferred
                   [:component/id :workplan]
                   (fn []
-                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target [:component/id :admin-users :admin-users/resources]})
+                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target
+
+                                                                          [:component/id :admin-users :admin-users/resources]})
                     (df/load! app :teams teams/Team
 
                               {:target 
@@ -1598,7 +1600,7 @@
     
 
     
-    (js/console.log "active" team-checkboxes)
+    
     (if (and dates logged-in?)
       
       [

@@ -39,13 +39,14 @@
 
             (let [ResourceCheckboxItem (comp/registry-key->class :app.ui.root/ResourceCheckboxItem)
                   ResourcesCheckboxes (comp/registry-key->class :app.ui.root/ResourcesCheckboxes)]
-
-              (swap! state merge/merge-component  ResourcesCheckboxes {:list/show-more? true :list/items (filter #(and (:resource/active? %) (:resource/email-address %))
-                                                                                                                 (vals (:resource/id @state))) :list/all-checked? false})
+              (js/console.log "PRINT" (vals (:resource/id @state)))
+              (swap! state merge/merge-component  ResourcesCheckboxes
+                     {:list/show-more? true :list/items (vals (:resource/id @state)) :list/all-checked? false}
+                      )
 
               (doseq [v r]
                 
-                (swap! state merge/merge-component ResourceCheckboxItem v) )))))
+                (swap! state merge/merge-component ResourceCheckboxItem v :append [:component/id :workplan :workplan/team-checkboxes]) )))))
 
 
 

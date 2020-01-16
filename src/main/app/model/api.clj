@@ -14,6 +14,7 @@
    [camel-snake-kebab.extras :as cske]
                                         ;[clojure.data.generators :as gen]
    [clojure.java.io :as io]
+   [user :as user]
    [clojure.pprint :as pp]
    ;[app.model.database :as db :refer [conn]]
    [clj-time.core :as t]
@@ -44,7 +45,7 @@
 
                                         ;(def db-uri-base "datomic:mem://")
 
-(def resource io/resource)
+;(def resource io/resource)
 
 
 ;; (defn scratch-conn
@@ -220,7 +221,7 @@
                                   :assignment/resource resource)))) response)
     ))
 
-(def all-project-names '("LeFrak"
+#_(def all-project-names '("LeFrak"
                          "RBC - IVALUA - S2C"
                          "Louboutin US"
                          "Boys & Girls Club of America"
@@ -444,19 +445,19 @@
 
 
 #_(d/q '[:find ?day ?a ?pn ?n ?w
-       :keys day id project task work
-       :where
-       [?a :assignment/by-day ?day]
-       [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
-       [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
-       [?a :assignment/task ?t]
-       [?t :task/name ?n]
-       [?pr :project/assignments ?a]
-       [?pr :project/name ?pn]
-       [?a :assignment/resource ?r]
-       [?r :resource/name "Newsha Neishaboory"]
-       [?a :assignment/work ?w]
-       ] (d/db conn2))
+         :keys day id project task work
+         :where
+         [?a :assignment/by-day ?day]
+         [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
+         [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
+         [?a :assignment/task ?t]
+         [?t :task/name ?n]
+         [?pr :project/assignments ?a]
+         [?pr :project/name ?pn]
+         [?a :assignment/resource ?r]
+         [?r :resource/name "Newsha Neishaboory"]
+         [?a :assignment/work ?w]
+         ] (d/db conn2))
 
 
 
@@ -492,5 +493,35 @@
 
 #_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
+
+
+;[:db/retractEntity id-of-jane]
+
+;; steps 
+
+
+;; delete projects 
+(d/transact
+  (d/connect "datomic:dev://localhost:4334/one2")
+
+  (mapv
+   (fn [id]
+
+     [:db/retractEntity id])
+
+   (d/q '[:find [?e ...]
+         
+          :where
+          [?e :project/name ?n]
+        
+          ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+
+;; seed projects
+
+(d/transact (d/connect "datomic:dev://localhost:4334/one2") all-projects)
+
+
+;; restart
+(user/restart)
 
 

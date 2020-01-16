@@ -103,7 +103,7 @@
  {:db/id #db/id[:db.part/db]
 
   :db/ident :assignment/resource
-  :db/isComponent true
+  ;:db/isComponent true
   :db/valueType :db.type/ref
   :db/cardinality :db.cardinality/one
   
