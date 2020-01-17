@@ -1397,7 +1397,7 @@
                 combined-resource-lines (vec (distinct (concat resource-lines new-resource-lines)))]
             ;; todo add team lead
             (js/console.log "HIIIII" combined-resource-lines)
-            (doseq [[_ id] (:team/resources team)]
+            (doseq [[_ id] (conj  (:team/resources team) (:team/lead team))]
               (swap! state merge/merge-component ResourceLine
                      {:resource-line/resource [:resource/id id]
                       :resource-line/id id}
@@ -1427,10 +1427,11 @@
           (let [team (get-in @state [:team/id team-id])
                 team-resources (:team/resources team)
                 team-resources-ids (set (map second team-resources))
+                team-lead (:team/lead team)
 
                 
                 ]
-            (doseq [id team-resources-ids]
+            (doseq [id (conj team-resources-ids (second team-lead))]
               (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines]))
             ;; todo add team lead
             
