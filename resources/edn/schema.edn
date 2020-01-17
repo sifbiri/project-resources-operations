@@ -6,8 +6,32 @@
   
   :db/valueType :db.type/instant
   :db/cardinality :db.cardinality/one
-  ;:db/unique :db.unique/value           
+                                        ;:db/unique :db.unique/value           
   }
+
+;; new 
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :project/modified-date
+  
+  :db/valueType :db.type/instant
+  :db/cardinality :db.cardinality/one
+                                        ;:db/unique :db.unique/value           
+  }
+
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :project/last-published-date
+  
+  :db/valueType :db.type/instant
+  :db/cardinality :db.cardinality/one
+                                        ;:db/unique :db.unique/value           
+  }
+
+ 
 
  
  {:db/id #db/id[:db.part/db]

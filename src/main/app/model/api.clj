@@ -31,6 +31,8 @@
                    #_:project/author-name  :project/start-date
                    :project/name
                    :project/created-date
+                   :project/modified-date
+                   :project/last-published-date
                    ])
 
                                         ;(def db-url "datomic:dev://localhost:4334/one2")
@@ -161,6 +163,7 @@
 
 
 
+
 (defn remove-nils
   [m]
   (apply dissoc                                                                                            
@@ -214,7 +217,8 @@
                        task-id (:task/id x)
                        task-is-active (:task/is-active x )
                        resource-before (get-resource (:resource/id x))
-                       resource (if (number? resource-before ) resource-before (remove-nils resource-before))]
+                       resource (if (number? resource-before ) resource-before (remove-nils resource-before))
+                        ]
                    
                    (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id)
                                   :assignment/task (remove-nils {:task/name task-name
@@ -261,6 +265,7 @@
 
 
 
+
 (defn get-all-projects
   []
   (let [response (-> (client/get "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/Projects"
@@ -268,28 +273,51 @@
                      :body
                      (json/read-str :key-fn keyword)
                      :value)
-        all-projects (map #(select-keys % [:Name :Id]) response)
-        all-projects-renamed (mapv #(s/rename-keys % {:Name :project/name :Id :project/id}) all-projects)
 
-        keyword-response (cske/transform-keys csk/->kebab-case-keyword response)
-        splited-response (cske/transform-keys
+
+        
+        all-projects
+        (map #(select-keys % [:Name :Id]) response)
+
+        
+        all-projects-renamed
+        (mapv #(s/rename-keys % {:Name :project/name :Id :project/id}) all-projects)
+
+        keyword-response
+        (cske/transform-keys csk/->kebab-case-keyword response)
+
+        splited-response
+        (cske/transform-keys
                           (fn [x]
                             (keyword (clojure.string/replace-first (name x) #"-" "/")) )
                           keyword-response)
-        result (map #(select-keys % project-keys) splited-response)
-        result2 (map (fn [x] (update x :project/id #(uuid %)))result)
-        result3 (map
-                 (fn [x] (update x :project/start-date #(when-not (nil? %)
-                                                          (clojure.instant/read-instant-date %))))
-                 result2)
-        result4 (map
-                 (fn [x] (update x :project/finish-date #(when-not (nil? %)
-                                                           (clojure.instant/read-instant-date %))))
-                 result3)
-        result5 (map
-                 (fn [x] (update x :project/work #(when-not (nil? %)
-                                                    (clojure.edn/read-string %))))
-                 result4)
+
+        
+        result
+        (map #(select-keys % project-keys) splited-response)
+
+        result2
+        (map (fn [x] (update x :project/id #(uuid %)))result)
+        
+        result3
+        (map
+         (fn [x] (update x :project/start-date #(when-not (nil? %)
+                                                  (clojure.instant/read-instant-date %))))
+         result2)
+
+        
+        result4
+        (map
+         (fn [x] (update x :project/finish-date #(when-not (nil? %)
+                                                   (clojure.instant/read-instant-date %))))
+         result3)
+        
+        result5
+        (map
+         (fn [x] (update x :project/work #(when-not (nil? %)
+                                            (clojure.edn/read-string %))))
+         result4)
+
         result6
         (map
          (fn [x] (update x :project/created-date #(when-not (nil? %)
@@ -297,21 +325,37 @@
                                                     (clojure.instant/read-instant-date %))))
          result5)
 
-        ;; adding assignement to project
         result7
+        (map
+         (fn [x] (update x :project/modified-date #(when-not (nil? %)
+
+                                                     (clojure.instant/read-instant-date %))))
+         result6)
+
+        result8
+        (map
+         (fn [x] (update x :project/last-published-date #(when-not (nil? %)
+
+                                                           (clojure.instant/read-instant-date %))))
+         result7)
+
+        ;; adding assignement to project
+        result9
         (map
          (fn [x] (let
                      [assignments (assignement-phased-project-id (str (:project/id x)))]
 
                    (remove-nils (assoc x :project/assignments (mapv (fn [x] (dissoc x :project/name))  assignments)))))
-         result6)]
-    
-    result7)
-  )
+         result8)
+
+                ]
+
+    result9))
 
 
-;(def all-projects (get-all-projects))
-;(def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
+
+(def all-projects (get-all-projects))
+(def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
 
 
 (defn get-projects
@@ -416,6 +460,7 @@
                                         ;(transact-all  conn "resources/edn/schema.edn")
                                         ;(transact-all2 conn (reduce (fn [r x] (conj r [x] )) [] assignement-phased))
 
+#_(def all-projects (butlast (get-all-projects)))
 
 (defn project-by-name
   [name]
@@ -494,40 +539,41 @@
 
 #_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
+(println "transacting schema................")
+(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
 
-
-
-;(println "Test")
+                                        ;(println "Test")
 
 ;; steps
 
 
 ;; delete projects
-(println "delete projects")
+(println "delete projects...........")
 
 (d/transact
-   (d/connect "datomic:dev://localhost:4334/one2")
+ (d/connect "datomic:dev://localhost:4334/one2")
 
-   (mapv
-    (fn [id]
+ (mapv
+  (fn [id]
 
-      [:db/retractEntity id])
+    [:db/retractEntity id])
 
-    (d/q '[:find [?e ...]
+  (d/q '[:find [?e ...]
 
-           :where
-           [?e :project/name ?n]
+         :where
+         [?e :project/name ?n]
 
-           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+         ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
 
 ;; seed projects
 
-(println "seed projects")
-(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
+(println "seed projects...............")
 
-(println "Done")
+(println
+ (d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects)))
+
+(println "Done....................")
 
 (System/exit 0)
 ;; restart
-;(user/restart)
-
+                                        ;(user/restart)
