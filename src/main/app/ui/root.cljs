@@ -1404,7 +1404,9 @@
                      :append [:component/id :workplan :workplan/resource-lines
                               ]
                      ))
-
+            (println "HERE" (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team))))
+            (doseq [[_ id] (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team)))]
+              (swap! state assoc-in [:checkbox/id id :ui/checked?] true))
             ;; (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
             ;;                        ] combined-resource-lines)
             ;; (swap! state (fn [s]
@@ -1431,8 +1433,10 @@
 
                 
                 ]
-            (doseq [id (conj team-resources-ids (second team-lead))]
-              (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines]))
+            (doseq [[_ id] (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team)))]
+              (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines])
+              (swap! state assoc-in [:checkbox/id id :ui/checked?] false))
+            
             ;; todo add team lead
             
             
@@ -1593,7 +1597,7 @@
    }
   (let [resources-options (:resource/options (comp/props this))
         marker (get props [df/marker-table :projects] )
-        active-resources (vec (filter (fn [m] (and (:resource/email-address m) (:resource/active? m)))
+        active-resources (vec (filter (fn [m] (:resource/active? m))
                                       (vals (:checkbox/id (comp/props this)))))
         teams (vec (vals (:team/id (comp/props this))))
         current-state (uism/get-active-state this ::session/session)
