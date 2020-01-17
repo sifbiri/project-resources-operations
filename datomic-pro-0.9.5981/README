@@ -1,0 +1,24 @@
+====================================
+Documentation 
+
+Getting Started:                   https://docs.datomic.com/on-prem/getting-started.html
+All docs:                          http://datomic.com
+
+====================================
+Install Datomic to your local maven repo:
+
+bin/maven-install
+
+====================================
+Use Datomic from maven:
+
+    <dependency>
+      <groupId>com.datomic</groupId>
+      <artifactId>datomic-pro</artifactId>
+      <version>0.9.5981</version>
+    </dependency>
+
+====================================
+Use Datomic from leiningen:
+
+   [com.datomic/datomic-pro "0.9.5981"]

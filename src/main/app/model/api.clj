@@ -153,22 +153,23 @@
     
     ))
 
-
-
-(defn get-resource
-  [id]
-  (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
-        {:keys [db/id]}  (d/entity (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id  id])]
-    (if id id resource-server)))
-
-
-
-
 (defn remove-nils
   [m]
   (apply dissoc                                                                                            
          m                                                                                                  
          (for [[k v] m :when (nil? v)] k)))
+
+(defn get-resource
+  [id]
+  (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
+        val  (d/entity (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id  id])]
+    (println "resource with id " (:db/id val))
+    (if (number? (:db/id id)) id (remove-nils resource-server))))
+
+
+
+
+
 
 
 (defn assignement-phased-project-id
@@ -216,8 +217,8 @@
     (map (fn [x] (let [task-name (:task/name x)
                        task-id (:task/id x)
                        task-is-active (:task/is-active x )
-                       resource-before (get-resource (:resource/id x))
-                       resource (if (number? resource-before ) resource-before (remove-nils resource-before))
+                       resource (get-resource (:resource/id x))
+                       
                         ]
                    
                    (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id)
@@ -546,38 +547,38 @@
 
 
 
-
+(comment 
                                         ; schema
-(println "transacting schema................")
-(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
+  (println "transacting schema................")
+  (transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
 
-;; delete projects
-(println "delete projects...........")
+  ;; delete projects
+  (println "delete projects...........")
 
-(d/transact
- (d/connect "datomic:dev://localhost:4334/one2")
+  (d/transact
+   (d/connect "datomic:dev://localhost:4334/one2")
 
- (mapv
-  (fn [id]
+   (mapv
+    (fn [id]
 
-    [:db/retractEntity id])
+      [:db/retractEntity id])
 
-  (d/q '[:find [?e ...]
+    (d/q '[:find [?e ...]
 
-         :where
-         [?e :project/name ?n]
+           :where
+           [?e :project/name ?n]
 
-         ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
 
-;; seed projects
+  ;; seed projects
 
-(println "seed projects...............")
+  (println "seed projects...............")
 
-(println
- (d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects)))
+  (println
+   (d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects)))
 
-(println "Done....................")
+  (println "Done....................")
 
-(System/exit 0)
+  (System/exit 0))
 ;; restart
                                         ;(user/restart)
