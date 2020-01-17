@@ -1267,7 +1267,8 @@
 (defmutation check-all-resource-boxes [{:keys []}]
   (action [{:keys [state] :as env}]
           
-          (let [active-checkboxes (filter #(and (:resource/active? %) (:resource/email-address %)) (vals (:checkbox/id @state)))
+          (let [active-checkboxes (filter (:resource/active? %)
+                                          (vals (:checkbox/id @state)))
                 active-ids  (map :checkbox/value active-checkboxes)]
             (doseq [id active-ids]
               
