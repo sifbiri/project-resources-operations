@@ -6,32 +6,8 @@
   
   :db/valueType :db.type/instant
   :db/cardinality :db.cardinality/one
-                                        ;:db/unique :db.unique/value           
+  ;:db/unique :db.unique/value           
   }
-
-;; new 
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :project/modified-date
-  
-  :db/valueType :db.type/instant
-  :db/cardinality :db.cardinality/one
-                                        ;:db/unique :db.unique/value           
-  }
-
-
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :project/last-published-date
-  
-  :db/valueType :db.type/instant
-  :db/cardinality :db.cardinality/one
-                                        ;:db/unique :db.unique/value           
-  }
-
- 
 
  
  {:db/id #db/id[:db.part/db]
@@ -127,7 +103,7 @@
  {:db/id #db/id[:db.part/db]
 
   :db/ident :assignment/resource
-  
+  :db/isComponent true
   :db/valueType :db.type/ref
   :db/cardinality :db.cardinality/one
   
@@ -159,8 +135,13 @@
 
   :db/valueType :db.type/uuid
 
+<<<<<<< Updated upstream
   ;:db/unique :db.unique/identity
   ;:db/index true
+=======
+;  :db/unique :db.unique/identity
+ ; :db/index true
+>>>>>>> Stashed changes
   :db/cardinality :db.cardinality/one
 
   
@@ -297,9 +278,6 @@
   
   }
 
-
- 
-
  {:db/id #db/id[:db.part/db]
 
   :db/ident :resource/modified-date
@@ -308,97 +286,4 @@
   :db/cardinality :db.cardinality/one
   
   }
-
-
-
- ;; local Resources
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :resource/active?
-
-  :db/valueType :db.type/boolean
-  
-  :db/cardinality :db.cardinality/one
-  
-  }
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :resource/active?
-
-  :db/valueType :db.type/boolean
-  
-  :db/cardinality :db.cardinality/one
-  
-  }
-
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :resource/profile
-
-  :db/valueType :db.type/keyword
-  
-  :db/cardinality :db.cardinality/one
-  
-  }
- 
-
- {:db/ident :profile/admin}
- {:db/ident :profile/team-leader}
- {:db/ident :profile/project-manager}
- {:db/ident :profile/user}
-
-
- ;; local Teams
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :team/name
-
-  :db/valueType :db.type/string
-  
-  :db/cardinality :db.cardinality/one
-
-  :db/unique  :db.unique/identity
-  }
-
-
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :team/type
-
-  :db/valueType :db.type/keyword
-  
-  :db/cardinality :db.cardinality/one
-  
-  }
-
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :team/resources
-
-  :db/valueType :db.type/ref
-  
-  :db/cardinality :db.cardinality/many
-  
-  
-  }
-
-
- {:db/id #db/id[:db.part/db]
-
-  :db/ident :team/lead
-
-  :db/valueType :db.type/ref
-  
-  :db/cardinality :db.cardinality/one
-  
-  
-  }
- 
  ]
-
