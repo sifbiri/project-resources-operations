@@ -28,13 +28,16 @@
   {::pc/output [{:projects [:project/id :project/name]}]}
   (let [id (get-in env [:ast :params :resource/id])]
     {:projects (map (fn [row]
-                      (zipmap [:project/name :project/id] row))
-                    (d/q  '[:find ?pn ?pi
+                      (zipmap [:project/name :project/id :project/modified-date :project/last-published-date] row))
+                    (d/q  '[:find ?pn ?pi ?last-modified ?last-published
                             :in $ ?id
                             
                             :where
                             [?p :project/name ?pn]
                             [?p :project/id ?pi]
+                            [?p :project/modified-date ?last-modified]
+                            [?p :project/last-published-date ?last-published]
+                            
                             [?p :project/assignments ?a]
                             [?a :assignment/resource ?r]
                             [?r :resource/id ?id]] (d/db conn) id))}))

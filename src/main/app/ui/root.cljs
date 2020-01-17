@@ -3,9 +3,6 @@
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
 
-
-
-
    [com.fulcrologic.semantic-ui.elements.input.ui-input :refer [ui-input]]
    [com.fulcrologic.semantic-ui.elements.icon.ui-icon :refer [ui-icon]]
    [com.fulcrologic.semantic-ui.elements.loader.ui-loader :refer [ui-loader]]
@@ -650,7 +647,7 @@
 
 (defsc Project
   [this {:project/keys [id name]}]
-  {:query [:project/id :project/name]
+  {:query [:project/id :project/name :project/last-published-date :project/modified-date]
    :ident :project/id})
 
 (defsc SelectedProject
@@ -784,14 +781,16 @@
       (comp/fragment
 
        
-       (tr
+       (ui-table-row
         {:style {}
          :onClick (fn []
                     #_(comp/set-state! this {:ui/selected (not (:ui/selected (comp/get-state this)))})
                     (m/toggle! this :ui/selected)
                     )}
 
-        (td {:style {:backgroundColor  "#3281b9"}} "") (td {:colSpan 2}
+        (ui-table-cell  {:style {:backgroundColor  "#3281b9"}} "") (ui-table-cell 
+
+                                                                    {:colSpan 2 :title (apply str (take 21 (str (:project/last-published-date project))))}
                                                            (str (:project/name project) " ")
                                                            (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline" :z-index -1}})))
 

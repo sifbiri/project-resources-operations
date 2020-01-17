@@ -539,13 +539,17 @@
 
 #_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
-(println "transacting schema................")
-(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
-
                                         ;(println "Test")
 
 ;; steps
 
+
+
+
+
+                                        ; schema
+(println "transacting schema................")
+(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
 
 ;; delete projects
 (println "delete projects...........")
