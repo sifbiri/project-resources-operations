@@ -163,7 +163,7 @@
   [id]
   (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
         val  (d/entity (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id  id])]
-    (println "resource with id " (:db/id val))
+    (println "resource with id " val)
     (if (number? (:db/id id)) id (remove-nils resource-server))))
 
 
@@ -546,11 +546,11 @@
 
 
 
-
 (comment 
+
                                         ; schema
-  (println "transacting schema................")
-  (transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
+                                        ;(println "transacting schema................")
+                                        ;(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
 
   ;; delete projects
   (println "delete projects...........")
