@@ -837,6 +837,7 @@
     :resource-line/totals
     [:ui/dates '_]
     :resource-line/id
+    [df/marker-table :resource-line-loader]
     {:resource-line/projects (comp/get-query Project)}
     {:resource-line/project-lines (comp/get-query ProjectLine)}
     ]
@@ -909,16 +910,17 @@
    :componentDidMount (fn [this]
                         (let
                             [start (:start (:dates (comp/props this)))
-
+                             
                              end (:end (:dates (comp/props this)))
+                             
                              resource-line-id (:resource-line/id (comp/props this))
                              {:resource-line/keys [resource projects]}
                              (:resource-line/resource (comp/props this))
 
                              ]
 
-                          (df/load! this :projects Project
-                                    {:marker :projects
+                         (df/load! this :projects Project
+                                    {:marker :resource-line-loader
                                      :params               {:resource/id resource-line-id}
 
                                      :target [:resource-line/id  resource-line-id :resource-line/projects]
@@ -926,7 +928,7 @@
                                      :post-mutation `set-projects-lines
                                      ;; we get the resource from workplan
                                      :post-mutation-params {:projects (:resource-line/projects (comp/props this)) :resource-id (:resource-line/id (comp/props this))}
-
+                                     
                                      })
 
 
@@ -958,28 +960,35 @@
                         (= n 0) "white"
                         (and (> n 0) (<= n 8)) "lightGreen"
                         (and (> n 8) (<= n 10)) "orange"
-                        (> n 10) "red"))] (comp/fragment
-                                           (tr
-                                            {:style {}
-                                             :onClick (fn []
-                                                        (m/toggle! this :ui/selected)
-                                                        )}
+                        (> n 10) "red"))
+        marker (get (comp/props this) [df/marker-table :resource-line-loader])]
 
-                                            (td {:style {} :colspan 3}
-                                                
-                                                (str (:resource/name resource) " ")
-                                                (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
+    (if (not (df/loading? marker))
+      (comp/fragment
+      (tr
+       {:style {}
+        :onClick (fn []
+                   (m/toggle! this :ui/selected)
+                   )}
 
-                                            (when totals (map #(td {:style {:backgroundColor (color %)}}
+       (td {:style {} :colspan 3}
+           
+           (str (:resource/name resource) " ")
+           (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-                                                                   
-                                                                   (goog.string.format "%.2f" %)) totals))
+       (when totals (map #(td {:style {:backgroundColor (color %)}}
+
+                              
+                              (goog.string.format "%.2f" %)) totals))
 
 
-                                            )
+       )
 
-                                           (when selected
-                                             (map ui-project-line project-lines)))))
+      (when selected
+        (map ui-project-line project-lines)))
+      (tr (td {:colSpan 8}
+
+              (ui-loader {:active true :inline :centered} ))))))
 (def ui-resource-line (comp/factory ResourceLine))
 
 
@@ -1263,7 +1272,7 @@
                 active-ids  (map :checkbox/value active-checkboxes)]
             (doseq [id active-ids]
               
-              (swap! state assoc-in [:checkbox/id id :checkbox/checked?] true)
+              (swap! state assoc-in [:checkbox/id id :ui/checked?] true)
               )
             (js/console.log "active ids" active-ids)
             (comp/transact! SPA  [(set-resource-lines {:ids active-ids})]))
@@ -1281,7 +1290,7 @@
   (action [{:keys [state] :as env}]
           (let [ids  (map first (:checkbox/id @state))]
             (doseq [id ids]
-              (swap! state assoc-in [:checkbox/id id :checkbox/checked?] false)
+              (swap! state assoc-in [:checkbox/id id :ui/checked?] false)
               (comp/transact! SPA  [(remove-resource-line {:id id})])
               )
             )
@@ -1305,7 +1314,7 @@
    
    :ident (fn [] [:checkbox/id (:checkbox/value props)])
    ;:initLocalState (fn [this] {:ui/checked? false})
-   ;:shouldComponentUpdate (fn [_ _ _] true)
+   
    :initLocalState (fn [this props]
                      {:checked false})
    }
@@ -1340,6 +1349,7 @@
 (defsc ResourcesCheckboxes [this {:list/keys [items all-checked? show-more?]}]
   {:query [{:list/items (comp/get-query ResourceCheckboxItem)  } :list/all-checked? :list/show-more?]
    :ident (fn [] [:component/id :checkboxes])
+   ;:shouldComponentUpdate (fn [_ _ _] true)
    :initLocalState (fn [_] {:all-checked? false :list/show-more? false})}
   (let [#_#_all-checked? (every? item-checked? items)
         show-more? (comp/get-state this :list/show-more?)]

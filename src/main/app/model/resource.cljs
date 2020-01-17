@@ -46,7 +46,13 @@
 
               (doseq [v r]
                 
-                (swap! state merge/merge-component ResourceCheckboxItem v :append [:component/id :workplan :workplan/team-checkboxes]) )))))
+                (swap! state merge/merge-component ResourceCheckboxItem (assoc v :ui/checked? false)
+                       ;; TODO take this off ? 
+                       :append [:component/id :checkboxes :list/items]
+
+                       )
+
+                )))))
 
 
 
