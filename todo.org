@@ -47,11 +47,11 @@ https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
 
 
 * features3
-- add team lead to resource lines
-- implement loading ....
-- Don't show table of admin teams when no teams
-- Add button to add a team
-- You have to login to be able to see
-- when changing the name of team, the popup closes
-- add a way to delte team
+- [x]  add team lead to resource lines
+- [x] implement loading ....
+- [x] Don't show table of admin teams when no teams
+- [x] Add button to add a team
+- [x] You have to login to be able to see
+- [x] when changing the name of team, the popup closes
+-[x]  add a way to delte team
 - fix the add member to the table

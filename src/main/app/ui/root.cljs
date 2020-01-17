@@ -1397,7 +1397,7 @@
                 combined-resource-lines (vec (distinct (concat resource-lines new-resource-lines)))]
             ;; todo add team lead
             (js/console.log "HIIIII" combined-resource-lines)
-            (doseq [[_ id] (conj  (:team/resources team) (:team/lead team))]
+            (doseq [[_ id] (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team)))]
               (swap! state merge/merge-component ResourceLine
                      {:resource-line/resource [:resource/id id]
                       :resource-line/id id}
