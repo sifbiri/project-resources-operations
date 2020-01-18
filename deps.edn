@@ -25,9 +25,13 @@
 
 
             fulcrologic/fulcro
+
            {:git/url "https://github.com/fulcrologic/fulcro" :sha "11be26c011bcf966f36b8cc9a44f23d83810a10c"
             
             }
+
+           
+           
 
 
            com.wsscode/pathom-datomic {:git/url "https://github.com/wilkerlucio/pathom-datomic.git"

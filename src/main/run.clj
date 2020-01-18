@@ -18,13 +18,20 @@
    [clojure.pprint :as pp]
                                         ;[app.model.database :as db :refer [conn]]
    [overtone.at-at :as at-at]
-   [clojure.core :refer :all]))
+   [clojure.core :refer :all]
+   [tick.alpha.api :as t])
+  )
 
 
 
 
 
 (println "delete projects...........")
+(def my-pool (at-at/mk-pool))
+;(at-at/at (t/millisecond (t/now)) #(println "hello from the past!") my-pool)
+
+;(t/millis (t/between (t/instant "1970-01-01T00:00:00Z") (t/now)))
+
 
 (comment (d/transact
           (d/connect "datomic:dev://localhost:4334/one2")
@@ -46,4 +53,4 @@
 
          (println "Done....................")
          )
-(System/exit 0)
+;(System/exit 0)
