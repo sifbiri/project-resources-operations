@@ -24,33 +24,36 @@
 
 
 
+(defn run []
+  (println "delete projects...........")
+  (d/transact
+   (d/connect "datomic:dev://localhost:4334/one2")
+
+   (mapv
+    (fn [id]
+
+      [:db/retractEntity id])
+
+    (d/q '[:find [?e ...]
+
+           :where
+           [?e :project/name ?n]
+
+           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+
+  (println "seed projects...............")
+  @(d/transact (d/connect "datomic:dev://localhost:4334/one2") (api/get-all-projects))
+
+  (println "Done....................")
+  )
 
 
-(println "delete projects...........")
+
 (def my-pool (at-at/mk-pool))
-;(at-at/at (t/millisecond (t/now)) #(println "hello from the past!") my-pool)
+(at-at/interspaced (t/millis (t/new-duration 120 :minutes)) ( (t/now)) run my-pool)
 
 ;(t/millis (t/between (t/instant "1970-01-01T00:00:00Z") (t/now)))
 
 
-(comment (d/transact
-          (d/connect "datomic:dev://localhost:4334/one2")
 
-          (mapv
-           (fn [id]
-
-             [:db/retractEntity id])
-
-           (d/q '[:find [?e ...]
-
-                  :where
-                  [?e :project/name ?n]
-
-                  ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
-
-         (println "seed projects...............")
-         @(d/transact (d/connect "datomic:dev://localhost:4334/one2") (api/get-all-projects))
-
-         (println "Done....................")
-         )
 ;(System/exit 0)
