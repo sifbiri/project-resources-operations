@@ -5,7 +5,7 @@
            bk/ring-gzip                        {:mvn/version "0.3.0"}
            com.taoensso/timbre                 {:mvn/version "4.10.0"}
            com.taoensso/tufte                  {:mvn/version "2.1.0-RC4"}
-           com.wsscode/pathom                  {:mvn/version "2.2.26"}
+           com.wsscode/pathom                  {:mvn/version "2.2.29"}
            tick {:mvn/version "0.4.23-alpha"}
                                         ;           com.fulcrologic/fulcro              {:mvn/version "3.0.3"}
                                         ;com.fulcrologic/fulcro {:mvn/version "3.0.9"}
@@ -26,7 +26,7 @@
 
             fulcrologic/fulcro
 
-           {:git/url "https://github.com/fulcrologic/fulcro" :sha "11be26c011bcf966f36b8cc9a44f23d83810a10c"
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "01cada92374db410268790863635e3865f7ce304"
             
             }
 

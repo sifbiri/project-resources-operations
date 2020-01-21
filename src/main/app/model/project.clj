@@ -24,6 +24,126 @@
                 ] (d/db conn) id)
          ))
 
+
+
+
+(pc/defresolver made-up-resolver [env {:keys [project-panel/id]}]
+  {::pc/input #{:project-panel/id}
+   ::pc/output [:project-panel/made-up]}
+  {:project-panel/made-up 44})
+
+
+(pc/defresolver made-up-resolver2 [{:keys [db]} {:keys [project-panel/id]}]
+  {::pc/input #{:project-panel/id}
+   ::pc/output [:project-panel/finish-date]}
+  {:project-panel/finish-date (d/q  '[:find  ?ps .
+                                      
+                                      :where
+                                      [?p :project/id ?id ]
+                                      [?p :project/finish-date ?ps]
+                                      
+                                      ] db id) })
+
+(pc/defresolver start-date-resolver [{:keys [db]} {:keys [project-panel/id]}]
+  {::pc/input #{:project-panel/id}
+   ::pc/output [:project-panel/start-date]}
+
+  {:project-panel/start-date
+   (d/q  '[:find  ?ps .
+           
+           :where
+           [?p :project/id ?id ]
+           [?p :project/start-date ?ps]
+           
+           ] db id)})
+
+(pc/defresolver modified-date-resolver [{:keys [db]} {:keys [project-panel/id]}]
+  {::pc/input #{:project-panel/id}
+   ::pc/output [:project-panel/modified-date]}
+
+  {:project-panel/modified-date
+   (d/q  '[:find  ?ps .
+           
+           :where
+           [?p :project/id ?id ]
+           [?p :project/modified-date ?ps]
+           
+           ] db id)})
+
+(pc/defresolver last-published-date-resolver [{:keys [db]} {:keys [project-panel/id]}]
+  {::pc/input #{:project-panel/id}
+   ::pc/output [:project-panel/last-published-date]}
+
+  {:project-panel/last-published-date
+   (d/q  '[:find  ?ps .
+           
+           :where
+           [?p :project/id ?id ]
+           [?p :project/last-published-date ?ps]
+           
+           ] db id)})
+
+
+
+
+
+
+
+
+
+
+(pc/defresolver name-resolver [{:keys [db]} {:keys [project-panel/id]}]
+  {::pc/input #{:project-panel/id}
+   ::pc/output [:project-panel/name]}
+
+  {:project-panel/name
+   (d/q  '[:find  ?ps .
+           
+           :where
+           [?p :project/id ?id ]
+           [?p :project/name ?ps]
+           
+           ] db id)})
+
+(def alias-project-id (pc/alias-resolver2 :project/id :project-panel/id))
+
+
+(pc/defresolver project-resolver [env {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:project/id :project/name   :project/modified-date :project/last-published-date 
+                :project/created-date :project/work]}
+  (d/q  '[:find ?pi ?pn  ?pm ?pl  ?pc ?pw
+          :keys project/id project/name  project/modified-date project/last-published-date 
+          project/created-date project/work
+          :where
+          
+          [?p :project/id ?pi]
+          [?p :project/name ?pn]
+          
+          [?p :project/modified-date ?pm]
+          [?p :project/last-published-date ?pl]
+          
+          [?p :project/created-date ?pc]
+          [?p :project/work ?pw]
+          
+          ] (d/db conn)))
+
+
+
+
+(pc/defresolver all-projects-resolver [env _]
+  {::pc/output [{:all-projects [:project/id :project/name :project/start-date :project/modified-date]}]}
+  (let [id (get-in env [:ast :params :resource/id])]
+    {:all-projects (d/q  '[:find ?pi
+                           :keys project/id
+                           :where
+                           
+                           [?p :project/id ?pi]
+                           ] (d/db conn))}))
+
+
+
+
 (pc/defresolver projects-resolver [env _]
   {::pc/output [{:projects [:project/id :project/name]}]}
   (let [id (get-in env [:ast :params :resource/id])]
@@ -79,7 +199,7 @@
                                    [?a :assignment/by-day ?bd]
                                    ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) resource-id project-id)))}))
 
-(def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver])
+
 
 
 
@@ -144,3 +264,5 @@
             
             
 
+(def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
+                 all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver])

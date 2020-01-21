@@ -192,6 +192,8 @@
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Team Lead")
                                                                                      (ui-dropdown {:placeholder "Team Lead"
+                                                                                                   :selection true
+                                                                                                   :search true
                                                                                                    :options filtered-resources
                                                                                                    :value (:resource/id lead)
                                                                                                    

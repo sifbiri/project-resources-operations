@@ -52,6 +52,7 @@
 
    [com.fulcrologic.semantic-ui.collections.form.ui-form-checkbox :refer [ui-form-checkbox]]
    [app.ui.users :as users]
+   [app.ui.projects :as projects]
    [app.ui.teams :as teams :refer []]
 
 
@@ -625,19 +626,7 @@
 
 
   (div (ui-date date)
-       #_(div  {:style {:flex 1 :display "flex"
-                        :marginTop "200px"
-                        :alignItems "center"
-                        :color "gray"
-                        :textAlign "center"
-                        :justifyContent "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
-
-                                        ;(ui-flag-icon #js {:code "CA"})
-
-                        ;; (Flag {:code "CA"})
-
-                        ;; (ui-react-country-flag {:code "US" :svg true :title "CA" :style {:width "2em" :height "2em"}})
-                        ))
+       )
 
   )
 
@@ -645,14 +634,11 @@
 
 
 
-(defsc Project
-  [this {:project/keys [id name]}]
-  {:query [:project/id :project/name :project/last-published-date :project/modified-date]
-   :ident :project/id})
+
 
 (defsc SelectedProject
   [this {:selected/keys [project]}]
-  {:query [:selected/project (comp/get-query Project)
+  {:query [:selected/project (comp/get-query projects/Project)
            {:selected/resource (comp/get-query users/Resource)}]
    :ident (fn [] [:component/id :selected])}
 
@@ -728,7 +714,7 @@
                                  ui/dates] :as props}]
   {:query [:project-line/id
            [:ui/dates '_]
-           {:project-line/project (comp/get-query Project)}
+           {:project-line/project (comp/get-query projects/Project)}
            {:project-line/resource (comp/get-query users/Resource)}
            {:project-line/assignments (comp/get-query Assignment)}
            :ui/selected ]
@@ -837,7 +823,7 @@
     [:ui/dates '_]
     :resource-line/id
     [df/marker-table :resource-line-loader]
-    {:resource-line/projects (comp/get-query Project)}
+    {:resource-line/projects (comp/get-query projects/Project)}
     {:resource-line/project-lines (comp/get-query ProjectLine)}
     ]
    :initLocalState (fn [this props] {:count 0})
@@ -918,7 +904,7 @@
 
                              ]
 
-                         (df/load! this :projects Project
+                         (df/load! this :projects projects/Project
                                     {:marker :resource-line-loader
                                      :params               {:resource/id resource-line-id}
 
@@ -1739,7 +1725,7 @@
                                         ;(dr/change-route)
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams]})
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel]})
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -1786,7 +1772,8 @@
                                                                                 (= current-tab :admin-users)) :content (ui-dropdown {:item true :text "Admin"}
                                                                                                                                     (ui-dropdown-menu {}
                                                                                                                                                       (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
-                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")))}
+                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
+                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to projects/AdminProjects))} "Projects")))}
                                                   )
 
                                     
@@ -1796,7 +1783,20 @@
                            
                            )
              (ui-grid-row {}
-                          (ui-top-router router)))))
+                          (ui-top-router router))
+             (ui-grid-row {:style {:paddingTop "250px"}} (div  {:style {:flex 1 :display "flex"
+                                            :marginTop "200px"
+                                            :alignItems "center"
+                                            :color "gray"
+                                            :textAlign "center"
+                                            :justifyContent "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
+
+                                        ;(ui-flag-icon #js {:code "CA"})
+
+                                            ;; (Flag {:code "CA"})
+
+                                            ;; (ui-react-country-flag {:code "US" :svg true :title "CA" :style {:width "2em" :height "2em"}})
+                                            )))))
 
 (def ui-top-chrome (comp/factory TopChrome))
 

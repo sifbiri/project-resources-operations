@@ -2,10 +2,9 @@
  :source-paths ["src"]
 
  :dependencies
-
- [[tick "0.4.17-alpha"]
-                                        ; you need to add this extra dependency! 
-  [thheller/shadow-cljsjs "0.0.16"]]
+ [[tick "0.4.23-alpha"]
+                                        ; you need to add                                        ; you need to add this extra dependency! 
+  [thheller/shadow-cljsjs "0.0.21"]]
 
 
 
