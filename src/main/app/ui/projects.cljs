@@ -91,6 +91,13 @@
 
    [com.fulcrologic.semantic-ui.collections.form.ui-form-input :refer [ui-form-input]]
 
+
+   [com.fulcrologic.semantic-ui.elements.step.ui-step :refer [ui-step]]
+   [com.fulcrologic.semantic-ui.elements.step.ui-step-content :refer [ui-step-content]]
+   [com.fulcrologic.semantic-ui.elements.step.ui-step-description :refer [ui-step-description]]
+   [com.fulcrologic.semantic-ui.elements.step.ui-step-group :refer [ui-step-group]]
+   [com.fulcrologic.semantic-ui.elements.step.ui-step-title :refer [ui-step-title]]
+
    
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
@@ -118,10 +125,24 @@
 
    ))
 
+(defn ui-project-governance-review [ props]
+   
+   (ui-container {:textAlign "center"}
+                 (ui-step-group {}
+                                (ui-step {}
+                                         (ui-step-content {}
+                                                          (ui-step-title {} "Title")
+                                                          (ui-step-description {} "Description")))
+                                (ui-step {}
+                                         (ui-step-content {}
+                                                          (ui-step-title {} "Title")
+                                                          (ui-step-description {} "Description")))
+                                (ui-step {}
+                                         (ui-step-content {}
+                                                          (ui-step-title {} "Title")
+                                                          (ui-step-description {} "Description"))))))
 
-
-
-
+;(def ui-project-governance-review (comp/factory ProjectGovernanceReview))
 
 
 (defmutation change-route [{:keys [this target]}]
@@ -158,9 +179,12 @@
 
 (defsc ProjectPanel [this {:ui/keys      []
                            :project/keys  [ ]
-                           :project-panel/keys [id made-up name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead]
+                           :project-panel/keys [id made-up name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead status phase entity fluxod-name]
                            :as          props}]
-  {:query           [:project-panel/made-up :project-panel/id :project-panel/start-date :project-panel/modified-date  :some-stuff :project-panel/last-published-date :project-panel/finish-date :project-panel/name
+  {:query           [:project-panel/made-up :project-panel/id :project-panel/start-date :project-panel/modified-date  :some-stuff :project-panel/last-published-date :project-panel/finish-date :project-panel/name :project-panel/status
+                     :project-panel/phase
+                     :project-panel/entity
+                     :project-panel/fluxod-name
                      [:resource/options2 '_]
                      [df/marker-table '_]
                      fs/form-config-join
@@ -201,15 +225,7 @@
                                       { :menuItem "Info" :render  (fn [] (ui-tab-pane {:fluid true}
                                                                                       (ui-form {}
                                                                                                (ui-form-group {}
-                                                                                                              #_(ui-form-field {:width 6}(ui-form-input {:label "Name" :placeholder "Project Name" :readOnly true :value name}))
-
-                                                                                                              
-                                                                                                              
-                                                                                                              
-                                                                                                              
-                                                                                                              
-                                                                                                              
-                                                                                                              )
+                                                                                                              #_(ui-form-field {:width 6}(ui-form-input {:label "Name" :placeholder "Project Name" :readOnly true :value name})))
 
                                                                                                (ui-form-group {}
                                                                                                               (ui-form-field {}
@@ -217,19 +233,43 @@
                                                                                                                              (ui-dropdown {:placeholder "Project Status"
                                                                                                                                            :selection true
                                                                                                                                            :search true
-                                                                                                                                           :options  [{:text "one" :value "1"}]
-;                                                                                                                                           :value (:resource/id project-lead)
+                                                                                                                                           :options  
+                                                                                                                                           [{:text "Sales" :value :sales}
+                                                                                                                                            {:text "In Progress" :value :in-progress}
+                                                                                                                                            {:text "Closed" :value :closed}
+                                                                                                                                            {:text "Cancelled" :value :cancelled}]
+                                                                                                                                           :value status
                                                                                                                                            
-                                                                                                                                           :onChange #(js/console.log %)}))
+                                                                                                                                           :onChange #(comp/transact! this [(project/set-project-status {:status (keyword (.-value %2))  :project-panel/id id })])}))
                                                                                                               (ui-form-field {}
                                                                                                                              (dom/label {} "Project Phase")
                                                                                                                              (ui-dropdown {:placeholder "Project Phase"
                                                                                                                                            :selection true
                                                                                                                                            :search true
-                                                                                                                                           :options  [{:text "one" :value "1"}]
-                                                                                                                                           ;:value (:resource/id project-lead)
+                                                                                                                                           :options  [{:text "Mobilize" :value :mobilize}
+                                                                                                                                                      {:text "Design" :value :design}
+                                                                                                                                                      {:text "Build" :value :build}
+                                                                                                                                                      {:text "Test" :value :test}
+                                                                                                                                                      {:text "Training" :value :training}
+                                                                                                                                                      {:text "HyperCare" :value :hyper-care}]
+                                                                                                                                           :value phase 
                                                                                                                                            
-                                                                                                                                           :onChange #(js/console.log %)}))
+                                                                                                                                           :onChange #(comp/transact! this [(project/set-project-phase {:phase (keyword (.-value %2))  :project-panel/id id })])}))
+
+
+                                                                                                              (ui-form-field {}
+                                                                                                                             (dom/label {} "Fluxym Entity")
+                                                                                                                             (ui-dropdown {:placeholder "Fluxym Entity"
+                                                                                                                                           :selection true
+                                                                                                                                           :search true
+                                                                                                                                           :options  [{:text "APAC" :value :apac}
+                                                                                                                                                      {:text "FRANCE" :value :france}
+                                                                                                                                                      {:text "NORAM" :value :noram}
+                                                                                                                                                      
+                                                                                                                                                      ]
+                                                                                                                                           :value (or entity :noram) 
+                                                                                                                                           
+                                                                                                                                           :onChange #(comp/transact! this [(project/set-project-entity {:entity (keyword (.-value %2))  :project-panel/id id })])}))
                                                                                                               )
                                                                                                (ui-divider {})
 
@@ -254,15 +294,7 @@
                                                                                                                                }))
                                                                                                (ui-divider {})
 
-                                                                                               (ui-form-group {}
-
-
-                                                                                                              
-                                                                                                              
-                                                                                                              
-                                                                                                              
-
-                                                                                                              )
+                                                                                               
                                                                                                (ui-form-group {}
 
 
@@ -307,9 +339,27 @@
 
                                                                                                               
 
+                                                                                                              )
+
+
+                                                                                               (ui-form-group {}
+                                                                                                              (ui-form-field {}
+                                                                                                                             (dom/label {} "Fluxod Name")
+                                                                                                                             (ui-input {:placeholder "Fluxod Name"
+                                                                                                                                        :onChange #()
+                                                                                                                                        :onBlur (fn [e]
+                                                                                                                                                  (comp/transact! this [(project/set-project-fluxod-name {:name (evt/target-value e) :project-panel/id id})]))
+                                                                                                                                         
+                                                                                                                                         :value fluxod-name
+                                                                                                                                         }))
+
+                                                                                                              
+
                                                                                                               )))) }
-                                      { :menuItem "Governance Review" :render  (fn [] (ui-tab-pane {} "Governance Review")) }
-                                      { :menuItem "RMP" :render  (fn [] (ui-tab-pane {} "RMP")) }
+                                      { :menuItem "Governance Review" :render  (fn [] (ui-tab-pane {} (ui-project-governance-review {}))) }
+                                      { :menuItem "Risk & Issues" :render  (fn [] (ui-tab-pane {} "Risk & Issues")) }
+                                      { :menuItem "Action List" :render  (fn [] (ui-tab-pane {} "Action List")) }
+                                      { :menuItem "TimeLine" :render  (fn [] (ui-tab-pane {} "TimeLine")) }
                                       
                                       ]}  ))
       )))
@@ -376,3 +426,9 @@
         )
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))))
+
+
+
+
+
+

@@ -59,3 +59,17 @@ https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
 ** Info
 **
 ** RMP
+* Options
+
+** Project Phases
+*** Mobilize
+*** Design
+*** Build
+*** Test
+*** Training
+*** HyperCare
+** Fluxym Entity
+*** APAC
+*** FRANCE
+*** NORAM(default)
+** Fluxod Project Name (free text)

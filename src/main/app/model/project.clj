@@ -46,6 +46,70 @@
     {:entity (nil? entity)}))
 
 
+
+(pc/defresolver project-status-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [:project-panel/status]}
+  {:project-panel/status
+   (d/q '[:find ?status .;?rn ?re
+          :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+          :where
+          [?p :project-panel/status ?status]
+          [?p :project-panel/id ?id]
+          ]  db (api/uuid id))})
+
+(pc/defmutation set-project-status [{:keys [db connection]} {:keys [project-panel/id status]}]
+  {::pc/sym`set-project-status
+   ::pc/params [:project-panel/id :status]
+   ::pc/output [:entity]}
+  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/status status
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/status status
+                               :project-panel/id (api/uuid id)}]))
+
+    
+    {:entity (nil? entity)}))
+
+
+(pc/defresolver project-phase-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [:project-panel/phase]}
+  {:project-panel/phase
+   (d/q '[:find ?phase .;?rn ?re
+          :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+          :where
+          [?p :project-panel/phase ?phase]
+          [?p :project-panel/id ?id]
+          ]  db (api/uuid id))})
+
+
+(pc/defmutation set-project-phase [{:keys [db connection]} {:keys [project-panel/id phase]}]
+  {::pc/sym`set-project-phase
+   ::pc/params [:project-panel/id :phase]
+   ::pc/output [:entity]}
+  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/phase phase
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/phase phase
+                               :project-panel/id (api/uuid id)}]))
+
+    
+    {:entity (nil? entity)}))
+
+
 (pc/defmutation set-functional-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
   {::pc/sym`set-functional-lead
    ::pc/params [:project-panel/id :lead-id]
@@ -63,6 +127,70 @@
 
     
     {:entity (nil? entity)}))
+
+
+(pc/defmutation set-project-entity [{:keys [db connection]} {:keys [project-panel/id entity]}]
+  {::pc/sym`set-project-entity
+   ::pc/params [:project-panel/id :entity]
+   ::pc/output [:entity]}
+  (let [entity2 (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity2))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/entity entity
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/entity entity
+                               :project-panel/id (api/uuid id)}]))
+
+    
+    {:entity (nil? entity2)}))
+
+
+(pc/defmutation set-project-fluxod-name [{:keys [db connection]} {:keys [project-panel/id name]}]
+  {::pc/sym`set-project-fluxod-name
+   ::pc/params [:project-panel/id :name]
+   ::pc/output [:entity]}
+  (let [entity2 (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity2))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/fluxod-name name
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/fluxod-name name
+                               :project-panel/id (api/uuid id)}]))
+
+    
+    {:entity (nil? entity2)}))
+
+
+(pc/defresolver project-fluxod-name-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [:project-panel/fluxod-name]}
+  {:project-panel/fluxod-name
+   (d/q '[:find ?name .;?rn ?re
+          :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+          :where
+          [?p :project-panel/fluxod-name ?name]
+          [?p :project-panel/id ?id]] db (api/uuid id))})
+
+
+
+(pc/defresolver project-entity-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [:project-panel/entity]}
+  {:project-panel/status
+   (d/q '[:find ?entity .;?rn ?re
+          :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+          :where
+          [?p :project-panel/entity ?entity]
+          [?p :project-panel/id ?id]
+          ]  db (api/uuid id))})
 
 
 
@@ -381,4 +509,5 @@
 
 (def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver project-lead-resolver
-                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead])
+                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver
+                 set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name])

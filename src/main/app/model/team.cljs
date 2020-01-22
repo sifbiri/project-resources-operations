@@ -32,15 +32,15 @@
   (action [{:keys [state]}]
           (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
             (js/console.log "LOG" team-id)
-           (swap! state (fn [state]
-                          (-> state
-                              (assoc-in [:team/id team-id :team/name] name)
-                              )))
-           ;; (swap! state  merge/merge-component TeamCheckbox
-           ;;        {:db/id team-id :team/name name }
-                  
-           ;;        )
-           ))
+            (swap! state (fn [state]
+                           (-> state
+                               (assoc-in [:team/id team-id :team/name] name)
+                               )))
+            ;; (swap! state  merge/merge-component TeamCheckbox
+            ;;        {:db/id team-id :team/name name }
+            
+            ;;        )
+            ))
   (remote [env] true))
 
 

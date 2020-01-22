@@ -28,6 +28,50 @@
   (remote [env] true))
 
 
+
+(defmutation set-project-status [{:keys [project-panel/id status]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [state]
+                         (-> state
+                             (assoc-in [:project-panel/id id :project-panel/status] status)))))
+  (remote [env] true))
+
+(defmutation set-project-entity [{:keys [project-panel/id entity]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [state]
+                         (-> state
+                             (assoc-in [:project-panel/id id :project-panel/entity] entity)))))
+  (remote [env] true))
+
+
+
+(defmutation set-project-fluxod-name [{:keys [project-panel/id name]}]
+  (action [{:keys [state]}]
+          (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
+            
+            (swap! state (fn [state]
+                           (-> state
+                               (assoc-in [:project-panel/id id :project-panel/fluxod-name] name)
+                               )))
+            ;; (swap! state  merge/merge-component TeamCheckbox
+            ;;        {:db/id team-id :team/name name }
+            
+            ;;        )
+            ))
+  (remote [env] true))
+
+
+
+
+
+(defmutation set-project-phase [{:keys [project-panel/id phase]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [state]
+                         (-> state
+                             (assoc-in [:project-panel/id id :project-panel/phase] phase)))))
+  (remote [env] true))
+
+
 (defmutation set-functional-lead [{:keys [:project-panel/id :lead-id]}]
   (action [{:keys [state]}]
           (swap! state (fn [state]
