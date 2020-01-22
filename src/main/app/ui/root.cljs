@@ -1772,11 +1772,13 @@
                                     (ui-menu-item { :name "Projects" :active (= current-tab :admin-projects)  :onClick #(dr/change-route this (dr/path-to projects/AdminProjects))} )
                                     
                                     (ui-menu-item {:position :right :active (or (= current-tab :admin-teams)
-                                                                                (= current-tab :admin-users)) :content (ui-dropdown {:item true :text "Admin"}
-                                                                                                                                    (ui-dropdown-menu {}
-                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
-                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
-                                                                                                                                                      ))}
+                                                                                (= current-tab :admin-users))
+                                                   :content
+                                                   (ui-dropdown {:item true :text "Admin"}
+                                                                (ui-dropdown-menu {}
+                                                                                  (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
+                                                                                  (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
+                                                                                  ))}
                                                   )
 
                                     
@@ -1785,7 +1787,7 @@
                                     )
                            
                            )
-             (ui-grid-row {:centered true  :columns 1}
+             (ui-grid-row {:centered true :columns 1}
                           (ui-top-router router))
              (ui-grid-row {:style {:paddingTop "250px"}} (div  {:style {:flex 1 :display "flex"
                                             :marginTop "200px"
