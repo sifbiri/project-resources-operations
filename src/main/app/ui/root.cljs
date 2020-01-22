@@ -1007,7 +1007,7 @@
 
                   (let [asses (map (fn [ident] (get-in @state ident))
                                    (:project-line/assignments pl))]
-                    (js/console.log "asses" (:project-line/assignments pl))
+                    
                     (map
                      (fn [r]
                        (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
@@ -1260,7 +1260,7 @@
               
               (swap! state assoc-in [:checkbox/id id :ui/checked?] true)
               )
-            (js/console.log "active ids" active-ids)
+            
             (comp/transact! SPA  [(set-resource-lines {:ids active-ids})]))
           
           ))
@@ -1340,7 +1340,7 @@
   (let [#_#_all-checked? (every? item-checked? items)
         show-more? (comp/get-state this :list/show-more?)]
 
-    (js/console.log "item2s" items)
+    
     (dom/div :.ui.checkbox
              (dom/input {
                          :type "checkbox"
@@ -1361,7 +1361,7 @@
                                         )))})
              (dom/label {:style {:color "#3281b9"}} "Check all")
              (ui-divider {})
-             (js/console.log "ITEMS" items)
+             
              (map #(ui-resource-checkbox-item  % )
                   (take (if show-more? 100 10) items))
              (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
@@ -1383,7 +1383,7 @@
                 new-resource-lines (mapv (fn [[_ id]] [:resource-line/id id]) (:team/resources team))
                 combined-resource-lines (vec (distinct (concat resource-lines new-resource-lines)))]
             ;; todo add team lead
-            (js/console.log "HIIIII" combined-resource-lines)
+            
             (doseq [[_ id] (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team)))]
               (swap! state merge/merge-component ResourceLine
                      {:resource-line/resource [:resource/id id]
@@ -1456,7 +1456,7 @@
 
                                                             (m/toggle! this :ui/checked?)
 
-                                                            (js/console.log "checked" checked?)
+                                                            
                                                             
                                                             
                                                             (if  checked?
@@ -1553,7 +1553,7 @@
                               resource-options (:resource/options state-map )
                               resource (get-in state-map [:component/id :session :account/resource])
                               teams (vec (vals (:team/id (comp/props this))))]
-                          (js/console.log "teams " (comp/props this))
+                          
 
                           (comp/transact! this [(set-workplan-date {:start
                                                                     (str (t/date))
@@ -1575,7 +1575,7 @@
 
                           
                           #_(doseq [team teams]
-                            (do (js/console.log "VALUE" team)
+                            (do 
                                 (merge/merge-component! SPA TeamCheckbox (assoc team :ui/checked? false))) ))
 
                         
@@ -1765,15 +1765,18 @@
                                                   (dom/img {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} ))
                                     (ui-menu-item {:name "WorkPlan" :active (= :workplan current-tab) :onClick (fn [event]
                                                                                                                  (dr/change-route this (dr/path-to  WorkPlan)))} )
+
+
                                     
                                     (ui-menu-item {:name "Calendar" :active (= :main current-tab) :onClick (fn [event] (dr/change-route this ["main"]))} )
+                                    (ui-menu-item { :name "Projects" :active (= current-tab :admin-projects)  :onClick #(dr/change-route this (dr/path-to projects/AdminProjects))} )
                                     
                                     (ui-menu-item {:position :right :active (or (= current-tab :admin-teams)
                                                                                 (= current-tab :admin-users)) :content (ui-dropdown {:item true :text "Admin"}
                                                                                                                                     (ui-dropdown-menu {}
                                                                                                                                                       (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
                                                                                                                                                       (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
-                                                                                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to projects/AdminProjects))} "Projects")))}
+                                                                                                                                                      ))}
                                                   )
 
                                     
@@ -1782,7 +1785,7 @@
                                     )
                            
                            )
-             (ui-grid-row {}
+             (ui-grid-row {:centered true  :columns 1}
                           (ui-top-router router))
              (ui-grid-row {:style {:paddingTop "250px"}} (div  {:style {:flex 1 :display "flex"
                                             :marginTop "200px"

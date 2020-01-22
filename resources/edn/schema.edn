@@ -1,3 +1,60 @@
+;; project panel
+
+[{:db/id #db/id[:db.part/db]
+
+  :db/ident :project-panel/id
+
+  :db/unique  :db.unique/identity
+  
+  :db/valueType :db.type/uuid
+  :db/cardinality :db.cardinality/one
+                                        ;:db/unique :db.unique/value           
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :project-panel/functional-lead
+  
+  :db/valueType :db.type/ref
+  :db/cardinality :db.cardinality/one
+                                        ;:db/unique :db.unique/value           
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :project-panel/technical-lead
+  
+  :db/valueType :db.type/ref
+  :db/cardinality :db.cardinality/one
+                                        ;:db/unique :db.unique/value           
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :project-panel/project-lead
+  
+  :db/valueType :db.type/ref
+  :db/cardinality :db.cardinality/one
+                                        ;:db/unique :db.unique/value           
+  }
+
+
+
+
+ ]
+
+
+
+
+
+
+
+
+
+
 ;; project
 [
  {:db/id #db/id[:db.part/db]

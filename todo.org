@@ -55,3 +55,7 @@ https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
 - [x] when changing the name of team, the popup closes
 -[x]  add a way to delte team
 - fix the add member to the table
+* Tabs
+** Info
+**
+** RMP

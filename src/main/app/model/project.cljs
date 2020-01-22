@@ -19,3 +19,28 @@
             (swap! state assoc-in [:component/id :resources :resources/projects] projects)
             (swap! state assoc  :projects []))))
 
+(defmutation set-project-lead [{:keys [:project-panel/id :lead-id]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [state]
+                         (-> state
+                             (assoc-in [:project-panel/id id :project-panel/project-lead]
+                                       [:resource/id  lead-id])))))
+  (remote [env] true))
+
+
+(defmutation set-functional-lead [{:keys [:project-panel/id :lead-id]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [state]
+                         (-> state
+                             (assoc-in [:project-panel/id id :project-panel/functional-lead]
+                                       [:resource/id  lead-id])))))
+  (remote [env] true))
+
+(defmutation set-technical-lead [{:keys [:project-panel/id :lead-id]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [state]
+                         (-> state
+                             (assoc-in [:project-panel/id id :project-panel/technical-lead]
+                                       [:resource/id  lead-id])))))
+  (remote [env] true))
+

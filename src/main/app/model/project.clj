@@ -3,6 +3,7 @@
    [com.wsscode.pathom.connect :as pc]
    [app.model.database :refer [conn]]
    [clojure.set :as set]
+   [app.model.api :as api]
    
    [datomic.api :as d]))
 
@@ -11,18 +12,130 @@
 
 (def conn2 (d/connect db-url))
 
-(pc/defresolver resource-resolver [env {:resource/keys [id]}]
+(pc/defresolver resource-resolver [{:keys [db]} {:resource/keys [id]}]
   {::pc/input  #{:resource/id}
    ::pc/output [:resource/name :resource/email-address]}
   (first (d/q '[:find ?name ?ea
                 :in $ ?id
-                :keys :resource/name :resource/email-address
+                :keys resource/name resource/email-address
                 :where
                 [?r :resource/id ?id]
                 [?r :resource/name ?name]
                 [?r :resource/email-address ?ea]
-                ] (d/db conn) id)
+                ] db (api/uuid id))
          ))
+
+
+
+(pc/defmutation set-project-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
+  {::pc/sym`set-project-lead
+   ::pc/params [:project-panel/id :lead-id]
+   ::pc/output [:entity]}
+  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/project-lead [:resource/id (api/uuid lead-id)]
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/project-lead [:resource/id (api/uuid lead-id)]
+                               :project-panel/id (api/uuid id)}]))
+
+    
+    {:entity (nil? entity)}))
+
+
+(pc/defmutation set-functional-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
+  {::pc/sym`set-functional-lead
+   ::pc/params [:project-panel/id :lead-id]
+   ::pc/output [:entity]}
+  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/functional-lead [:resource/id (api/uuid lead-id)]
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/functional-lead [:resource/id (api/uuid lead-id)]
+                               :project-panel/id (api/uuid id)}]))
+
+    
+    {:entity (nil? entity)}))
+
+
+
+(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [{:project-panel/project-lead [:resource/id]}]}
+  {:project-panel/project-lead
+   {:resource/id
+    (d/q '[:find ?rid .;?rn ?re
+           :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+           :where
+           [?p :project-panel/project-lead ?r]
+           [?r :resource/id ?rid]
+                                        ;[?r :resource/name ?rn]
+                                        ;[?r :resource/email-address ?re]
+           [?p :project-panel/id ?id]
+           ]  db (api/uuid id))}})
+
+
+
+(pc/defmutation set-technical-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
+  {::pc/sym`set-technical-lead
+   ::pc/params [:project-panel/id :lead-id]
+   ::pc/output [:entity]}
+  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+
+    
+    (if (not (nil? entity))
+      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
+                               :project-panel/technical-lead [:resource/id (api/uuid lead-id)]
+                               }])
+      (d/transact connection [{:db/id "new"
+                               :project-panel/technical-lead [:resource/id (api/uuid lead-id)]
+                               :project-panel/id (api/uuid id)}]))
+    
+    {:entity (nil? entity)}))
+
+
+
+
+(pc/defresolver functional-lead-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [{:project-panel/functional-lead [:resource/id]}]}
+  {:project-panel/functional-lead
+   {:resource/id
+    (d/q '[:find ?rid .;?rn ?re
+           :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+           :where
+           [?p :project-panel/functional-lead ?r]
+           [?r :resource/id ?rid]
+                                        ;[?r :resource/name ?rn]
+                                        ;[?r :resource/email-address ?re]
+           [?p :project-panel/id ?id]
+           ]  db (api/uuid id))}})
+
+
+(pc/defresolver technical-lead-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
+  {::pc/input  #{:project-panel/id}
+   ::pc/output [{:project-panel/technical-lead [:resource/id]}]}
+  {:project-panel/technical-lead
+   {:resource/id
+    (d/q '[:find ?rid .;?rn ?re
+           :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+           :where
+           [?p :project-panel/technical-lead ?r]
+           [?r :resource/id ?rid]
+                                        ;[?r :resource/name ?rn]
+                                        ;[?r :resource/email-address ?re]
+           [?p :project-panel/id ?id]
+           ]  db (api/uuid id))}})
 
 
 
@@ -96,14 +209,16 @@
   {::pc/input #{:project-panel/id}
    ::pc/output [:project-panel/name]}
 
+  
   {:project-panel/name
+   
    (d/q  '[:find  ?ps .
-           
+           :in $ ?id
            :where
            [?p :project/id ?id ]
            [?p :project/name ?ps]
            
-           ] db id)})
+           ] db (api/uuid id))})
 
 (def alias-project-id (pc/alias-resolver2 :project/id :project-panel/id))
 
@@ -265,4 +380,5 @@
             
 
 (def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
-                 all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver])
+                 all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver project-lead-resolver
+                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead])

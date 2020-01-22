@@ -84,8 +84,9 @@
 
 
 (defn uuid [s]
-  (assert (string? s))
-  (java.util.UUID/fromString (.toLowerCase s)))
+  (if (string? s)
+    (java.util.UUID/fromString (.toLowerCase s))
+    s))
 
 
 
@@ -583,3 +584,14 @@
   (System/exit 0))
 ;; restart
                                         ;(user/restart)
+
+(d/transact (d/connect "datomic:dev://localhost:4334/one2")
+            [{:db/id "new"
+              :project-panel/id #uuid "375d400e-82d9-e911-b08f-00155de07709"
+              
+              :project-panel/technical-lead [:resource/id #uuid "d771d4d9-34de-e911-b085-00155de0a811"]}])
+
+
+
+
+
