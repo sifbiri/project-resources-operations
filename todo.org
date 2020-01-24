@@ -71,5 +71,5 @@ https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
 ** Fluxym Entity
 *** APAC
 *** FRANCE
-*** NORAM(default)
+*** NORAM (default)
 ** Fluxod Project Name (free text)

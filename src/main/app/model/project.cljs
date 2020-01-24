@@ -23,7 +23,7 @@
   (action [{:keys [state]}]
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:project-panel/id id :project-panel/project-lead]
+                             (assoc-in [:project-info/id id :project-panel/project-lead]
                                        [:resource/id  lead-id])))))
   (remote [env] true))
 
@@ -33,14 +33,14 @@
   (action [{:keys [state]}]
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:project-panel/id id :project-panel/status] status)))))
+                             (assoc-in [:project-info/id id :project-panel/status] status)))))
   (remote [env] true))
 
 (defmutation set-project-entity [{:keys [project-panel/id entity]}]
   (action [{:keys [state]}]
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:project-panel/id id :project-panel/entity] entity)))))
+                             (assoc-in [:project-info/id id :project-panel/entity] entity)))))
   (remote [env] true))
 
 
@@ -51,7 +51,7 @@
             
             (swap! state (fn [state]
                            (-> state
-                               (assoc-in [:project-panel/id id :project-panel/fluxod-name] name)
+                               (assoc-in [:project-info/id id :project-panel/fluxod-name] name)
                                )))
             ;; (swap! state  merge/merge-component TeamCheckbox
             ;;        {:db/id team-id :team/name name }
@@ -68,7 +68,7 @@
   (action [{:keys [state]}]
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:project-panel/id id :project-panel/phase] phase)))))
+                             (assoc-in [:project-info/id id :project-panel/phase] phase)))))
   (remote [env] true))
 
 
@@ -76,7 +76,7 @@
   (action [{:keys [state]}]
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:project-panel/id id :project-panel/functional-lead]
+                             (assoc-in [:project-info/id id :project-panel/functional-lead]
                                        [:resource/id  lead-id])))))
   (remote [env] true))
 
@@ -84,7 +84,9 @@
   (action [{:keys [state]}]
           (swap! state (fn [state]
                          (-> state
-                             (assoc-in [:project-panel/id id :project-panel/technical-lead]
+                             (assoc-in [:project-info/id id :project-panel/technical-lead]
                                        [:resource/id  lead-id])))))
   (remote [env] true))
+
+
 

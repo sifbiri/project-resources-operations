@@ -11,6 +11,7 @@
 
 
 (def conn2 (d/connect db-url))
+(def alias-project-info-project-panel (pc/alias-resolver2 :project-panel/id :project-info/id))
 
 (pc/defresolver resource-resolver [{:keys [db]} {:resource/keys [id]}]
   {::pc/input  #{:resource/id}
@@ -191,6 +192,8 @@
           [?p :project-panel/entity ?entity]
           [?p :project-panel/id ?id]
           ]  db (api/uuid id))})
+
+
 
 
 
@@ -507,7 +510,7 @@
             
             
 
-(def resolvers  [projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
+(def resolvers  [alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver project-lead-resolver
                  set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver
                  set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name])

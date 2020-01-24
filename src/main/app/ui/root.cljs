@@ -1497,6 +1497,7 @@
                    {:workplan/team-checkboxes (comp/get-query TeamCheckbox)}
                    [:ui/dates '_]
                    [df/marker-table :projects]]
+   
    :ident         (fn [] [:component/id :workplan])
    :route-segment ["workplan"]
    :shouldComponentUpdate (fn [_ _ _] true)
@@ -1787,7 +1788,8 @@
                                     )
                            
                            )
-             (ui-grid-row {:centered true :columns 1}
+             
+             (ui-grid-row {:centered true :columns 2}
                           (ui-top-router router))
              (ui-grid-row {:style {:paddingTop "250px"}} (div  {:style {:flex 1 :display "flex"
                                             :marginTop "200px"
