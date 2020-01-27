@@ -1796,7 +1796,7 @@
                                             :alignItems "center"
                                             :color "gray"
                                             :textAlign "center"
-                                            :justifyContent "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
+                                                                        :justifyContent "center"}}  "made with  " (ui-icon {:style {:position "relative" :bottom "3px" :left "2px"} :name "true like"  }) " in MTL"
 
                                         ;(ui-flag-icon #js {:code "CA"})
 

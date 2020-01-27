@@ -16,8 +16,10 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    ;[app.model.database :as db :refer [conn]]
-   [clj-time.core :as t]
+   ;[clj-time.core :as t]
+   [tick.alpha.api :as t]
    [app.at-at :as at-at]
+   ;[app.model.project :as p]
    [clojure.core :refer :all])
   (:import datomic.Util))
 
@@ -538,7 +540,7 @@
 
 
 ;; (d/transact {:db/id 17592186048985 :resource/profile}
-;;             (d/connect "datomic:dev://localhost:4334/one2"))
+;;             (d/connect ))
 
 #_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
@@ -585,11 +587,12 @@
 ;; restart
                                         ;(user/restart)
 
-(d/transact (d/connect "datomic:dev://localhost:4334/one2")
+#_(d/transact (d/connect "datomic:dev://localhost:4334/one2")
             [{:db/id "new"
               :project-panel/id #uuid "375d400e-82d9-e911-b08f-00155de07709"
               
               :project-panel/technical-lead [:resource/id #uuid "d771d4d9-34de-e911-b085-00155de0a811"]}])
+
 
 
 

@@ -4,8 +4,25 @@
    [app.model.database :refer [conn]]
    [clojure.set :as set]
    [app.model.api :as api]
+   [tick.alpha.api :as t]
    
    [datomic.api :as d]))
+
+
+
+
+(defn round-to-first-day-of-week [ts]
+  (loop [ts ts
+         day (t/day-of-week ts)]
+    (if (not= day t/MONDAY)
+      (recur (t/- ts (t/new-period 1 :days))
+             (t/day-of-week (t/- ts (t/new-period 1 :days)))
+             
+             
+             )
+      ts)))
+
+
 
 (def db-url "datomic:dev://localhost:4334/one2")
 
@@ -28,259 +45,346 @@
 
 
 
-(pc/defmutation set-project-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
+(pc/defmutation set-project-lead [{:keys [db connection]} {:keys [project-info/id lead-id]}]
   {::pc/sym`set-project-lead
-   ::pc/params [:project-panel/id :lead-id]
+   ::pc/params [:project-info/id :lead-id]
    ::pc/output [:entity]}
-  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/project-lead [:resource/id (api/uuid lead-id)]
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/project-lead [:resource/id (api/uuid lead-id)]
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/project-lead [:resource/id (api/uuid lead-id)]
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/project-lead [:resource/id (api/uuid lead-id)]
+                               :project-info/id (api/uuid id)}]))
 
     
     {:entity (nil? entity)}))
 
 
 
-(pc/defresolver project-status-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [:project-panel/status]}
-  {:project-panel/status
+(pc/defresolver project-status-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [:project-info/status]}
+  {:project-info/status
    (d/q '[:find ?status .;?rn ?re
           :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
           :where
-          [?p :project-panel/status ?status]
-          [?p :project-panel/id ?id]
+          [?p :project-info/status ?status]
+          [?p :project-info/id ?id]
           ]  db (api/uuid id))})
 
-(pc/defmutation set-project-status [{:keys [db connection]} {:keys [project-panel/id status]}]
+(pc/defmutation set-project-status [{:keys [db connection]} {:keys [project-info/id status]}]
   {::pc/sym`set-project-status
-   ::pc/params [:project-panel/id :status]
+   ::pc/params [:project-info/id :status]
    ::pc/output [:entity]}
-  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/status status
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/status status
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/status status
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/status status
+                               :project-info/id (api/uuid id)}]))
 
     
-    {:entity (nil? entity)}))
+    {:new-entity? (nil? entity)}))
 
 
-(pc/defresolver project-phase-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [:project-panel/phase]}
-  {:project-panel/phase
+(pc/defresolver project-phase-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [:project-info/phase]}
+  {:project-info/phase
    (d/q '[:find ?phase .;?rn ?re
           :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
           :where
-          [?p :project-panel/phase ?phase]
-          [?p :project-panel/id ?id]
+          [?p :project-info/phase ?phase]
+          [?p :project-info/id ?id]
           ]  db (api/uuid id))})
 
 
-(pc/defmutation set-project-phase [{:keys [db connection]} {:keys [project-panel/id phase]}]
+(pc/defmutation set-project-phase [{:keys [db connection]} {:keys [project-info/id phase]}]
   {::pc/sym`set-project-phase
-   ::pc/params [:project-panel/id :phase]
+   ::pc/params [:project-info/id :phase]
    ::pc/output [:entity]}
-  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/phase phase
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/phase phase
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/phase phase
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/phase phase
+                               :project-info/id (api/uuid id)}]))
 
     
     {:entity (nil? entity)}))
 
 
-(pc/defmutation set-functional-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
+(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week]}]
+  {::pc/sym `get-or-create-current-gov-review-week
+   ::pc/params [:gov-review-week/week]
+   ::pc/output [:gov-review-week/week
+                :gov-review-week/status
+                {:gov-review-week/exec-summary [:comment/text :comment/color]}
+                {:gov-review-week/client-relationship
+                 [:comment/text :comment/color]}
+                {:gov-review-week/finance [:comment/text :comment/color]}
+                {:gov-review-week/scope-schedule [:comment/text :comment/color]}
+                :gov-review-week/submitted-by 
+                :gov-review-week/submitted-at]}
+
+  (let [entity (d/entity db [:gov-review-week/week week])]
+    (println "GOV REVIEW WEEK" week)
+
+
+    (let [entity (d/pull db [:gov-review-week/week
+                             :gov-review-week/status
+                             {:gov-review-week/exec-summary [:comment/text :comment/color]}
+                             {:gov-review-week/client-relationship
+                              [:comment/text :comment/color]}
+                             {:gov-review-week/finance [:comment/text :comment/color]}
+                             {:gov-review-week/scope-schedule [:comment/text :comment/color]}
+                             :gov-review-week/submitted-by 
+                             :gov-review-week/submitted-at]
+                         [:gov-review-week/week week]
+                         )]
+      (if (nil? entity)
+        (let [tx {:db/id "new"
+                  :gov-review-week/week week
+                  :gov-review-week/status :open 
+                  :gov-review-week/exec-summary {:comment/text "Text" :comment/color :orange}
+                  :gov-review-week/client-relationship {:comment/text "Text" :comment/color :orange}
+                  :gov-review-week/finance {:comment/text "Text" :comment/color :red}
+                  :gov-review-week/scope-schedule {:comment/text "Text" :comment/color :green} 
+                  }]
+          (d/transact connection
+                      [tx])
+          tx)
+        entity))))
+
+(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week]}]
+  {::pc/sym `get-or-create-gov-review-week
+   ::pc/params [:gov-review-week/week]
+   ::pc/output [:gov-review-week/week
+                :gov-review-week/status
+                {:gov-review-week/exec-summary [:comment/text :comment/color]}
+                {:gov-review-week/client-relationship
+                 [:comment/text :comment/color]}
+                {:gov-review-week/finance [:comment/text :comment/color]}
+                {:gov-review-week/scope-schedule [:comment/text :comment/color]}
+                :gov-review-week/submitted-by 
+                :gov-review-week/submitted-at]}
+
+  (let [entity (d/entity db [:gov-review-week/week week])]
+    (println "GOV REVIEW WEEK" week)
+
+
+    (let [entity (d/pull db [:gov-review-week/week
+                             :gov-review-week/status
+                             {:gov-review-week/exec-summary [:comment/text :comment/color]}
+                             {:gov-review-week/client-relationship
+                              [:comment/text :comment/color]}
+                             {:gov-review-week/finance [:comment/text :comment/color]}
+                             {:gov-review-week/scope-schedule [:comment/text :comment/color]}
+                             :gov-review-week/submitted-by 
+                             :gov-review-week/submitted-at]
+                         [:gov-review-week/week week]
+                         )]
+      (if (nil? entity)
+        (let [tx {:db/id "new"
+                  :gov-review-week/week week
+                  :gov-review-week/status :open 
+                  :gov-review-week/exec-summary {:comment/text "Text" :comment/color :orange}
+                  :gov-review-week/client-relationship {:comment/text "Text" :comment/color :orange}
+                  :gov-review-week/finance {:comment/text "Text" :comment/color :red}
+                  :gov-review-week/scope-schedule {:comment/text "Text" :comment/color :green} 
+                  }]
+          (d/transact connection
+                      [tx])
+          tx)
+        entity))))
+
+
+
+
+(pc/defmutation set-functional-lead [{:keys [db connection]} {:keys [project-info/id lead-id]}]
   {::pc/sym`set-functional-lead
-   ::pc/params [:project-panel/id :lead-id]
+   ::pc/params [:project-info/id :lead-id]
    ::pc/output [:entity]}
-  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/functional-lead [:resource/id (api/uuid lead-id)]
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/functional-lead [:resource/id (api/uuid lead-id)]
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/functional-lead [:resource/id (api/uuid lead-id)]
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/functional-lead [:resource/id (api/uuid lead-id)]
+                               :project-info/id (api/uuid id)}]))
 
     
     {:entity (nil? entity)}))
 
 
-(pc/defmutation set-project-entity [{:keys [db connection]} {:keys [project-panel/id entity]}]
+(pc/defmutation set-project-entity [{:keys [db connection]} {:keys [project-info/id entity]}]
   {::pc/sym`set-project-entity
-   ::pc/params [:project-panel/id :entity]
+   ::pc/params [:project-info/id :entity]
    ::pc/output [:entity]}
-  (let [entity2 (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity2 (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity2))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/entity entity
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/entity entity
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/entity entity
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/entity entity
+                               :project-info/id (api/uuid id)}]))
 
     
     {:entity (nil? entity2)}))
 
 
-(pc/defmutation set-project-fluxod-name [{:keys [db connection]} {:keys [project-panel/id name]}]
+(pc/defmutation set-project-fluxod-name [{:keys [db connection]} {:keys [project-info/id name]}]
   {::pc/sym`set-project-fluxod-name
-   ::pc/params [:project-panel/id :name]
+   ::pc/params [:project-info/id :name]
    ::pc/output [:entity]}
-  (let [entity2 (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity2 (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity2))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/fluxod-name name
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/fluxod-name name
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/fluxod-name name
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/fluxod-name name
+                               :project-info/id (api/uuid id)}]))
 
     
     {:entity (nil? entity2)}))
 
 
-(pc/defresolver project-fluxod-name-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [:project-panel/fluxod-name]}
-  {:project-panel/fluxod-name
+(pc/defresolver project-fluxod-name-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [:project-info/fluxod-name]}
+  {:project-info/fluxod-name
    (d/q '[:find ?name .;?rn ?re
           :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
           :where
-          [?p :project-panel/fluxod-name ?name]
-          [?p :project-panel/id ?id]] db (api/uuid id))})
+          [?p :project-info/fluxod-name ?name]
+          [?p :project-info/id ?id]] db (api/uuid id))})
 
 
 
-(pc/defresolver project-entity-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [:project-panel/entity]}
-  {:project-panel/status
+(pc/defresolver project-entity-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [:project-info/entity]}
+  {:project-info/status
    (d/q '[:find ?entity .;?rn ?re
           :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
           :where
-          [?p :project-panel/entity ?entity]
-          [?p :project-panel/id ?id]
+          [?p :project-info/entity ?entity]
+          [?p :project-info/id ?id]
           ]  db (api/uuid id))})
 
 
 
 
 
-(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [{:project-panel/project-lead [:resource/id]}]}
-  {:project-panel/project-lead
+(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [{:project-info/project-lead [:resource/id]}]}
+  {:project-info/project-lead
    {:resource/id
     (d/q '[:find ?rid .;?rn ?re
            :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
            :where
-           [?p :project-panel/project-lead ?r]
+           [?p :project-info/project-lead ?r]
            [?r :resource/id ?rid]
                                         ;[?r :resource/name ?rn]
                                         ;[?r :resource/email-address ?re]
-           [?p :project-panel/id ?id]
+           [?p :project-info/id ?id]
            ]  db (api/uuid id))}})
 
 
 
-(pc/defmutation set-technical-lead [{:keys [db connection]} {:keys [project-panel/id lead-id]}]
+(pc/defmutation set-technical-lead [{:keys [db connection]} {:keys [project-info/id lead-id]}]
   {::pc/sym`set-technical-lead
-   ::pc/params [:project-panel/id :lead-id]
+   ::pc/params [:project-info/id :lead-id]
    ::pc/output [:entity]}
-  (let [entity (d/entity db [:project-panel/id (api/uuid id)]) ]
+  (let [entity (d/entity db [:project-info/id (api/uuid id)]) ]
 
     
     (if (not (nil? entity))
-      (d/transact connection [{:db/id [:project-panel/id (api/uuid id)]
-                               :project-panel/technical-lead [:resource/id (api/uuid lead-id)]
+      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
+                               :project-info/technical-lead [:resource/id (api/uuid lead-id)]
                                }])
       (d/transact connection [{:db/id "new"
-                               :project-panel/technical-lead [:resource/id (api/uuid lead-id)]
-                               :project-panel/id (api/uuid id)}]))
+                               :project-info/technical-lead [:resource/id (api/uuid lead-id)]
+                               :project-info/id (api/uuid id)}]))
     
     {:entity (nil? entity)}))
 
 
 
 
-(pc/defresolver functional-lead-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [{:project-panel/functional-lead [:resource/id]}]}
-  {:project-panel/functional-lead
+(pc/defresolver functional-lead-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [{:project-info/functional-lead [:resource/id]}]}
+  {:project-info/functional-lead
    {:resource/id
     (d/q '[:find ?rid .;?rn ?re
            :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
            :where
-           [?p :project-panel/functional-lead ?r]
+           [?p :project-info/functional-lead ?r]
            [?r :resource/id ?rid]
                                         ;[?r :resource/name ?rn]
                                         ;[?r :resource/email-address ?re]
-           [?p :project-panel/id ?id]
+           [?p :project-info/id ?id]
            ]  db (api/uuid id))}})
 
 
-(pc/defresolver technical-lead-resolver [{:keys [connection db]} {:keys [project-panel/id]}]
-  {::pc/input  #{:project-panel/id}
-   ::pc/output [{:project-panel/technical-lead [:resource/id]}]}
-  {:project-panel/technical-lead
+(pc/defresolver technical-lead-resolver [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input  #{:project-info/id}
+   ::pc/output [{:project-info/technical-lead [:resource/id]}]}
+  {:project-info/technical-lead
    {:resource/id
     (d/q '[:find ?rid .;?rn ?re
            :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
            :where
-           [?p :project-panel/technical-lead ?r]
+           [?p :project-info/technical-lead ?r]
            [?r :resource/id ?rid]
                                         ;[?r :resource/name ?rn]
                                         ;[?r :resource/email-address ?re]
-           [?p :project-panel/id ?id]
+           [?p :project-info/id ?id]
            ]  db (api/uuid id))}})
 
 
 
 
-(pc/defresolver made-up-resolver [env {:keys [project-panel/id]}]
-  {::pc/input #{:project-panel/id}
-   ::pc/output [:project-panel/made-up]}
-  {:project-panel/made-up 44})
+(pc/defresolver made-up-resolver [env {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/made-up]}
+  {:project-info/made-up 44})
 
 
-(pc/defresolver made-up-resolver2 [{:keys [db]} {:keys [project-panel/id]}]
-  {::pc/input #{:project-panel/id}
-   ::pc/output [:project-panel/finish-date]}
-  {:project-panel/finish-date (d/q  '[:find  ?ps .
+(pc/defresolver made-up-resolver2 [{:keys [db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/finish-date]}
+  {:project-info/finish-date (d/q  '[:find  ?ps .
                                       
                                       :where
                                       [?p :project/id ?id ]
@@ -288,11 +392,11 @@
                                       
                                       ] db id) })
 
-(pc/defresolver start-date-resolver [{:keys [db]} {:keys [project-panel/id]}]
-  {::pc/input #{:project-panel/id}
-   ::pc/output [:project-panel/start-date]}
+(pc/defresolver start-date-resolver [{:keys [db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/start-date]}
 
-  {:project-panel/start-date
+  {:project-info/start-date
    (d/q  '[:find  ?ps .
            
            :where
@@ -301,11 +405,11 @@
            
            ] db id)})
 
-(pc/defresolver modified-date-resolver [{:keys [db]} {:keys [project-panel/id]}]
-  {::pc/input #{:project-panel/id}
-   ::pc/output [:project-panel/modified-date]}
+(pc/defresolver modified-date-resolver [{:keys [db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/modified-date]}
 
-  {:project-panel/modified-date
+  {:project-info/modified-date
    (d/q  '[:find  ?ps .
            
            :where
@@ -314,11 +418,11 @@
            
            ] db id)})
 
-(pc/defresolver last-published-date-resolver [{:keys [db]} {:keys [project-panel/id]}]
-  {::pc/input #{:project-panel/id}
-   ::pc/output [:project-panel/last-published-date]}
+(pc/defresolver last-published-date-resolver [{:keys [db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/last-published-date]}
 
-  {:project-panel/last-published-date
+  {:project-info/last-published-date
    (d/q  '[:find  ?ps .
            
            :where
@@ -336,12 +440,12 @@
 
 
 
-(pc/defresolver name-resolver [{:keys [db]} {:keys [project-panel/id]}]
-  {::pc/input #{:project-panel/id}
-   ::pc/output [:project-panel/name]}
+(pc/defresolver name-resolver [{:keys [db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/name]}
 
   
-  {:project-panel/name
+  {:project-info/name
    
    (d/q  '[:find  ?ps .
            :in $ ?id
@@ -351,7 +455,7 @@
            
            ] db (api/uuid id))})
 
-(def alias-project-id (pc/alias-resolver2 :project/id :project-panel/id))
+(def alias-project-id (pc/alias-resolver2 :project/id :project-info/id))
 
 
 (pc/defresolver project-resolver [env {:keys [project/id]}]
@@ -513,4 +617,8 @@
 (def resolvers  [alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver project-lead-resolver
                  set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver
-                 set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name])
+                 set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week])
+
+
+
+

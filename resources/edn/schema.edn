@@ -1,9 +1,152 @@
-;; project panel
 
-[
+[;; gov review week
+
+ 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/status
+  :db/ident :gov-review-week/week
+
+  :db/valueType :db.type/instant
+  
+  :db/cardinality :db.cardinality/one
+
+  :db/unique  :db.unique/identity
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/status
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/exec-summary
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/one
+  :db/isComponent true
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/client-relationship
+
+  :db/valueType :db.type/ref
+  :db/isComponent true
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/finance
+
+  :db/isComponent true
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/scope-schedule
+
+  :db/valueType :db.type/ref
+  :db/isComponent true
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/submitted-at
+
+  :db/valueType :db.type/instant
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/submitted-by
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+
+ ;; Comment
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :comment/text
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+
+ 
+  
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :comment/color
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+
+  
+  
+  }
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+ ;; project panel
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :project-info/status
 
   :db/valueType :db.type/keyword
   
@@ -14,7 +157,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/phase
+  :db/ident :project-info/phase
 
   :db/valueType :db.type/keyword
   
@@ -24,7 +167,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/entity
+  :db/ident :project-info/entity
 
   :db/valueType :db.type/keyword
   
@@ -35,7 +178,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/fluxod-name
+  :db/ident :project-info/fluxod-name
 
   :db/valueType :db.type/string
   
@@ -46,7 +189,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/id
+  :db/ident :project-info/id
 
   :db/unique  :db.unique/identity
   
@@ -58,7 +201,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/functional-lead
+  :db/ident :project-info/functional-lead
   
   :db/valueType :db.type/ref
   :db/cardinality :db.cardinality/one
@@ -68,7 +211,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/technical-lead
+  :db/ident :project-info/technical-lead
   
   :db/valueType :db.type/ref
   :db/cardinality :db.cardinality/one
@@ -78,7 +221,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :project-panel/project-lead
+  :db/ident :project-info/project-lead
   
   :db/valueType :db.type/ref
   :db/cardinality :db.cardinality/one
