@@ -23,6 +23,18 @@
                    (targeting/replace-at [:component/id :gov-review :gov-review/current-week])))))))
 
 
+(defmutation submit-current-gov-review-week  [{:keys [gov-review-week] :as params}]
+  (action [env]
+          (js/console.log "TTTT" gov-review-week))
+  (remote [{:keys [ast state] :as env}]
+          (let [GovReviewWeek (comp/registry-key->class :app.ui.projects/GovReviewWeek)
+                resource-id (get-in @state [:component/id :session :account/resource])]
+            (-> env
+                (m/with-params (merge params {:resource-id resource-id}))
+                (m/returning GovReviewWeek)
+                ))))
+
+
 (defmutation get-or-create-gov-review-week [{:keys [gov-review-week/week index]}]
                                         ;(action [env] )
   (remote [{:keys [ast state] :as env}]

@@ -587,14 +587,97 @@
 ;; restart
                                         ;(user/restart)
 
-#_(d/transact (d/connect "datomic:dev://localhost:4334/one2")
-            [{:db/id "new"
-              :project-panel/id #uuid "375d400e-82d9-e911-b08f-00155de07709"
-              
-              :project-panel/technical-lead [:resource/id #uuid "d771d4d9-34de-e911-b085-00155de0a811"]}])
+(comment
+  (d/transact 
+         [{
+           :db/id [:gov-review-week/week ]
+           :gov-review-week/status :open 
+           :gov-review-week/exec-summary {:comment/text "Exec summary" :comment/color :orange}
+           :gov-review-week/client-relationship {:comment/text "Text" :comment/color :orange}
+           :gov-review-week/finance {:comment/text "Text" :comment/color :red}
+           :gov-review-week/scope-schedule {:comment/text "Text" :comment/color :green} 
+           }])
 
 
 
+        (let [tx {
+                  :gov-review-week/week #inst "2020-01-27T17:00:00.000-00:00"
+                  :gov-review-week/status :open 
+                  :gov-review-week/exec-summary {:comment/text "Exec summary" :comment/color :orange}
+                  :gov-review-week/client-relationship {:comment/text "Text" :comment/color :orange}
+                  :gov-review-week/finance {:comment/text "Text" :comment/color :red}
+                  :gov-review-week/scope-schedule {:comment/text "Text" :comment/color :green} 
+                  }]
+          (d/transact (d/connect "datomic:dev://localhost:4334/one2")
+                      [tx]))
+
+
+        
+
+
+        (t/> (t/now) (t/yersterday))
+        (d/transact
+         (d/connect "datomic:dev://localhost:4334/one2")
+
+         (mapv
+          (fn [id]
+
+            [:db/retractEntity id])
+
+          (d/q '[:find [?e ...]
+
+                 :where
+                 [?e :gov-review-week/week ?n]
+
+                 ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+
+
+        )
+
+
+(ffirst (d/q '[:find (pull ?e  [*]) 
+               :in $ ?id ?week
+               :where
+               [?e :gov-review-week/week ?week]
+               [?e :gov-review-week/project ?p]
+               [?p :project/id ?id]
+               ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))  #uuid "0c35708b-32e1-e911-b19b-9cb6d0e1bd60"  #inst "2020-01-27T17:00:00.000-00:00" ))
+
+
+(d/transact
+ (d/connect "datomic:dev://localhost:4334/one2")
+ [{
+   :gov-review-week/week #inst "2020-01-27T17:00:00.000-00:00"
+   :gov-review-week/project [:project/id #uuid "0c35708b-32e1-e911-b19b-9cb6d0e1bd60"]
+   :gov-review-week/status  :open
+   :gov-review-week/exec-summary {:comment/text "X" :comment/color :orange}
+   :gov-review-week/client-relationship {:comment/text "" :comment/color :orange}
+   :gov-review-week/finance {:comment/text "" :comment/color :red}
+   :gov-review-week/scope-schedule {:comment/text "" :comment/color :green} 
+   }])
+
+
+
+
+(d/transact
+ (d/connect "datomic:dev://localhost:4334/one2")
+
+ (mapv
+  (fn [id]
+
+    [:db/retractEntity id])
+
+  (d/q '[:find [?e ...]
+
+         :where
+         [?e :gov-review-week/week ?n]
+
+         ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+
+
+
+(d/transact (d/connect "datomic:dev://localhost:4334/one2")
+            [(assoc {} :db/id 17592186112226  :gov-review-week/finance-text "FIINANCE TEXT"  :gov-review-week/submitted-at (t/inst (t/now)) :gov-review-week/status :submitted)])
 
 
 

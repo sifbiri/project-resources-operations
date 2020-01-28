@@ -73,3 +73,25 @@ https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
 *** FRANCE
 *** NORAM (default)
 ** Fluxod Project Name (free text)
+
+* icons
+check circle outline(green)
+times circle outline (red)
+
+
+** make font smaller
+** use colored table
+** use sortable
+** add col project lead
+** make it look like disabled for when status is open)
+** tooltip project last week filling (submitted)
+
+
+
+** filters
+*** status (in progress checked)
+*** phase (all checked)
+*** lead (projects lead all checked)
+
+
+exclamation

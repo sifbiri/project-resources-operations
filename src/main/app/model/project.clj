@@ -9,7 +9,30 @@
    [datomic.api :as d]))
 
 
-
+(def gov-review-week-keys  [:gov-review-week/week
+                            :gov-review-week/status
+                            :gov-review-week/exec-summary-text
+                            :gov-review-week/exec-summary-color
+                            {:gov-review-week/project
+                             [:project/id
+                              :project/name
+                              :project/start-date
+                              :project/last-published-date
+                              :project/modified-date
+                              :project/finish-date]}
+                            :gov-review-week/client-relationship-text
+                            :gov-review-week/client-relationship-color
+                            :gov-review-week/finance-text
+                            :gov-review-week/finance-color
+                            :gov-review-week/scope-schedule-text
+                            :gov-review-week/scope-schedule-color
+                            {:gov-review-week/submitted-by
+                             [:resource/id
+                              :resource/name
+                              :resource/email-address
+                              :resource/active?
+                              :resource/profile]} 
+                            :gov-review-week/submitted-at])
 
 (defn round-to-first-day-of-week [ts]
   (loop [ts ts
@@ -128,89 +151,277 @@
     {:entity (nil? entity)}))
 
 
-(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week]}]
+
+
+
+
+
+
+(pc/defmutation submit-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week resource-id project/id]}]
+  {::pc/sym `submit-current-gov-review-week
+   ::pc/params [:gov-review-week :resource-id :project/id]
+   ::pc/output [:gov-review-week/week
+                :gov-review-week/status
+                :gov-review-week/exec-summary-text
+                :gov-review-week/exec-summary-color
+                
+                :gov-review-week/client-relationship-text
+                :gov-review-week/client-relationship-color
+                :gov-review-week/finance-text
+                :gov-review-week/finance-color
+                :gov-review-week/scope-schedule-text
+                :gov-review-week/scope-schedule-color
+                {:gov-review-week/submitted-by
+                 [:resource/id
+                  ]} 
+                :gov-review-week/submitted-at]}
+
+  (let [week (:gov-review-week/week gov-review-week)
+        now (t/inst (t/now))
+
+        eid (d/q '[:find ?e . 
+                   :in $ ?id ?week
+                   :where
+                   [?e :gov-review-week/week ?week]
+                   [?e :gov-review-week/project ?p]
+                   [?p :project/id ?id]
+                   ] db id week )
+
+        pid (d/q '[:find ?e . 
+                   :in $ ?id 
+                   :where                            
+                   [?e :project/id ?id]
+                   ] db id )
+        
+        tx (cond-> gov-review-week
+             true (assoc :db/id eid)
+             resource-id  (assoc :gov-review-week/submitted-by [:resource/id resource-id])
+             true (assoc :gov-review-week/submitted-at now :gov-review-week/status :submitted))]
+
+    
+    @(d/transact connection
+                 [tx])
+    
+    #_(ffirst (d/q '[:find (pull ?e [:gov-review-week/week
+                                   :gov-review-week/status
+                                   :gov-review-week/exec-summary-text
+                                   :gov-review-week/exec-summary-color
+                                   
+                                   :gov-review-week/client-relationship-text
+                                   :gov-review-week/client-relationship-color
+                                   :gov-review-week/finance-text
+                                   :gov-review-week/finance-color
+                                   :gov-review-week/scope-schedule-text
+                                   :gov-review-week/scope-schedule-color
+                                   {:gov-review-week/submitted-by
+                                    [:resource/id]}
+                                     :gov-review-week/submitted-at])  
+                   :in $ ?id ?week
+                   :where
+                   [?e :gov-review-week/week ?week]
+                   [?e :gov-review-week/project ?p]
+                   [?p :project/id ?id]
+                   ] db id week )
+
+              )
+    (assoc tx :gov-review-week/submitted-by {:resource/id resource-id})))
+
+
+
+
+
+
+
+
+(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
   {::pc/sym `get-or-create-current-gov-review-week
-   ::pc/params [:gov-review-week/week]
+   ::pc/params [:gov-review-week/week :project/id]
    ::pc/output [:gov-review-week/week
                 :gov-review-week/status
-                {:gov-review-week/exec-summary [:comment/text :comment/color]}
-                {:gov-review-week/client-relationship
-                 [:comment/text :comment/color]}
-                {:gov-review-week/finance [:comment/text :comment/color]}
-                {:gov-review-week/scope-schedule [:comment/text :comment/color]}
-                :gov-review-week/submitted-by 
+                :gov-review-week/exec-summary-text
+                :gov-review-week/exec-summary-color
+                {:gov-review-week/project
+                 [:project/id
+                  :project/name
+                  :project/start-date
+                  :project/last-published-date
+                  :project/modified-date
+                  :project/finish-date]}
+                :gov-review-week/client-relationship-text
+                :gov-review-week/client-relationship-color
+                :gov-review-week/finance-text
+                :gov-review-week/finance-color
+                :gov-review-week/scope-schedule-text
+                :gov-review-week/scope-schedule-color
+                {:gov-review-week/submitted-by
+                 [:resource/id
+                  :resource/name
+                  :resource/email-address
+                  :resource/active?
+                  :resource/profile]} 
                 :gov-review-week/submitted-at]}
 
-  (let [entity (d/entity db [:gov-review-week/week week])]
-    (println "GOV REVIEW WEEK" week)
+  (let [entity (d/q '[:find ?e . 
+                      :in $ ?id ?week
+                      :where
+                      [?e :gov-review-week/week ?week]
+                      [?e :gov-review-week/project ?p]
+                      [?p :project/id ?id]
+                      ] db id week)]
+    
+    (when (nil? entity)
+      (let [tx
+
+            {:db/id "new"
+             :gov-review-week/week week
+             :gov-review-week/project [:project/id id]
+             :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
+
+             :gov-review-week/exec-summary-text ""
+             :gov-review-week/exec-summary-color :orange
+             
+             :gov-review-week/client-relationship-text ""
+             :gov-review-week/client-relationship-color :orange
+             
+             :gov-review-week/finance-text ""
+             :gov-review-week/finance-color :red
+             
+             :gov-review-week/scope-schedule-text ""
+             :gov-review-week/scope-schedule-color :green
+             
+             }
+            ]
+        
+        @(d/transact (d/connect "datomic:dev://localhost:4334/one2")
+                     [tx])))
+    
+    (ffirst (d/q '[:find (pull ?e [:gov-review-week/week
+                            :gov-review-week/status
+                            :gov-review-week/exec-summary-text
+                            :gov-review-week/exec-summary-color
+                            {:gov-review-week/project
+                             [:project/id
+                              :project/name
+                              :project/start-date
+                              :project/last-published-date
+                              :project/modified-date
+                              :project/finish-date]}
+                            :gov-review-week/client-relationship-text
+                            :gov-review-week/client-relationship-color
+                            :gov-review-week/finance-text
+                            :gov-review-week/finance-color
+                            :gov-review-week/scope-schedule-text
+                            :gov-review-week/scope-schedule-color
+                            {:gov-review-week/submitted-by
+                             [:resource/id
+                              :resource/name
+                              :resource/email-address
+                              :resource/active?
+                              :resource/profile]} 
+                            :gov-review-week/submitted-at] )  
+                   :in $ ?id ?week
+                   :where
+                   [?e :gov-review-week/week ?week]
+                   [?e :gov-review-week/project ?p]
+                   [?p :project/id ?id]
+                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week ))
+    ))
 
 
-    (let [entity (d/pull db [:gov-review-week/week
-                             :gov-review-week/status
-                             {:gov-review-week/exec-summary [:comment/text :comment/color]}
-                             {:gov-review-week/client-relationship
-                              [:comment/text :comment/color]}
-                             {:gov-review-week/finance [:comment/text :comment/color]}
-                             {:gov-review-week/scope-schedule [:comment/text :comment/color]}
-                             :gov-review-week/submitted-by 
-                             :gov-review-week/submitted-at]
-                         [:gov-review-week/week week]
-                         )]
-      (if (nil? entity)
-        (let [tx {:db/id "new"
-                  :gov-review-week/week week
-                  :gov-review-week/status :open 
-                  :gov-review-week/exec-summary {:comment/text "Text" :comment/color :orange}
-                  :gov-review-week/client-relationship {:comment/text "Text" :comment/color :orange}
-                  :gov-review-week/finance {:comment/text "Text" :comment/color :red}
-                  :gov-review-week/scope-schedule {:comment/text "Text" :comment/color :green} 
-                  }]
-          (d/transact connection
-                      [tx])
-          tx)
-        entity))))
-
-(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week]}]
+(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
   {::pc/sym `get-or-create-gov-review-week
-   ::pc/params [:gov-review-week/week]
+   ::pc/params [:gov-review-week/week :project/id]
    ::pc/output [:gov-review-week/week
-                :gov-review-week/status
-                {:gov-review-week/exec-summary [:comment/text :comment/color]}
-                {:gov-review-week/client-relationship
-                 [:comment/text :comment/color]}
-                {:gov-review-week/finance [:comment/text :comment/color]}
-                {:gov-review-week/scope-schedule [:comment/text :comment/color]}
-                :gov-review-week/submitted-by 
-                :gov-review-week/submitted-at]}
+                            :gov-review-week/status
+                            :gov-review-week/exec-summary-text
+                            :gov-review-week/exec-summary-color
+                            {:gov-review-week/project
+                             [:project/id
+                              :project/name
+                              :project/start-date
+                              :project/last-published-date
+                              :project/modified-date
+                              :project/finish-date]}
+                            :gov-review-week/client-relationship-text
+                            :gov-review-week/client-relationship-color
+                            :gov-review-week/finance-text
+                            :gov-review-week/finance-color
+                            :gov-review-week/scope-schedule-text
+                            :gov-review-week/scope-schedule-color
+                            {:gov-review-week/submitted-by
+                             [:resource/id
+                              :resource/name
+                              :resource/email-address
+                              :resource/active?
+                              :resource/profile]} 
+                            :gov-review-week/submitted-at]}
 
-  (let [entity (d/entity db [:gov-review-week/week week])]
-    (println "GOV REVIEW WEEK" week)
+  (let [entity (d/q '[:find ?e . 
+                      :in $ ?id ?week
+                      :where
+                      [?e :gov-review-week/week ?week]
+                      [?e :gov-review-week/project ?p]
+                      [?p :project/id ?id]
+                      ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week)]
+    (println "WICKED" week "ID" id)
+    (if (nil? entity)
+      (let [tx
 
+            {:db/id "new"
+             :gov-review-week/week week
+             :gov-review-week/project [:project/id id]
+             :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
 
-    (let [entity (d/pull db [:gov-review-week/week
-                             :gov-review-week/status
-                             {:gov-review-week/exec-summary [:comment/text :comment/color]}
-                             {:gov-review-week/client-relationship
-                              [:comment/text :comment/color]}
-                             {:gov-review-week/finance [:comment/text :comment/color]}
-                             {:gov-review-week/scope-schedule [:comment/text :comment/color]}
-                             :gov-review-week/submitted-by 
-                             :gov-review-week/submitted-at]
-                         [:gov-review-week/week week]
-                         )]
-      (if (nil? entity)
-        (let [tx {:db/id "new"
-                  :gov-review-week/week week
-                  :gov-review-week/status :open 
-                  :gov-review-week/exec-summary {:comment/text "Text" :comment/color :orange}
-                  :gov-review-week/client-relationship {:comment/text "Text" :comment/color :orange}
-                  :gov-review-week/finance {:comment/text "Text" :comment/color :red}
-                  :gov-review-week/scope-schedule {:comment/text "Text" :comment/color :green} 
-                  }]
-          (d/transact connection
-                      [tx])
-          tx)
-        entity))))
+             :gov-review-week/exec-summary-text ""
+             :gov-review-week/exec-summary-color :orange
+
+             
+             :gov-review-week/client-relationship-text ""
+             :gov-review-week/client-relationship-color :orange
+             
+             :gov-review-week/finance-text ""
+             :gov-review-week/finance-color :red
+             
+             :gov-review-week/scope-schedule-text ""
+             :gov-review-week/scope-schedule-color :green
+             
+             }
+            ]
+        
+        @(d/transact connection
+                     [tx])
+        
+        tx)
+      (ffirst (d/q '[:find (pull ?e [:gov-review-week/week
+                                     :gov-review-week/status
+                                     :gov-review-week/exec-summary-text
+                                     :gov-review-week/exec-summary-color
+                                     {:gov-review-week/project
+                                      [:project/id
+                                       :project/name
+                                       :project/start-date
+                                       :project/last-published-date
+                                       :project/modified-date
+                                       :project/finish-date]}
+                                     :gov-review-week/client-relationship-text
+                                     :gov-review-week/client-relationship-color
+                                     :gov-review-week/finance-text
+                                     :gov-review-week/finance-color
+                                     :gov-review-week/scope-schedule-text
+                                     :gov-review-week/scope-schedule-color
+                                     {:gov-review-week/submitted-by
+                                      [:resource/id
+                                       :resource/name
+                                       :resource/email-address
+                                       :resource/active?
+                                       :resource/profile]} 
+                                     :gov-review-week/submitted-at])  
+                     :in $ ?id ?week
+                     :where
+                     [?e :gov-review-week/week ?week]
+                     [?e :gov-review-week/project ?p]
+                     [?p :project/id ?id]
+                     ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week )))))
 
 
 
@@ -617,8 +828,8 @@
 (def resolvers  [alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver project-lead-resolver
                  set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver
-                 set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week])
-
+                 set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week
+                 submit-current-gov-review-week])
 
 
 

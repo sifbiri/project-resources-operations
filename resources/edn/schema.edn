@@ -10,14 +10,53 @@
   
   :db/cardinality :db.cardinality/one
 
-  :db/unique  :db.unique/identity
+  ;:db/unique  :db.unique/value
   
   }
 
 
  {:db/id #db/id[:db.part/db]
 
+  :db/ident :gov-review-week/project
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/one
+
+  ;:db/unique  :db.unique/value
+  
+  }
+
+ 
+
+
+ {:db/id #db/id[:db.part/db]
+
   :db/ident :gov-review-week/status
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+
+  
+  
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/exec-summary-text
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/exec-summary-color
 
   :db/valueType :db.type/keyword
   
@@ -29,22 +68,44 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :gov-review-week/exec-summary
+  :db/ident :gov-review-week/client-relationship-text
 
-  :db/valueType :db.type/ref
+  :db/valueType :db.type/string
   
   :db/cardinality :db.cardinality/one
-  :db/isComponent true
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/client-relationship-color
+
+  :db/valueType :db.type/keyword
+  
+  
+  :db/cardinality :db.cardinality/one
   
   }
 
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :gov-review-week/client-relationship
+  :db/ident :gov-review-week/finance-text
 
-  :db/valueType :db.type/ref
-  :db/isComponent true
+  
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :gov-review-week/finance-color
+ 
+  :db/valueType :db.type/keyword
   
   :db/cardinality :db.cardinality/one
   
@@ -54,28 +115,25 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :gov-review-week/finance
+  :db/ident :gov-review-week/scope-schedule-text
 
-  :db/isComponent true
-
-  :db/valueType :db.type/ref
+  :db/valueType :db.type/string
+  
   
   :db/cardinality :db.cardinality/one
   
   
   }
 
-
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :gov-review-week/scope-schedule
+  :db/ident :gov-review-week/scope-schedule-color
 
-  :db/valueType :db.type/ref
-  :db/isComponent true
+  :db/valueType :db.type/keyword
+  
   
   :db/cardinality :db.cardinality/one
-  
-  
+    
   }
 
 

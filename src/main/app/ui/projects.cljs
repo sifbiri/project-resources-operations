@@ -169,7 +169,7 @@
              
              
              )
-       ts)))
+      ts)))
 
 (defn get-current-month-weeks []
   (let [current-week (round-to-first-day-of-week (-> (t/today)
@@ -260,20 +260,35 @@
 
 
 (defsc Comment [this props]
-  {:query [:comment/text :comment/color]})
+  {:query [:db/id :comment/text :comment/color fs/form-config-join]
+   :form-fields #{:comment/text :comment/color}
+   })
 
 (def Resource (comp/registry-key->class :app.ui.users/Resource))
 
-(defsc GovReviewWeek [this {:gov-review-week/keys [week status exec-summary client-relationship finance scope-schedule submitted-by submitted-at]}]
+(defsc GovReviewWeek [this {:gov-review-week/keys [week status exec-summary-text exec-summary-color client-relationship-text client-relationship-color  finance-text finance-color scope-schedule-text scope-schedule-color  submitted-by submitted-at project]}]
   {:query [:gov-review-week/week  :gov-review-week/status
-           {:gov-review-week/exec-summary (comp/get-query Comment)}
-           {:gov-review-week/client-relationship (comp/get-query Comment)}
-           {:gov-review-week/finance (comp/get-query Comment)}
-           {:gov-review-week/scope-schedule (comp/get-query Comment)}
+           fs/form-config-join
+           :gov-review-week/exec-summary-text
+           :gov-review-week/exec-summary-color
+
+           
+           {:gov-review-week/project (comp/get-query Project)}
+
+           
+           :gov-review-week/client-relationship-text
+           :gov-review-week/client-relationship-color
+           
+           :gov-review-week/finance-text
+           :gov-review-week/finance-color
+           
+           :gov-review-week/scope-schedule-text
+           :gov-review-week/scope-schedule-color
 
            {:gov-review-week/submitted-by (comp/get-query Resource)}
            :gov-review-week/submitted-at
            ]
+   :form-fields #{:gov-review-week/status :gov-review-week/finance}
    :route-segment ["gov-review-week" :gov-review-week/week]
    :ident  (fn[][:gov-review-week/week week])
   
@@ -282,76 +297,119 @@
                  (dr/route-deferred
                   [:gov-review-week/week week]
                   (fn []
+                    #_(merge/merge-component! app GovReviewWeek {:gov-review-week/week week})
+                    
                     (comp/transact! app [(dr/target-ready {:target [:gov-review-week/week week]})]))))
-    #_#_:pre-merge (fn [{:keys [current-normalized data-tree]}]
-                (merge
-                 {:db/id 1} 
-                 current-normalized
-                 data-tree))
-   :intial-state {:db/id 2}}
-  (js/console.log "Q" (comp/props this))
-  (dom/div {:style {:display "flex" :flex-direction "row" :flex-wrap "wrap"}}
-           (dom/label {:style {:alignSelf "flex-start"}} "Status: " (clojure.string/capitalize (name status)))
-           (ui-divider {:horizontal true})
-           #_(ui-container {}
-                         (ui-form {}
-                                  #_(ui-table {:textAlign :center}
-                                              (ui-table-header {}
-                                                               (ui-table-header-cell {} "Header")
-                                                               
+   ;:pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config GovReviewWeek data-tree))
+   :intial-state {}}
+  (js/console.log "QQQQ" (comp/props this))
+  (let [finance-color-handler
+        (fn [e d]
+          (let [new-color (keyword (.-key (.-text d)))]
+            (m/set-value! this :gov-review-week/finance-color new-color)))
 
-                                                               ))
-                                  
-                                  (div {}
-                                       (dom/div {:style {:border (str "1px solid" (name (:comment/color exec-summary))) :backgroundColor (:comment/color exec-summary) :paddingTop "8px" :display "flex"}}
-                                                (ui-header {:style {:flex 10 } :size :tiny} "Overal Status - Executive Summary")
-                                                (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "50px"}}
-                                                             (ui-dropdown-menu {}
-                                                                               (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange})} )
-                                                                               (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green})})
-                                                                               (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red})})))
-                                                )
-                                       (ui-text-area {:value (:comment/text exec-summary)}))
+        scope-schedule-color-handler (fn [e d]
+                                       (let [new-color (keyword (.-key (.-text d)))]
+                                         (m/set-value! this :gov-review-week/scope-schedule-color new-color)))
 
 
-                                  (div {:style {:display "flex"}}
+        exec-summary-color-handler (fn [e d]
+                                     (let [new-color (keyword (.-key (.-text d)))]
+                                       (m/set-value! this :gov-review-week/exec-summary-color new-color)))
 
-                                       (div {:style {:flex 2}}
-                                            (dom/div {:style {:border (str "1px solid" (:comment/color client-relationship)) :backgroundColor (:comment/color client-relationship) :paddingTop "8px" :display "flex"}}
-                                                     (ui-header {:style {:flex 10 } :size :tiny} "Client Relationship")
-                                                     (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
-                                                                  (ui-dropdown-menu {}
-                                                                                    (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange})} )
-                                                                                    (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green})})
-                                                                                    (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red})})))
-                                                     )
-                                            (ui-text-area {}))
+        client-relationship-color-handler (fn [e d]
+                                            (let [new-color (keyword (.-key (.-text d)))]
+                                              (m/set-value! this :gov-review-week/client-relationship-color new-color)))]
+    
+    (dom/div {:style {:display "flex" :flexDirection "row" :flexWrap "wrap"}}
+            (dom/label {:style {:alignSelf "flex-start"}} "Status: " (clojure.string/capitalize (name status)))
+            (ui-divider {:horizontal true})
+            (ui-container {}
+                          (ui-form {}
+                                   #_(ui-table {:textAlign :center}
+                                               (ui-table-header {}
+                                                                (ui-table-header-cell {} "Header")
+                                                                
 
-                                       (div {:style {:flex 2}}
-                                            (dom/div {:style {:border (str "1px solid" (:comment/color finance)) :backgroundColor (:comment/color finance) :paddingTop "8px" :display "flex"}}
-                                                     (ui-header {:style {:flex 10 } :size :tiny} "Finance")
-                                                     (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
-                                                                  (ui-dropdown-menu {}
-                                                                                    (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange})} )
-                                                                                    (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green})})
-                                                                                    (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red})})))
-                                                     )
-                                            (ui-text-area {}))
+                                                                ))
+                                   ;; EXEC SUMMARY
+                                   
+                                   (div {}
+                                        (dom/div {:style {:border (str "1px solid " (name exec-summary-color)) :backgroundColor exec-summary-color :paddingTop "8px" :display "flex"}}
+                                                 (ui-header {:style {:flex 10 } :size :tiny} "Overal Status - Executive Summary")
+                                                 (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "50px"}}
+                                                              (ui-dropdown-menu {}
+                                                                                (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange}) :onClick exec-summary-color-handler} )
+                                                                                (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green}) :onClick exec-summary-color-handler})
+                                                                                (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red}) :onClick exec-summary-color-handler})))
+                                                 )
+                                        (ui-text-area {:rows 8 :value exec-summary-text
+                                                       :onChange (fn [e]
+                                                                   
+                                                                   (m/set-value! this :gov-review-week/exec-summary-text (evt/target-value e)))}))
 
-                                       (div {:style {:flex 2}}
-                                            (dom/div {:style {:border (:comment/color scope-schedule) :backgroundColor (:comment/color scope-schedule) :paddingTop "8px" :display "flex"}}
-                                                     (ui-header {:style {:flex 10 } :size :tiny} "Scope & Schedule")
-                                                     (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
-                                                                  (ui-dropdown-menu {}
-                                                                                    (ui-dropdown-item {:text "Amber"} )
-                                                                                    (ui-dropdown-item {:text "Green"})
-                                                                                    (ui-dropdown-item {:text "Red"})))
-                                                     )
-                                            (ui-text-area {})))
-                                  ))
-           (ui-divider {:horizontal true})
-           (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "Submitted the " (apply str (take 10 (str submitted-at))) " by " (:resource/email-address submitted-by))
-           (ui-button  {:basic true :style {:alignSelf "auto" :marginLeft "459px" :marginTop "5px"}} "Submit")))
+                                   ;; CLIENT RELATIONSHIP
+                                   
+                                   (div {:style {:display "flex"}}
+
+                                        (div {:style {:flex 2}}
+                                             (dom/div {:style {:border (str "1px solid " (name client-relationship-color)) :backgroundColor client-relationship-color :paddingTop "8px" :display "flex"}}
+                                                      (ui-header {:style {:flex 10 } :size :tiny} "Client Relationship")
+                                                      (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
+                                                                   (ui-dropdown-menu {}
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange}) :onClick client-relationship-color-handler} )
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green}) :onClick client-relationship-color-handler})
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red}) :onClick client-relationship-color-handler})))
+                                                      )
+                                             (ui-text-area {:rows 5
+                                                            :value client-relationship-text
+                                                            :onChange (fn [e]
+                                                                        (m/set-value! this :gov-review-week/client-relationship-text (evt/target-value e)))}))
+
+
+                                        ;; FINANCE 
+                                        (div {:style {:flex 2}}
+                                             (dom/div {:style {:border (str "1px solid "  (name finance-color)) :backgroundColor finance-color :paddingTop "8px" :display "flex"}}
+                                                      (ui-header {:style {:flex 10 } :size :tiny} "Finance")
+                                                      (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
+                                                                   (ui-dropdown-menu {}
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange})
+                                                                                                        :onClick finance-color-handler
+                                                                                                        })
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green})
+                                                                                                        :onClick finance-color-handler})
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red
+                                                                                                                         })
+                                                                                                        :onClick finance-color-handler})))
+                                                      )
+                                             (ui-text-area {:rows 5
+                                                            :value finance-text
+                                                            :onChange (fn [e]
+                                                                        (m/set-value! this :gov-review-week/finance-text (evt/target-value e)))}))
+                                        ;; SCOPE & SCHEDULE
+
+                                        (div {:style {:flex 2}}
+                                             (dom/div {:style {:border (str "1px solid " (name scope-schedule-color)) :backgroundColor scope-schedule-color :paddingTop "8px" :display "flex"}}
+                                                      (ui-header {:style {:flex 10 } :size :tiny} "Scope & Schedule")
+                                                      (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
+                                                                   (ui-dropdown-menu {}
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange}) :onClick scope-schedule-color-handler} )
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :green :empty true :key :green}) :onClick scope-schedule-color-handler})
+                                                                                     (ui-dropdown-item {:text (ui-label {:circular true :color :red :empty true :key :red}) :onClick scope-schedule-color-handler})))
+                                                      )
+                                             (ui-text-area {:rows 5
+                                                            :value scope-schedule-text
+                                                            :onChange (fn [e]
+                                                                        (m/set-value! this :gov-review-week/scope-schedule-text (evt/target-value e)))})))
+                                   ))
+            (ui-divider {:horizontal true})
+            (if (= status :submitted)
+              (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "Submitted the " (apply str (take 21 (str submitted-at)))
+                         (when (or (not (keyword? (:resource/email-address submitted-by)))
+                                   (nil? (:resource/email-address submitted-by)))
+                           (str " by " (:resource/email-address submitted-by))))
+              (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "-"))
+            )))
 
 
 (def ui-gov-review-week (comp/factory GovReviewWeek {:keyfn :gov-review-week/week}))
@@ -385,9 +443,9 @@
 
 (defsc GovReview [this {:keys [ gov-review/id gov-review/current-weeks gov-review/current-week] :as props}]
   {:query [:gov-review/id {:gov-review/current-weeks (comp/get-query GovReviewWeek)} {:gov-review/current-week (comp/get-query GovReviewWeek)}]
-   :route-segment ["gov-review"]
+   :route-segment ["gov-review" :gov-review/id]
    :ident  (fn [] [:component/id :gov-review])
-   :initial-state (fn [p] {:gov-review/current-weeks []})
+   :initial-state (fn [p] {:gov-review/current-weeks [[:gov-review-week/week (t/instant (t/now))][:gov-review-week/week (t/instant (t/now))] [:gov-review-week/week (t/instant (t/now))] [:gov-review-week/week (t/instant (t/now))]]})
    :will-enter (fn [app {:keys [gov-review/id] :as params}]
                  (dr/route-deferred
                   
@@ -395,14 +453,18 @@
                   (fn []
                     #_(df/load! app [:project-info/id id] ProjectInfo)
                     (js/console.log "GOV REVIEW" params)
-                                        ;(merge/merge-component! app GovReview {:gov-review/id id})
+
+                    
+                    (merge/merge-component! app GovReview {:gov-review/id (uuid id)})
                     #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (t/instant (round-to-first-day-of-week (-> (t/today)
-                                                                                                                      (t/at (t/noon)))))
+                                                                                                                                  (t/at (t/noon)))))
                                                                :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-week]
                                                                )
 
+                    
                     (comp/transact! app [(project/get-or-create-current-gov-review-week {:gov-review-week/week (t/inst (round-to-first-day-of-week (-> (t/today)
-                                                                                                                                               (t/at (t/noon)))))})])
+                                                                                                                                                      (t/at (t/noon)))))
+                                                                                         :project/id (uuid (:gov-review/id params))})])
                     #_(df/load! app [:gov-review-week/week (round-to-first-day-of-week (-> (t/today)
                                                                                            (t/at (t/noon))))] GovReviewWeek)
                     
@@ -412,8 +474,10 @@
                       
                       (when (seq weeks)
                         (js/console.log "loop")
-                       
-                        (comp/transact! app [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index})])
+                        #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
+                                                                     :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
+                                                                     )
+                        (comp/transact! app [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project/id (uuid (:gov-review/id params))})])
                         
                         (recur (rest weeks) (inc index) )))
 
@@ -422,65 +486,102 @@
                     
                     )               ))}
 
-  (js/console.log "ROUTE123" current-week)
+  (js/console.log "ROUTE123" id)
   
   (let [current-tab (some-> (dr/current-route this this) first keyword)]
-    (ui-container {:textAlign :center}
+    (ui-container {:textAlign :center :style {:fontSize "85%"}}
 
-                  (ui-icon { :onClick (fn [e]
-                                        (let [last-week (:gov-review-week/week (first current-weeks))
-                                              previous-weeks (previous-weeks last-week)]
+                  (dom/div {:style {:display "flex" :alignItems "center" :alignContent "center" :flexWrap "nowrap"  }}
+                           (ui-icon { :onClick (fn [e]
+                                                 (let [last-week (:gov-review-week/week (first current-weeks))
+                                                       previous-weeks (previous-weeks last-week)]
 
 
-                                          (loop [weeks previous-weeks
-                                                 index 0]
-                                            
-                                            (when (seq weeks)
-                                              
-                                              
-                                              (comp/transact! this [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index})])
-                                              
-                                              (recur (rest weeks) (inc index) )))
+                                                   (loop [weeks previous-weeks
+                                                          index 0]
+                                                     
+                                                     (when (seq weeks)
+                                                       (js/console.log "loop")
+                                                       #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
+                                                                                                    :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
+                                                                                                    )
+                                                       (comp/transact! this [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project/id id})])
+                                                       
+                                                       (recur (rest weeks) (inc index) )))
 
-                                                                                    
-                                          #_(m/set-value! this :gov-review/current-weeks (mapv (fn [week] [:gov-review-week/week week])
-                                                                                             previous-weeks)))
-                                        #_(comp/transact! this [(move-current-weeks-next {:last-week (last current-weeks)})])) :name "chevron left"  })
+                                                   
+                                                   #_(doseq [
+                                                             ]
+                                                       (merge/merge-component! SPA GovReviewWeek {:gov-review-week/week week
+                                                                                                  :gov-review-week/status :open}))
+
+
+                                                   #_(m/set-value! this :gov-review/current-weeks (mapv (fn [week] [:gov-review-week/week week])
+                                                                                                        previous-weeks)))
+                                                 #_(comp/transact! this [(move-current-weeks-next {:last-week (last current-weeks)})])) :name "chevron left"  })
                                         ;(map ui-gov-review-week current-weeks)
-                 
-                 ;; we need to map this from current-weeks prop 
-                  (ui-step-group {}
+                           
+                           ;; we need to map this from current-weeks prop 
+                           (ui-step-group {:style {:flex 1} :fluid true :size :mini}
+                                          
+                                          (mapv (fn [gov-review-week]
 
-                                 (map (fn [gov-review-week]
+                                                  (ui-step {:onClick
+                                                            (fn [e] (m/set-value! this :gov-review/current-week [:gov-review-week/week (:gov-review-week/week gov-review-week)]))
 
-                                        (ui-step {:onClick (fn [e] (comp/transact! this [(project/set-current-gov-week {:gov-review-week gov-review-week})])) :active
-                                                  (= (:gov-review-week/week gov-review-week) (:gov-review-week/week current-week) )}
-                                                 (ui-step-content {}
+                                                            ;(fn [e] (comp/transact! this [(project/set-current-gov-week {:gov-review-week gov-review-week})]))
+                                                            :active
+                                                            (= (:gov-review-week/week gov-review-week) (:gov-review-week/week current-week) )
 
-                                                                  (ui-step-title {} "Week "(week-number (:gov-review-week/week gov-review-week)))
-                                                                  
-                                                                  (ui-step-description {} (apply str (take 10 (str (:gov-review-week/week gov-review-week))))))) ) current-weeks))
-                 
-                 (ui-icon { :name "chevron right" :onClick (fn [e]
-                                                             (let [last-week (:gov-review-week/week (last current-weeks))
-                                                                   next-weeks (next-weeks last-week)]
-                                                               (loop [weeks next-weeks
-                                                                      index 0]
-                                                                 
-                                                                 (when (seq weeks)
-                                                                   (js/console.log "loop")
-                                                                   
-                                                                   (comp/transact! this [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index})])
-                                                                   
-                                                                   (recur (rest weeks) (inc index) )))
+                                                            :style {:color (if (= (:gov-review-week/status gov-review-week) :open) "Gray" :black)}
+                                        ;:completed (= (:gov-review-week/status gov-review-week) :submitted)
+                                                            
+                                                            }
+                                                           
+                                                           (ui-icon (cond (= (:gov-review-week/status gov-review-week) :submitted) {:name  "check circle outline" :color :green}
+                                                                          (= (:gov-review-week/status gov-review-week) :overdue) {:name "times circle outline" :color :red}))
 
-                                                               
-                                                               (m/set-value! this :gov-review/current-weeks (mapv (fn [week] [:gov-review-week/week week])
-                                                                                                                  next-weeks)))
-                                                             #_(comp/transact! this [(move-current-weeks-next {:last-week (last current-weeks)})]))  })
-                 ;; router here?
+                                                           (ui-step-content {}
+
+                                                                            (ui-step-title {} "Week "(week-number (:gov-review-week/week gov-review-week)))
+                                                                            
+                                                                            (ui-step-description {:style {:color (if (= (:gov-review-week/status gov-review-week) :open) "Gray" :black)}}
+                                                                                                 (apply str (take 15 (str (:gov-review-week/week gov-review-week))))))) ) current-weeks)
+                                          )
+                           
+                           (ui-icon { :style {:position "relative" :left "3px"} :name "chevron right" :onClick (fn [e]
+                                                                                                                (let [last-week (:gov-review-week/week (last current-weeks))
+                                                                                                                      next-weeks (next-weeks last-week)]
+
+
+                                                                                                                  (loop [weeks next-weeks
+                                                                                                                         index 0]
+                                                                                                                    
+                                                                                                                    (when (seq weeks)
+                                                                                                                      (js/console.log "loop")
+                                                                                                                      #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
+                                                                                                                                                                   :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
+                                                                                                                                                                   )
+                                                                                                                      (comp/transact! this [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project/id id})])
+                                                                                                                      
+                                                                                                                      (recur (rest weeks) (inc index) )))
+
+                                                                                                                  
+                                                                                                                  #_(doseq [
+                                                                                                                            ]
+                                                                                                                      (merge/merge-component! SPA GovReviewWeek {:gov-review-week/week week
+                                                                                                                                                                 :gov-review-week/status :open}))
+
+
+                                                                                                                  #_(m/set-value! this :gov-review/current-weeks (mapv (fn [week] [:gov-review-week/week week])
+                                                                                                                                                                       previous-weeks)))
+                                                                                                                #_(comp/transact! this [(move-current-weeks-next {:last-week (last current-weeks)})]))  }))
+
+
+                  ;; router here?
                  (js/console.log "CURRENT WEEK " current-week)
                  (ui-gov-review-week current-week)
+                 (ui-button  {:basic true :style {:alignSelf "flex-end" :position "relative" :left "380px" :marginTop "10px"} :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project/id id})]))} "Submit")
                  )))
 
 
@@ -709,7 +810,7 @@
                   [:component/id :project-panel]
                   (fn []
                     #_(df/load! app [:project-info/id id] ProjectInfo)
-                    #_(merge/merge-component! app ProjectPanel  {:project-panel/current-project [:project/id (uuid current-project-id)] } )
+                    (merge/merge-component! app ProjectPanel  {:project-panel/current-project [:project/id (uuid current-project-id)] } )
                     (comp/transact! app [(set-current-project-id {:current-project-id current-project-id})])
                     #_(comp/transact! app [
 
@@ -749,7 +850,7 @@
                                                                                                                              ;(merge/merge-component! this GovReviewWeek {:db/id 1})
                                                                                                                              (js/console.log "CONSOLE ")
                                                                                                                              ;; check this out! TODO 
-                                                                                                                             (dr/change-route this (dr/path-to  GovReview {:gov-review/id current-project-id} )))} )
+                                                                                                                             (dr/change-route this (dr/path-to  GovReview {:gov-review/id current-project-id  } )))} )
 
 
                               (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
