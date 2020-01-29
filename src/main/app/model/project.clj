@@ -106,17 +106,18 @@
 (pc/defresolver client-relationship-color-resolver  [{:keys [db]} {:project/keys [id]}]  
   {::pc/input  #{:project/id}
    ::pc/output [:gov-review-week/client-relationship-color]}
-  (last (sort-by :gov-review-week/week
-                 (map first (d/q '[:find (pull ?gw [:gov-review-week/client-relationship-color :gov-review-week/week])
-                                   :in $ ?id
-                                   
-                                   :where
-                                   [?p :project/id ?id]
-                                   [?gw :gov-review-week/project ?p]
-                                   [?gw :gov-review-week/status :submitted]
-                                   
-                                   ] db  id)
-                      ))))
+  (assoc (last (sort-by :gov-review-week/week
+                  (map first (d/q '[:find (pull ?gw [:gov-review-week/client-relationship-color :gov-review-week/week])
+                                    :in $ ?id
+                                    
+                                    :where
+                                    [?p :project/id ?id]
+                                    [?gw :gov-review-week/project ?p]
+                                    [?gw :gov-review-week/status :submitted]
+                                    
+                                    ] db  id)
+                       )))
+    :project/id id))
 
 
 

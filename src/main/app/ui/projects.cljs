@@ -972,9 +972,9 @@
                                                                                                  project-lead)))
                                                                            
 
-                                                                           (ui-table-cell {} (str (:gov-review-week/exec-summary-color p))
-                                                                                          #_(ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
-                                                                           (ui-table-cell {} (str (:gov-review-week/client-relationship-color p))))) admin-projects)))
+                                                                           (ui-table-cell {} (ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                           (ui-table-cell {} (ui-label {:circular true :color (:gov-review-week/client-relationship-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                           )) admin-projects)))
                       )
         )
       (ui-segment {:style {:textAlign "center"}}
