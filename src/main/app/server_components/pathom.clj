@@ -28,7 +28,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [acct/resolvers session/resolvers resource/resolvers project/resolvers index-explorer wol/resolvers #_project/resolvers item/resolvers team/resolvers])
+(def all-resolvers [project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -79,6 +79,9 @@
 
 (defstate parser
   :start (build-parser db/conn))
+
+
+
 
 
 

@@ -73,12 +73,14 @@ https://www.grapecity.com/blogs/add-excel-import-and-export-to-a-react-app
 *** FRANCE
 *** NORAM (default)
 ** Fluxod Project Name (free text)
-
-* icons
+* icons/ todo
 check circle outline(green)
 times circle outline (red)
 
-
+** make the colors of project match (all orange)
+** filtre on resources
+** change the font color to white  (when green & red)
+** auto saves when filling the form of gov review
 ** make font smaller
 ** use colored table
 ** use sortable

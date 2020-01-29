@@ -55,6 +55,8 @@
             (swap! state assoc-in [:component/id :resources :resources/projects] projects)
             (swap! state assoc  :projects []))))
 
+
+
 (defmutation set-project-lead [{:keys [:project-info/id :lead-id]}]
   (action [{:keys [state]}]
           (swap! state (fn [state]

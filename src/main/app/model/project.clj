@@ -2,6 +2,7 @@
   (:require
    [com.wsscode.pathom.connect :as pc]
    [app.model.database :refer [conn]]
+   [clojure.core.async :refer [go]]
    [clojure.set :as set]
    [app.model.api :as api]
    [tick.alpha.api :as t]
@@ -67,21 +68,73 @@
          ))
 
 
+;; (pc/defresolver overall-exec-summary-color-resolver  [{:keys [db]} {:keys [project/id]}]
+;;     {::pc/input  #{:project/id}
+;;      ::pc/output [:gov-review-week/exec-summary-color]}
+;;     (select-keys (last (sort-by :gov-review-week/week
+;;                                 (map first (d/q '[:find (pull ?gw [:gov-review-week/exec-summary-color :gov-review-week/week])
+;;                                                   :in $ ?id
+                                                  
+;;                                                   :where
+;;                                                   [?p :project/id ?id]
+;;                                                   [?gw :gov-review-week/project ?p]
+                                                  
+;;                                                   ] db id )
+;;                                      ))) [:gov-review-week/exec-summary-color]))
+
+
+;; (pc/defresolver overall-exec-summary-color-resolver  [{:keys [db]} in]
+;;   {::pc/input #{:project/id}
+;;    ::pc/output  [:gov-review-week/exec-summary-color]
+;;    ::pc/transform pc/transform-batch-resolver}
+;;   (mapv (fn [{:keys [project/id]}]
+;;           {:gov-review-week/exec-summary-color :green}) in))
+
+
+(pc/defresolver overall-exec-summary-color-resolver  [{:keys [db]} {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output  [:gov-review-week/exec-summary-color :project/id]
+                                        ;::pc/transform pc/transform-batch-resolver
+   }
+  #_
+  {:gov-review-week/exec-summary-color :green})
+
+
+
+
+
+(pc/defresolver client-relationship-color-resolver  [{:keys [db]} {:project/keys [id]}]  
+  {::pc/input  #{:project/id}
+   ::pc/output [:gov-review-week/client-relationship-color]}
+  (last (sort-by :gov-review-week/week
+                 (map first (d/q '[:find (pull ?gw [:gov-review-week/client-relationship-color :gov-review-week/week])
+                                   :in $ ?id
+                                   
+                                   :where
+                                   [?p :project/id ?id]
+                                   [?gw :gov-review-week/project ?p]
+                                   [?gw :gov-review-week/status :submitted]
+                                   
+                                   ] db  id)
+                      ))))
+
+
 
 (pc/defmutation set-project-lead [{:keys [db connection]} {:keys [project-info/id lead-id]}]
   {::pc/sym`set-project-lead
    ::pc/params [:project-info/id :lead-id]
    ::pc/output [:entity]}
-  (let [entity (d/entity db [:project-info/id (api/uuid id)]) ]
+  (let [{pid :db/id :as entity} (d/entity db [:project-info/id (api/uuid id)])
+        {lid :db/id} (d/entity db [:resource/id (api/uuid lead-id)])]
 
-    
+    (println "YOOOOOOO" lid "YOOO" pid)
     (if (not (nil? entity))
-      (d/transact connection [{:db/id [:project-info/id (api/uuid id)]
-                               :project-info/project-lead [:resource/id (api/uuid lead-id)]
+      @(d/transact (d/connect db-url) [{:db/id pid
+                                :project-info/project-lead lid
                                }])
-      (d/transact connection [{:db/id "new"
-                               :project-info/project-lead [:resource/id (api/uuid lead-id)]
-                               :project-info/id (api/uuid id)}]))
+      @(d/transact connection [{:db/id "new"
+                               :project-info/project-lead [:resource/id lead-id]
+                               :project-info/id id}]))
 
     
     {:entity (nil? entity)}))
@@ -149,12 +202,6 @@
 
     
     {:entity (nil? entity)}))
-
-
-
-
-
-
 
 
 (pc/defmutation submit-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week resource-id project/id]}]
@@ -284,10 +331,10 @@
              :gov-review-week/client-relationship-color :orange
              
              :gov-review-week/finance-text ""
-             :gov-review-week/finance-color :red
+             :gov-review-week/finance-color :orange
              
              :gov-review-week/scope-schedule-text ""
-             :gov-review-week/scope-schedule-color :green
+             :gov-review-week/scope-schedule-color :orange
              
              }
             ]
@@ -380,10 +427,10 @@
              :gov-review-week/client-relationship-color :orange
              
              :gov-review-week/finance-text ""
-             :gov-review-week/finance-color :red
+             :gov-review-week/finance-color :orange
              
              :gov-review-week/scope-schedule-text ""
-             :gov-review-week/scope-schedule-color :green
+             :gov-review-week/scope-schedule-color :orange
              
              }
             ]
@@ -509,24 +556,36 @@
           ]  db (api/uuid id))})
 
 
-
-
-
-(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project-info/id]}]
-  {::pc/input  #{:project-info/id}
-   ::pc/output [{:project-info/project-lead [:resource/id]}]}
-  {:project-info/project-lead
-   {:resource/id
-    (d/q '[:find ?rid .;?rn ?re
-           :in $ ?id
+#_(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project/id]}]
+  {::pc/input  #{:project/id}
+   ::pc/output [{:project-info/project-lead [:resource/id :resource/name :resource/email-address]}]}
+  (println "PROJECT INFO ID" (api/uuid id))
+  (let [r {:project-info/project-lead
+           (ffirst (d/q '[:find (pull ?r [:resource/name :resource/id] :resource/email-address)
+                          
+                          :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
-           :where
-           [?p :project-info/project-lead ?r]
-           [?r :resource/id ?rid]
+                          :where
+                          [?p :project-info/project-lead ?r]
+                          [?r :resource/id ?rid]
+                          
                                         ;[?r :resource/name ?rn]
                                         ;[?r :resource/email-address ?re]
-           [?p :project-info/id ?id]
-           ]  db (api/uuid id))}})
+                          [?p :project-info/id ?id]
+                          ]  db id))}
+        ]
+    
+    r))
+
+
+(pc/defresolver project-lead-resolver [{:keys [connection db]} input]
+  {::pc/input  #{:project/id}
+   ::pc/output [{:project-info/project-lead [:resource/id]}]
+   ::pc/transform pc/transform-batch-resolver}
+  
+  (mapv (fn [{:keys [project/id]}]
+          {:project-info/project-lead
+           {:resource/id #uuid "1fc7ae1a-c8df-e911-b08c-00155de0701e" }} ) input))
 
 
 
@@ -671,11 +730,12 @@
 
 (pc/defresolver project-resolver [env {:keys [project/id]}]
   {::pc/input #{:project/id}
-   ::pc/output [:project/id :project/name   :project/modified-date :project/last-published-date 
-                :project/created-date :project/work]}
+   ::pc/output [:project/id :project/name  :project/modified-date :project/last-published-date 
+                :project/created-date]}
   (d/q  '[:find ?pi ?pn  ?pm ?pl  ?pc ?pw
           :keys project/id project/name  project/modified-date project/last-published-date 
           project/created-date project/work
+          :in $ ?pi
           :where
           
           [?p :project/id ?pi]
@@ -687,7 +747,28 @@
           [?p :project/created-date ?pc]
           [?p :project/work ?pw]
           
-          ] (d/db conn)))
+          ] (d/db conn) id))
+
+
+
+(pc/defresolver project-name-resolver [env {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:project/name]}
+  {:project/name
+   (d/q  '[:find  ?pn .
+           :in $ ?id
+           :where
+           
+           [?p :project/id ?id]
+           [?p :project/name ?pn]
+           
+           
+           ] (d/db conn) id)})
+
+
+
+
+
 
 
 
@@ -701,6 +782,25 @@
                            
                            [?p :project/id ?pi]
                            ] (d/db conn))}))
+
+
+
+
+
+
+
+(pc/defresolver all-admin-projects [{:keys [connection db]} _]
+  {::pc/output [{:all-admin-projects  [:project/id]}]}
+  (let []
+    {:all-admin-projects
+     (mapv first (d/q  '[:find (pull ?p [:project/id]) 
+                         
+                         :where
+                                        ;[?gw :gov-review-week/exec-summary-color ?c]
+                                        ;[?gw :gov-review-week/project ?p]
+                         [?p :project/id ?pi]
+                         
+                         ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))))}))
 
 
 
@@ -826,10 +926,14 @@
             
 
 (def resolvers  [alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
-                 all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver project-lead-resolver
-                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver
+                 
+                 all-projects-resolver made-up-resolver made-up-resolver2  #_alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver 
+                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver #_project-lead-resolver
                  set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week
-                 submit-current-gov-review-week])
-
-
-
+                 submit-current-gov-review-week
+                  
+                 client-relationship-color-resolver
+                 project-name-resolver
+                 overall-exec-summary-color-resolver
+                 all-admin-projects
+                 ])

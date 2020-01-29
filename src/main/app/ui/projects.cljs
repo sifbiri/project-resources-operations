@@ -319,7 +319,8 @@
 
         client-relationship-color-handler (fn [e d]
                                             (let [new-color (keyword (.-key (.-text d)))]
-                                              (m/set-value! this :gov-review-week/client-relationship-color new-color)))]
+                                              (m/set-value! this :gov-review-week/client-relationship-color new-color)))
+        get-color #(if (= % :orange) "DarkOrange" %)]
     
     (dom/div {:style {:display "flex" :flexDirection "row" :flexWrap "wrap"}}
             (dom/label {:style {:alignSelf "flex-start"}} "Status: " (clojure.string/capitalize (name status)))
@@ -335,8 +336,8 @@
                                    ;; EXEC SUMMARY
                                    
                                    (div {}
-                                        (dom/div {:style {:border (str "1px solid " (name exec-summary-color)) :backgroundColor exec-summary-color :paddingTop "8px" :display "flex"}}
-                                                 (ui-header {:style {:flex 10 } :size :tiny} "Overal Status - Executive Summary")
+                                        (dom/div {:style {:border (str "1px solid " (name (get-color exec-summary-color))) :backgroundColor (get-color exec-summary-color) :paddingTop "8px" :display "flex"}}
+                                                 (ui-header {:style {:flex 10 :color :white} :size :tiny} "Overal Status - Executive Summary")
                                                  (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "50px"}}
                                                               (ui-dropdown-menu {}
                                                                                 (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange}) :onClick exec-summary-color-handler} )
@@ -353,8 +354,8 @@
                                    (div {:style {:display "flex"}}
 
                                         (div {:style {:flex 2}}
-                                             (dom/div {:style {:border (str "1px solid " (name client-relationship-color)) :backgroundColor client-relationship-color :paddingTop "8px" :display "flex"}}
-                                                      (ui-header {:style {:flex 10 } :size :tiny} "Client Relationship")
+                                             (dom/div {:style {:border (str "1px solid " (name (get-color client-relationship-color))) :backgroundColor (get-color client-relationship-color) :paddingTop "8px" :display "flex"}}
+                                                      (ui-header {:style {:flex 10 :color "white"} :size :tiny } "Client Relationship")
                                                       (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
                                                                    (ui-dropdown-menu {}
                                                                                      (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange}) :onClick client-relationship-color-handler} )
@@ -369,8 +370,8 @@
 
                                         ;; FINANCE 
                                         (div {:style {:flex 2}}
-                                             (dom/div {:style {:border (str "1px solid "  (name finance-color)) :backgroundColor finance-color :paddingTop "8px" :display "flex"}}
-                                                      (ui-header {:style {:flex 10 } :size :tiny} "Finance")
+                                             (dom/div {:style {:border (str "1px solid "  (name (get-color finance-color))) :backgroundColor (get-color finance-color)  :paddingTop "8px" :display "flex"}}
+                                                      (ui-header {:style {:flex 10  :color "white"} :size :tiny} "Finance")
                                                       (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
                                                                    (ui-dropdown-menu {}
                                                                                      (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange})
@@ -389,8 +390,8 @@
                                         ;; SCOPE & SCHEDULE
 
                                         (div {:style {:flex 2}}
-                                             (dom/div {:style {:border (str "1px solid " (name scope-schedule-color)) :backgroundColor scope-schedule-color :paddingTop "8px" :display "flex"}}
-                                                      (ui-header {:style {:flex 10 } :size :tiny} "Scope & Schedule")
+                                             (dom/div {:style {:border (str "1px solid " (name (get-color scope-schedule-color))) :backgroundColor (get-color scope-schedule-color)  :paddingTop "8px" :display "flex"}}
+                                                      (ui-header {:style {:flex 10 :color "white"} :size :tiny} "Scope & Schedule")
                                                       (ui-dropdown {:icon (ui-icon {:name "angle down" })  :style {:flex 1 :position "relative" :left "2px"}}
                                                                    (ui-dropdown-menu {}
                                                                                      (ui-dropdown-item {:text (ui-label {:circular true :color :orange :empty true :key :orange}) :onClick scope-schedule-color-handler} )
@@ -542,7 +543,6 @@
                                                                           (= (:gov-review-week/status gov-review-week) :overdue) {:name "times circle outline" :color :red}))
 
                                                            (ui-step-content {}
-
                                                                             (ui-step-title {} "Week "(week-number (:gov-review-week/week gov-review-week)))
                                                                             
                                                                             (ui-step-description {:style {:color (if (= (:gov-review-week/status gov-review-week) :open) "Gray" :black)}}
@@ -895,13 +895,16 @@
   {:route-segment ["risk-issues"]}
   (dom/p {} "Risk & Issues"))
 
+(defsc AdminProject [this {:keys [project/id]}]
+  {:query [:project/id :project/name #_{:project-info/project-lead [:resource/id]} 
+           :gov-review-week/exec-summary-color
+           :gov-review-week/client-relationship-color
+           ]
+   :ident (fn [] [:admin-project/id id])})
 
 
-
-
-
-(defsc AdminProjects [this {:admin-projects/keys [projects router] :as props}]
-  {:query         [{:admin-projects/projects (comp/get-query Project)}
+(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :as props}]
+  {:query         [{:admin-projects/admin-projects  (comp/get-query AdminProject)}
                    {:admin-projects/router (comp/get-query ProjectPanelRouter)}
                    [::uism/asm-id ::session/session]
 
@@ -913,12 +916,9 @@
                   [:component/id :admin-projects]
                   (fn []
                     
-                    (df/load! app :all-projects Project
-
-                              {:target [:component/id :admin-projects :admin-projects/projects]
+                    (df/load! app :all-admin-projects AdminProject
+                              {:target [:component/id :admin-projects :admin-projects/admin-projects]
                                :marker :admin-projects
-                               
-                               
                                })
                     (comp/transact! app [(dr/target-ready {:target [:component/id :admin-projects]})]))))
    :route-segment ["admin-projects"]
@@ -944,26 +944,18 @@
         (ui-container {:style {:width "60%"}}
                       (dom/h3 {:style {:textAlign "center"}} "Projects" )
                       
-                      (ui-table {} (ui-table-header {}
-                                                    (ui-table-row {}
-                                                                  
-                                                                  (ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} "Project Name")))
+                      (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true}
+                                (ui-table-header {}
+                                                 (ui-table-row {}
+                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Name")
+                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Lead")
+                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Overall")
+                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Client Relationship")
+                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Finance")
+                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Scope & Schedule")))
                                 (ui-table-body {}
-                                               (map (fn [p] (ui-table-row {:onClick (fn [e]
-                                                                                      #_(js/console.log "XXXXXX"
-                                                                                                        (dr/path-to ProjectPanel {:project/id (:project/id p)} ProjectInfo {:project-info/id (:project/id p)})
-)
-
-                                                                                      #_(dr/change-route this 
-                                                                                                       (dr/path-to  ProjectInfo2)
-
-                                                                                                       )
-                                                                                      #_(dr/change-route this
-                                                                                                         (dr/path-to  ProjectInfo))
-
-                                        ;(dr/change-route this (dr/path-to  ProjectInfo {:project-panel/id (:project/id p)}))
-                                                                                      
-                                                                                      #_(dr/change-route this (dr/path-to  GovReview GovReviewWeek {:db/id 1} ))
+                                               (mapv (fn [p] (ui-table-row {:onClick (fn [e]
+                                                                                     
 
                                                                                       (dr/change-route this (dr/path-to ProjectPanel ProjectInfo {:project-info/id (:project/id p) :project-panel/current-project-id (:project/id p)}))
                                                                                       
@@ -973,7 +965,16 @@
 
                                                                                       )}
                                                                           
-                                                                          (ui-table-cell {} (:project/name p)))) projects)))
+                                                                           (ui-table-cell {} (str (:project/name p)))
+                                                                           (ui-table-cell {} (let [project-lead (get-in p [:project-info/project-lead :resource/name])]
+                                                                                               (if (keyword? project-lead)
+                                                                                                 ""
+                                                                                                 project-lead)))
+                                                                           
+
+                                                                           (ui-table-cell {} (str (:gov-review-week/exec-summary-color p))
+                                                                                          #_(ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                           (ui-table-cell {} (str (:gov-review-week/client-relationship-color p))))) admin-projects)))
                       )
         )
       (ui-segment {:style {:textAlign "center"}}
