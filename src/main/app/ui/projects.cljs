@@ -896,9 +896,11 @@
   (dom/p {} "Risk & Issues"))
 
 (defsc AdminProject [this {:keys [project/id]}]
-  {:query [:project/id :project/name #_{:project-info/project-lead [:resource/id]} 
+  {:query [:project/id :project/name {:project-info/project-lead [:resource/id :resource/name]} 
            :gov-review-week/exec-summary-color
            :gov-review-week/client-relationship-color
+           :gov-review-week/finance-color
+           :gov-review-week/scope-schedule-color
            ]
    :ident (fn [] [:admin-project/id id])})
 
@@ -944,7 +946,7 @@
         (ui-container {:style {:width "60%"}}
                       (dom/h3 {:style {:textAlign "center"}} "Projects" )
                       
-                      (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true}
+                      (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true}
                                 (ui-table-header {}
                                                  (ui-table-row {}
                                                                (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Name")
@@ -972,8 +974,12 @@
                                                                                                  project-lead)))
                                                                            
 
-                                                                           (ui-table-cell {} (ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
-                                                                           (ui-table-cell {} (ui-label {:circular true :color (:gov-review-week/client-relationship-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/client-relationship-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/finance-color p) :empty true :key (:gov-review-week/finance-color p)}))
+                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/scope-schedule-color p) :empty true :key (:gov-review-week/scope-schedule-color p)}))
+
+                                                                           
                                                                            )) admin-projects)))
                       )
         )

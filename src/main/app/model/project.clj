@@ -91,32 +91,79 @@
 ;;           {:gov-review-week/exec-summary-color :green}) in))
 
 
-(pc/defresolver overall-exec-summary-color-resolver  [{:keys [db]} {:keys [project/id]}]
-  {::pc/input #{:project/id}
-   ::pc/output  [:gov-review-week/exec-summary-color :project/id]
-                                        ;::pc/transform pc/transform-batch-resolver
-   }
-  #_
-  {:gov-review-week/exec-summary-color :green})
 
 
+(pc/defresolver overall-exec-summary-color-resolver  [{:keys [db]} {:project/keys [id]}]  
+  {::pc/input  #{:project/id}
+   ::pc/output [:gov-review-week/exec-summary-color :project/id]}
+  (assoc (last (sort-by :gov-review-week/week
+                        (map first (d/q '[:find (pull ?gw [:gov-review-week/exec-summary-color :gov-review-week/week])
+                                          :in $ ?id
+                                          
+                                          :where
+                                          [?p :project/id ?id]
+                                          [?gw :gov-review-week/project ?p]
+                                          [?gw :gov-review-week/status :submitted]
+                                          
+                                          ] db  id)
+                             )))
+    :project/id id))
 
 
 
 (pc/defresolver client-relationship-color-resolver  [{:keys [db]} {:project/keys [id]}]  
   {::pc/input  #{:project/id}
-   ::pc/output [:gov-review-week/client-relationship-color]}
+   ::pc/output [:gov-review-week/client-relationship-color :project/id]}
   (assoc (last (sort-by :gov-review-week/week
-                  (map first (d/q '[:find (pull ?gw [:gov-review-week/client-relationship-color :gov-review-week/week])
-                                    :in $ ?id
-                                    
-                                    :where
-                                    [?p :project/id ?id]
-                                    [?gw :gov-review-week/project ?p]
-                                    [?gw :gov-review-week/status :submitted]
-                                    
-                                    ] db  id)
-                       )))
+                        (map first (d/q '[:find (pull ?gw [:gov-review-week/client-relationship-color :gov-review-week/week])
+                                          :in $ ?id
+                                          
+                                          :where
+                                          [?p :project/id ?id]
+                                          [?gw :gov-review-week/project ?p]
+                                          [?gw :gov-review-week/status :submitted]
+                                          
+                                          ] db  id)
+                             )))
+    :project/id id))
+
+
+(pc/defresolver scope-schedule-color-resolver  [{:keys [db]} {:project/keys [id]}]  
+  {::pc/input  #{:project/id}
+   ::pc/output [:gov-review-week/scope-schedule-color :project/id]}
+  (assoc (last (sort-by :gov-review-week/week
+                        (map first (d/q '[:find (pull ?gw [:gov-review-week/scope-schedule-color :gov-review-week/week])
+                                          :in $ ?id
+                                          
+                                          :where
+                                          [?p :project/id ?id]
+                                          [?gw :gov-review-week/project ?p]
+                                          [?gw :gov-review-week/status :submitted]
+                                          
+                                          ] db  id)
+                             )))
+    :project/id id))
+
+
+
+
+
+
+
+(pc/defresolver finance-color-resolver  [{:keys [db]} {:project/keys [id]}]  
+  {::pc/input  #{:project/id}
+   ::pc/output [:gov-review-week/finance-color :project/id]}
+  (assoc (last (sort-by :gov-review-week/week
+                        (map first (d/q '[:find (pull ?gw [:gov-review-week/finance-color :gov-review-week/week])
+                                          :in $ ?id
+                                          
+                                          :where
+                                          [?p :project/id ?id]
+                                          [?gw :gov-review-week/project ?p]
+                                          [?gw :gov-review-week/status :submitted]
+                                          
+                                          ] db  id)
+                             )))
     :project/id id))
 
 
@@ -557,12 +604,12 @@
           ]  db (api/uuid id))})
 
 
-#_(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project/id]}]
+(pc/defresolver project-lead-resolver [{:keys [connection db]} {:keys [project/id]}]
   {::pc/input  #{:project/id}
-   ::pc/output [{:project-info/project-lead [:resource/id :resource/name :resource/email-address]}]}
-  (println "PROJECT INFO ID" (api/uuid id))
+   ::pc/output [{:project-info/project-lead [:resource/id]} :project/id]
+   }
   (let [r {:project-info/project-lead
-           (ffirst (d/q '[:find (pull ?r [:resource/name :resource/id] :resource/email-address)
+           (ffirst (d/q '[:find (pull ?r [:resource/id])
                           
                           :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
@@ -576,10 +623,10 @@
                           ]  db id))}
         ]
     
-    r))
+    (assoc r :project/id id)))
 
 
-(pc/defresolver project-lead-resolver [{:keys [connection db]} input]
+#_(pc/defresolver project-lead-resolver [{:keys [connection db]} input]
   {::pc/input  #{:project/id}
    ::pc/output [{:project-info/project-lead [:resource/id]}]
    ::pc/transform pc/transform-batch-resolver}
@@ -929,12 +976,16 @@
 (def resolvers  [alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  
                  all-projects-resolver made-up-resolver made-up-resolver2  #_alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver 
-                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver #_project-lead-resolver
+                 set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver 
                  set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week
                  submit-current-gov-review-week
-                  
+                 finance-color-resolver
+                 project-lead-resolver
                  client-relationship-color-resolver
-                 project-name-resolver
                  overall-exec-summary-color-resolver
+                 scope-schedule-color-resolver
+
+                 project-name-resolver
+                 
                  all-admin-projects
                  ])
