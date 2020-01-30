@@ -810,7 +810,9 @@
                   [:component/id :project-panel]
                   (fn []
                     #_(df/load! app [:project-info/id id] ProjectInfo)
-                    (merge/merge-component! app ProjectPanel  {:project-panel/current-project [:project/id (uuid current-project-id)] } )
+                    #_(merge/merge-component! app ProjectPanel  {:project-panel/current-project {:project/id (uuid current-project-id)} } )
+
+                    (df/load! app [:project/id (uuid current-project-id)] Project {:target [:component/id :project-panel :project-panel/current-project]})
                     (comp/transact! app [(set-current-project-id {:current-project-id current-project-id})])
                     #_(comp/transact! app [
 
@@ -832,9 +834,9 @@
 
 
     
-    (js/console.log "PROPS" current-project-id)
+    (js/console.log "PROPS" (comp/props this))
 
-    [(dom/h3 {} (:project/name current-project))
+    [(dom/h3 {:style {:color "#3281b9"}} (:project/name current-project))
      (ui-grid-column {:width 4} 
                      (ui-menu {:fluid true :vertical true :tabular true}
                               (ui-menu-item {:name "Info" :active (= active-item :info) :onClick (fn [e]
@@ -901,18 +903,26 @@
            :gov-review-week/client-relationship-color
            :gov-review-week/finance-color
            :gov-review-week/scope-schedule-color
-           ]
+           :project-info/status]
    :ident (fn [] [:admin-project/id id])})
 
 
-(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :as props}]
+(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales?] :as props}]
   {:query         [{:admin-projects/admin-projects  (comp/get-query AdminProject)}
                    {:admin-projects/router (comp/get-query ProjectPanelRouter)}
                    [::uism/asm-id ::session/session]
 
+                   :ui/in-progress?
+                   :ui/closed?
+                   :ui/sales?
+                   :ui/cancelled?
+
                    [df/marker-table :admin-projects]]
    
    :ident         (fn [] [:component/id :admin-projects])
+   :initial-state (fn [p] {:ui/in-progress? true :ui/cancelled? false :ui/closed? false :ui/sales? false})
+   :initLocalState (fn [this props]
+                     {:active-index -1})
    :will-enter (fn [app route-params]
                  (dr/route-deferred
                   [:component/id :admin-projects]
@@ -933,6 +943,13 @@
   (let [
 
         current-state (uism/get-active-state this ::session/session)
+        active-index (comp/get-state this :active-index)
+        handleClick (fn [e v]
+                      (let [active-index (comp/get-state this :active-index)
+                            index (.-index  v)
+                            new-index (if (= active-index index) -1 index)]
+                        (comp/update-state! this assoc  :active-index new-index)
+                        ))
         logged-in? (= :state/logged-in current-state)
         marker (get props [df/marker-table :admin-projects])]
     (js/console.log "MARKER" props)
@@ -943,45 +960,112 @@
 
         (ui-loader {:active true :inline :centered} )
         
-        (ui-container {:style {:width "60%"}}
-                      (dom/h3 {:style {:textAlign "center"}} "Projects" )
-                      
-                      (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true}
-                                (ui-table-header {}
-                                                 (ui-table-row {}
-                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Name")
-                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Lead")
-                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Overall")
-                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Client Relationship")
-                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Finance")
-                                                               (ui-table-header-cell {:style {:position "sticky" :top 0} } "Scope & Schedule")))
-                                (ui-table-body {}
-                                               (mapv (fn [p] (ui-table-row {:onClick (fn [e]
-                                                                                     
+        
+        [(ui-grid-column  {:width 3 :style {:color "#3281b9"}}
+                          (ui-accordion
+                             {:as Menu  :vertical true :style {:color "#3281b9"}}
+                             
+                             (ui-menu-item {} (ui-accordion-title
+                                               {:active (= active-index 1)
+                                                :content "Status"
+                                                :index 1
+                                                :onClick handleClick
+                                                :style {:color "#3281b9"}})
+                                           (ui-accordion-content {:active (= active-index 1)
+                                                                  :content (ui-form {}
+                                                                                    (ui-form-group {:grouped true}
+                                                                                                   (ui-form-field {}                                                                                                                   
+                                                                                                                  (dom/div :.ui.checkbox
+                                                                                                                           (dom/input   {
+                                                                                                                                         :type "Checkbox"
+                                                                                                                                         :checked  in-progress?
+                                        
+                                                                                                                                         :style {:padding "10px"}
+                                                                                                                                         
+                                                                                                                                         :onChange (fn [_ d]
+                                                                                                                                                     (m/toggle! this :ui/in-progress?))})
+                                                                                                                           (dom/label {:style {:color "#3281b9" }} "In Progress")))
+                                                                                                   (ui-form-field {}                                                                                                                   
+                                                                                                                  (dom/div :.ui.checkbox
+                                                                                                                           (dom/input   {
+                                                                                                                                         :type "Checkbox"
+                                                                                                                                         :checked sales?
+                                        
+                                                                                                                                         :style {:padding "10px"}
+                                                                                                                                         
+                                                                                                                                         :onChange (fn [_ d]
+                                                                                                                                                     (m/toggle! this :ui/sales?))})
+                                                                                                                           (dom/label {:style {:color "#3281b9" }} "Sales")))
+                                                                                                   (ui-form-field {}                                                                                                                   
+                                                                                                                  (dom/div :.ui.checkbox
+                                                                                                                           (dom/input   {
+                                                                                                                                         :type "Checkbox"
+                                                                                                                                         :checked closed?
+                                        
+                                                                                                                                         :style {:padding "10px"}
+                                                                                                                                         
+                                                                                                                                         :onChange (fn [_ d]
+                                                                                                                                                     (m/toggle! this :ui/closed?))})
+                                                                                                                           (dom/label {:style {:color "#3281b9" }} "Closed")))
+                                                                                                   (ui-form-field {}                                                                                                                   
+                                                                                                                  (dom/div :.ui.checkbox
+                                                                                                                           (dom/input   {
+                                                                                                                                         :type "Checkbox"
+                                                                                                                                         :checked cancelled?
+                                        
+                                                                                                                                         :style {:padding "10px"}
+                                                                                                                                         
+                                                                                                                                         :onChange (fn [_ d]
+                                                                                                                                                     (m/toggle! this :ui/cancelled?))})
+                                                                                                                           (dom/label {:style {:color "#3281b9" }} "Cancelled")))
+                                                                                                   ))}))
+                             ))
+         (ui-grid-column {:width 13}
+                         #_(dom/h3 {:style {:textAlign "center"}} "Projects" )
+                         (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true}
+                                   (ui-table-header {}
+                                                    (ui-table-row {}
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Name")
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Lead")
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Overall")
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Client Relationship")
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Finance")
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Scope & Schedule")))
+                                   (ui-table-body {}
+                                                  (mapv (fn [p] (ui-table-row {:onClick (fn [e]
+                                                                                          
 
-                                                                                      (dr/change-route this (dr/path-to ProjectPanel ProjectInfo {:project-info/id (:project/id p) :project-panel/current-project-id (:project/id p)}))
-                                                                                      
-                                                                                      ;(dr/change-route this (dr/path-to ProjectPanel {:id (:project/id p)} ))
+                                                                                          (dr/change-route this (dr/path-to ProjectPanel ProjectInfo {:project-info/id (:project/id p) :project-panel/current-project-id (:project/id p)}))
+                                                                                          
+                                        ;(dr/change-route this (dr/path-to ProjectPanel {:id (:project/id p)} ))
 
-                                                                                      
+                                                                                          
 
-                                                                                      )}
-                                                                          
-                                                                           (ui-table-cell {} (str (:project/name p)))
-                                                                           (ui-table-cell {} (let [project-lead (get-in p [:project-info/project-lead :resource/name])]
-                                                                                               (if (keyword? project-lead)
-                                                                                                 ""
-                                                                                                 project-lead)))
-                                                                           
+                                                                                          )}
+                                                                              
+                                                                              (ui-table-cell {} (str (:project/name p)))
+                                                                              (ui-table-cell {} (let [project-lead (get-in p [:project-info/project-lead :resource/name])]
+                                                                                                  (if (keyword? project-lead)
+                                                                                                    ""
+                                                                                                    project-lead)))
+                                                                              
 
-                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
-                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/client-relationship-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
-                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/finance-color p) :empty true :key (:gov-review-week/finance-color p)}))
-                                                                           (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/scope-schedule-color p) :empty true :key (:gov-review-week/scope-schedule-color p)}))
+                                                                              (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                              (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/client-relationship-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
+                                                                              (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/finance-color p) :empty true :key (:gov-review-week/finance-color p)}))
+                                                                              (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/scope-schedule-color p) :empty true :key (:gov-review-week/scope-schedule-color p)}))
 
-                                                                           
-                                                                           )) admin-projects)))
-                      )
+                                                                              
+                                                                              )) (filter (if (or in-progress? sales? closed? cancelled?)
+                                                                                           (fn [p] (some identity ((juxt (cond-> p in-progress?
+                                                                                                                                 #(= (:project-info/status %) :in-progress)
+                                                                                                                                 sales?
+                                                                                                                                 #(= (:project-info/status %) :sales)
+                                                                                                                                 closed?
+                                                                                                                                 #(= (:project-info/status %) :closed)
+                                                                                                                                 cancelled?
+                                                                                                                                 #(= (:project-info/status %) :cancelled))) p)))
+                                                                                           identity) admin-projects)))))]
         )
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))))

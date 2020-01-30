@@ -814,12 +814,21 @@
            ] (d/db conn) id)})
 
 
+(pc/defresolver project-madeup [env {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:group/madeup [:a :b]]}
+  {:group/madeup {:a 1 :b 2}})
+
+(pc/defresolver a [env {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:a]}
+  {:a 1})
 
 
-
-
-
-
+(pc/defresolver b [env {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:b]}
+  {:b 2})
 
 (pc/defresolver all-projects-resolver [env _]
   {::pc/output [{:all-projects [:project/id :project/name :project/start-date :project/modified-date]}]}
@@ -847,6 +856,8 @@
                                         ;[?gw :gov-review-week/exec-summary-color ?c]
                                         ;[?gw :gov-review-week/project ?p]
                          [?p :project/id ?pi]
+                         
+                         
                          
                          ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))))}))
 
@@ -975,7 +986,7 @@
 
 (def resolvers  [alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  
-                 all-projects-resolver made-up-resolver made-up-resolver2  #_alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver 
+                 all-projects-resolver made-up-resolver made-up-resolver2  alias-project-id start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver 
                  set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver 
                  set-project-phase project-phase-resolver set-project-entity project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week
                  submit-current-gov-review-week
@@ -984,8 +995,9 @@
                  client-relationship-color-resolver
                  overall-exec-summary-color-resolver
                  scope-schedule-color-resolver
-
+                 project-madeup
                  project-name-resolver
                  
                  all-admin-projects
+                 a b
                  ])

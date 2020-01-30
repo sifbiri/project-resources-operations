@@ -1479,6 +1479,7 @@
 
 (def ui-team-checkbox (comp/factory TeamCheckbox))
 
+;; TODO rename WorkPlan to ResourcePlan
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
                        :keys [ui/dates ui/loading ui/show-more? workplan/teams]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
@@ -1699,19 +1700,20 @@
                                              :height "800px"}}
                                     
                                     #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
-                                    (ui-table {:style {:fontSize "90%"
+                                    (ui-table {:style {:fontSize "85%"
                                                        :position "relative"
+                                                       :compact true
+                                                       :selectable true
                                                        
-                                                       
-                                                       } :celled true :striped true}
+                                                       } :celled true :striped true :color :blue    }
                                               (ui-table-header
                                                {:fullWidth true :style {:position "sticky" :top 0}}
                                                (ui-table-row
                                                 {:style {:backgroundColor "red"}}
 
-                                                (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
+                                                (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
 
-                                                (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" :backgroundColor "#3281b9" :color "#ffffff"
+                                                (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
                                                                                      :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
                                                 ))
                                               (ui-table-body {} (map ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
@@ -1764,7 +1766,7 @@
                            (ui-menu {:style {:width "100%"} :stackable true :size "tiny" :floated true}
                                     (ui-menu-item {}
                                                   (dom/img {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} ))
-                                    (ui-menu-item {:name "WorkPlan" :active (= :workplan current-tab) :onClick (fn [event]
+                                    (ui-menu-item {:name "Resource Plan" :active (= :workplan current-tab) :onClick (fn [event]
                                                                                                                  (dr/change-route this (dr/path-to  WorkPlan)))} )
 
 

@@ -212,16 +212,14 @@
                                                                                      
                                                                                      ))
                                                        )
-                                              (ui-table {:style {:fontSize "90%"
+                                              (ui-table {:style {:fontSize "85%"
                                                                  :position "relative"
+                                                                 :compact true
+                                                                 :selectable true
                                                                  
-                                                                 
-                                                                 }
-                                                         :celled true
-                                                         :striped true
-                                                         :selectable true}
+                                                                 } :celled true :striped true :color :blue    }
                                                         (ui-table-header {}
-                                                                         (ui-table-row {} (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) [ "Name" "Action"])))
+                                                                         (ui-table-row {} (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) [ "Name" "Action"])))
                                                         (ui-table-body {}
                                                                        (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})]))} "Delete")) ) resources)
                                                                        )
@@ -266,22 +264,18 @@
                    
 
                    
-                   (ui-table {:style {:fontSize "90%"
-                                      :position "relative"
-                                      
-                                      
-                                      }
-                              :celled true
-                              :striped true
-                              :selectable true}
+                   (ui-table {:style {:fontSize "85%"
+                                                       :position "relative"
+                                                       :compact true
+                                                       :selectable true
+                                                       
+                                                       } :celled true :striped true :color :blue    }
                              (ui-table-header
                               {:fullWidth true :style {:position "sticky" :top 0}}
                               (ui-table-row
                                {:style {:backgroundColor "red"}}
 
-                               (map #(ui-table-header-cell {:style {:backgroundColor "#3281b9" :color "#ffffff" :position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Action"])
-
-                               
+                               (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Action"])
                                ))
                              
                              (ui-table-body {}
