@@ -801,17 +801,17 @@
 
 (pc/defresolver project-name-resolver [env {:keys [project/id]}]
   {::pc/input #{:project/id}
-   ::pc/output [:project/name]}
-  {:project/name
-   (d/q  '[:find  ?pn .
-           :in $ ?id
-           :where
-           
-           [?p :project/id ?id]
-           [?p :project/name ?pn]
-           
-           
-           ] (d/db conn) id)})
+   ::pc/output [:project/name :project/id]}
+  (first (d/q  '[:find  ?pn ?pid
+                 :keys project/name project/id
+                 :in $ ?id
+                 :where
+                 
+                 [?p :project/id ?id]
+                 [?p :project/name ?pn]
+                 
+                 
+                 ] (d/db conn) id)))
 
 
 (pc/defresolver project-madeup [env {:keys [project/id]}]
