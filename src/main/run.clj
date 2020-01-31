@@ -42,7 +42,7 @@
            ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
 
   (println "seed projects...............")
-  @(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
+  @(d/transact (d/connect "datomic:dev://localhost:4334/one2")  (get-all-projects))
 
   (println "Done....................")
   )

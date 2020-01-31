@@ -26,7 +26,7 @@ is a ref to a task/name for example...
 ** add color code
 ** [x] implement the dropdown componenet
 ** [x] merge td of resource with project & assignment {colspan 3}
-** [x]  merge td  project & assignment {colspan 2}
+** [x] merge td  project & assignment {colspan 2}
 ** [x] merge td resource & project  for assignment lines
 *** apply color for empty cells  (3 first colomns)
 ** [x] reduire font size du tableau

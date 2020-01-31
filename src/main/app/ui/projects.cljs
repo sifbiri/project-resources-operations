@@ -36,6 +36,7 @@
                                         ;["react-calendar-timeline" :as TimeLine]
    ["semantic-ui-calendar-react" :as SemanticUICalendar]
    ["react-timeline-9000" :as ReactTimeLine]
+   ["react-google-charts" :as ReactGoogleCharts]
    [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button tr td table thead th tbody tfoot]]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    
@@ -204,9 +205,42 @@
   (dom/p {} "Welcome :)"))
 
 (def ui-test-c (comp/factory TestC ))
+
 (defn test-c-func [props]
   [(dom/p {} "paragrah")
    (ui-test-c {})])
+
+
+(def ui-chart (interop/react-factory ReactGoogleCharts/Chart))
+
+
+(defsc TimeLine [this {:keys [project/id] :as props}]
+  {:query [:project/id]
+   
+   :route-segment   ["timeline"]
+   :ident   (fn [] [:component/id :timeline])
+   ;:initial-state {:project/id 1 }
+   #_#_:will-enter (fn [app {:keys [project-info/id] :as params}]
+                 (js/console.log "params " params)
+                 (dr/route-deferred
+                  [:project-info/id (uuid id)]
+                  (fn []
+                    (df/load! app [:project-info/id (uuid id)] ProjectInfo)
+                    (comp/transact! app [(dr/target-ready {:target [:project-info/id (uuid id)]})]))))}
+
+  ;(js/console.log "props" props)
+  (let [options (get props :resource/options2)]
+    #_(js/console.log "PPPPPPP" props)
+    (ui-chart {:chartType "Timeline" :data [[{:type :string :id :president}
+                                             {:type :date :id :start}
+                                             {:type :date :id :end}]
+                                            ["Trump?" (js/Date. 1789 3 30) (js/Date. 1797 2 4 )]]})
+    ))
+
+
+#_(defsc TimeLine [this props]
+  {:route-segment ["timeline"]}
+  (dom/p {} "TimeLine"))
 
 
 (defn ui-project-governance-review [props]
@@ -767,7 +801,7 @@
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview]}
+  {:router-targets [ProjectInfo GovReview TimeLine]}
   (case current-state
     :pending (dom/div "Loading...")
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -862,7 +896,8 @@
                                                                                                                        (comp/update-state! this assoc :active-item :action-list )
                                                                                                                        )} )
                               (ui-menu-item {:name "TimeLine" :active (= active-item :timeline) :onClick (fn []
-                                                                                                                    (comp/update-state! this assoc :active-item :timeline )
+                                                                                                           (comp/update-state! this assoc :active-item :timeline )
+                                                                                                           (dr/change-route this (dr/path-to  TimeLine { } ))
                                                                                                                        )} )))
 
      (ui-grid-column {:width 12} 
@@ -873,7 +908,11 @@
 
     )
    
-    )
+  )
+
+
+
+
 
 
 

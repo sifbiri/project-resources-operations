@@ -284,7 +284,7 @@
                                                                (ui-table-header-cell {:colSpan 5} (ui-button {:basic true :onClick
                                                                                                               (fn [e]
                                                                                                                 (merge/merge-component! this Team
-                                                                                                                                        {:db/id (tempid/tempid) :team/name "" :team/resources []}
+                                                                                                                                       {:db/id (tempid/tempid) :team/name "" :team/resources []}
                                                                                                                                         :append [:component/id :admin-teams :teams/teams]
                                         ;:append [:component/id :workplan :workplan/team-checkboxes]
                                                                                                                                         )

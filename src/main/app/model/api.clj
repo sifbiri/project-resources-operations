@@ -3,7 +3,7 @@
                                         ; [taoensso.timbre :as log]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [app.model.project-model :as project]
-   ;[app.server-components.pathom :as pathom]
+                                        ;[app.server-components.pathom :as pathom]
    [clojure.set :as s]
    [clojure.xml :as xml]
    [clojure.zip :as zip]
@@ -16,11 +16,11 @@
                                         ;[clojure.data.generators :as gen]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   ;[app.model.database :as db :refer [conn]]
-   ;[clj-time.core :as t]
+                                        ;[app.model.database :as db :refer [conn]]
+                                        ;[clj-time.core :as t]
    [tick.alpha.api :as t]
    [app.at-at :as at-at]
-   ;[app.model.project :as p]
+                                        ;[app.model.project :as p]
    [clojure.core :refer :all])
   (:import datomic.Util))
 
@@ -95,7 +95,17 @@
 
 (def assignment-phased-keys
   '(:task/name
+    
     :task/is-active
+
+    :task/end-date
+    :task/start-date
+
+    :parent/task-id
+    :parent/task-name
+
+    :task/is-root?
+    
     :resource/id
     :assignment/modified-date
     :assignment/id
@@ -168,7 +178,7 @@
   [id]
   (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
         val  (d/entity (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id  id])]
-    (println "resource with id " val)
+    
     (if (number? (:db/id id)) id (remove-nils resource-server))))
 
 
@@ -194,6 +204,8 @@
        (keyword (clojure.string/replace-first (name x) #"-" "/")) )
      response)
 
+    
+
     (map #(select-keys % assignment-phased-keys) response)
 
     (map
@@ -212,6 +224,22 @@
                         (clojure.instant/read-instant-date %))))
      response)
 
+    (map
+     (fn [x] (update x :task/start-date
+                     #(when-not (nil? %)
+                        (clojure.instant/read-instant-date %))))
+     response
+
+     )
+
+    (map
+     (fn [x] (update x :task/end-date
+                     #(when-not (nil? %)
+                        (clojure.instant/read-instant-date %))))
+     response
+
+     )
+
     (map #(s/rename-keys % {:time/by-day :assignment/by-day}) response)
 
     (map (fn [x] (update x :task/id #(uuid %))) response)
@@ -222,14 +250,26 @@
     (map (fn [x] (let [task-name (:task/name x)
                        task-id (:task/id x)
                        task-is-active (:task/is-active x )
+                       task-start-date (:task/start-date x)
+
+                       task-end-date (:task/end-date x)
+                       task-is-root (= (:parent/task-id x) (:task/id x))
+                       parent-task [:task/id (uuid (:parent/task-id x))]
+
+                       parent-task-name (:parent/task-name x)
+
+                       task-project [:project/id (uuid (:project/id x))]
+
+
+                       
                        resource (get-resource (:resource/id x))
                        
-                        ]
+                       
+                       ]
                    
-                   (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id)
-                                  :assignment/task (remove-nils {:task/name task-name
-                                                                 :task/id task-id
-                                                                 :task/is-active task-is-active})
+                   
+                   (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
+                                  :assignment/task {:task/id task-id}
                                   :assignment/resource resource)))) response)
     ))
 
@@ -268,7 +308,85 @@
 
 (def selected-project-names #{"Louboutin US" "simple" "Desjardins - Appro360"})
 
+(def task-props [:task/name :task/is-active :task/is-root? :task/parent-task :task/parent-task-name :task/project :task/is-root? :task/start-date :task/end-date])
 
+
+
+(defn tasks-for-project
+  [id]
+  (as-> (-> (client/get
+             (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/Projects(guid'"  (str id)  "')/Tasks")
+             
+             (project/prepare-request-options))
+            :body
+            (json/read-str :key-fn csk/->kebab-case-keyword)
+            :value
+            ;; just to have one.
+            ;; first
+            
+            ) response
+
+    (cske/transform-keys
+     (fn [x]
+       (keyword (clojure.string/replace-first (name x) #"-" "/")) )
+     response)
+
+    (map
+     (fn [x] (update x :task/start-date
+                     #(when-not (nil? %)
+                        (clojure.instant/read-instant-date %))))
+     response
+
+     )
+
+    (map
+     (fn [x] (update x :task/finish-date
+                     #(when-not (nil? %)
+                        (clojure.instant/read-instant-date %))))
+     response
+
+     )
+    
+
+    (map (fn [x] (update x :task/id #(uuid %))) response)
+
+    (map (fn [x]
+           (let [task-name (:task/name x)
+                 task-id (:task/id x)
+                 task-is-active (:task/is-active x )
+                 task-start-date (:task/start-date x)
+
+                 task-end-date (:task/finish-date x)
+                 task-is-root (= (str (:parent/task-id x)) (str (:task/id x)))
+                 ;parent-task (if (= (str (:parent/task-id x)) (str (:task/id x))) nil [:task/id (uuid (:parent/task-id x))])
+
+                 parent-task-name (:parent/task-name x)
+                 parent-task-id (uuid (:parent/task-id x))
+                 
+                 task-project [:project/id (uuid (:project/id x))]]
+             
+             
+             (remove-nils (assoc
+                  (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
+                :task/name task-name
+                :task/is-active task-is-active
+                :task/is-root? task-is-root
+
+                :task/parent-task-id parent-task-id
+                
+                :task/parent-task-name parent-task-name
+                                        ;:task/project task-project
+                :task/is-root? task-is-root
+                :task/start-date task-start-date
+                :task/end-date task-end-date
+                ))))
+         response)
+
+    (map #(select-keys % task-props) response)
+    response))
+
+
+                                        ;tasks-for-project
 
 
 
@@ -294,9 +412,9 @@
 
         splited-response
         (cske/transform-keys
-                          (fn [x]
-                            (keyword (clojure.string/replace-first (name x) #"-" "/")) )
-                          keyword-response)
+         (fn [x]
+           (keyword (clojure.string/replace-first (name x) #"-" "/")) )
+         keyword-response)
 
         
         result
@@ -351,10 +469,12 @@
          (fn [x] (let
                      [assignments (assignement-phased-project-id (str (:project/id x)))]
 
-                   (remove-nils (assoc x :project/assignments (mapv (fn [x] (dissoc x :project/name))  assignments)))))
+                   (remove-nils (assoc x
+                                  :project/tasks (tasks-for-project (str (:project/id x)))
+                                  :project/assignments (mapv (fn [x] (dissoc x :project/name))  assignments)))))
          result8)
 
-                ]
+        ]
 
     result9))
 
@@ -364,67 +484,22 @@
 (def selected-projects (filter (fn [x] (selected-project-names (:project/name x)))  all-projects))
 
 
-(defn get-projects
-  [name]
-  (let [response (-> (client/get "https://flu.sharepoint.com/site"
-                                 (project/prepare-request-options))
-                     :body
-                     (json/read-str :key-fn keyword)
-                     :value)
-        all-projects (map #(select-keys % [:Name :Id]) response)
-        all-projects-renamed (mapv #(s/rename-keys % {:Name :project/name :Id :project/id}) all-projects)
 
-        keyword-response (cske/transform-keys csk/->kebab-case-keyword response)
-        splited-response (cske/transform-keys
-                          (fn [x]
-                            (keyword (clojure.string/replace-first (name x) #"-" "/")) )
-                          keyword-response)
-        result (map #(select-keys % project-keys) splited-response)
-        result2 (map (fn [x] (update x :project/id #(uuid %)))result)
-        result3 (map
-                 (fn [x] (update x :project/start-date #(when-not (nil? %)
-                                                          (clojure.instant/read-instant-date %))))
-                 result2)
-        result4 (map
-                 (fn [x] (update x :project/finish-date #(when-not (nil? %)
-                                                           (clojure.instant/read-instant-date %))))
-                 result3)
-        result5 (map
-                 (fn [x] (update x :project/work #(when-not (nil? %)
-                                                    (clojure.edn/read-string %))))
-                 result4)
-        result6
-        (map
-         (fn [x] (update x :project/created-date #(when-not (nil? %)
-
-                                                    (clojure.instant/read-instant-date %))))
-         result5)
-
-        ;; adding assignement to project
-        result7
-        (map
-         (fn [x] (let
-                     [assignments (assignement-phased-project-id (str (:project/id x)))]
-
-                   (remove-nils (assoc x :project/assignments (mapv (fn [x] (dissoc x :project/name))  assignments)))))
-         result6)]
-    
-    result7))
 
 
 
 
 #_(defn get-project3
-  [name]
-  (cske/transform-keys
-   (fn [x]
-     (keyword (clojure.string/replace-first (name x) #"-" "/")) )
-   (get-project2 name)))
+    [name]
+    (cske/transform-keys
+     (fn [x]
+       (keyword (clojure.string/replace-first (name x) #"-" "/")) )
+     (get-project2 name)))
 
 
 
 
-;(def simple-project (filter #(= (:project/name %) "simple")(get-all-projects)))
+                                        ;(def simple-project (filter #(= (:project/name %) "simple")(get-all-projects)))
 
 
 
@@ -432,17 +507,7 @@
 
 
 
-(defn tasks-for-project [project-id]
-  (let [url (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectServer/Projects('" project-id "')/Tasks")
-        response (-> (client/get url
-                                 (project/prepare-request-options))
-                     :body
-                     (json/read-str :key-fn keyword)
-                     :value)
 
-        all-tasks (map #(select-keys % [:Name :Id]) response)
-        all-tasks-renamed (mapv #(s/rename-keys % {:Name :task/name :Id :task/id}) all-tasks)]
-    all-tasks-renamed))
 
 
 
@@ -487,7 +552,7 @@
 
 ;; To repeat
 
-;(def conn (scratch-conn))
+                                        ;(def conn (scratch-conn))
                                         ;(transact-all  conn2 "resources/edn/schema.edn")
 
 
@@ -497,41 +562,41 @@
 
 
 #_(d/q '[:find ?day ?a ?pn ?n ?w
-       :keys day id project task work
-       :where
-       [?a :assignment/by-day ?day]
-       [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
-       [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
-       [?a :assignment/task ?t]
-       [?t :task/name ?n]
-       [?pr :project/assignments ?a]
-       [?pr :project/name ?pn]
-       [?a :assignment/resource ?r]
-       [?r :resource/name "Newsha Neishaboory"]
-       [?a :assignment/work ?w]
-       ] (d/db conn2))
+         :keys day id project task work
+         :where
+         [?a :assignment/by-day ?day]
+         [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
+         [(.before ?day #inst "2019-04-01T00:00:00.000-00:00")]
+         [?a :assignment/task ?t]
+         [?t :task/name ?n]
+         [?pr :project/assignments ?a]
+         [?pr :project/name ?pn]
+         [?a :assignment/resource ?r]
+         [?r :resource/name "Newsha Neishaboory"]
+         [?a :assignment/work ?w]
+         ] (d/db conn2))
 
 
 
 
 #_(d/q '
- [:find ?day ?task-name ?work ?project
-  :where
-  [?resource :resource/name "Newsha Neishaboory"]
-  [?assignment :assignment/by-day ?day]
-  [?assignment :assignment/task ?task]
-  [?task :task/name ?task-name]
-  [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
-  [(.before ?day #inst "2019-03-10T00:00:00.000-00:00")]
-  [?p :project/name ?project]
-  [?assignment :assignment/work ?work]
-  ])
+   [:find ?day ?task-name ?work ?project
+    :where
+    [?resource :resource/name "Newsha Neishaboory"]
+    [?assignment :assignment/by-day ?day]
+    [?assignment :assignment/task ?task]
+    [?task :task/name ?task-name]
+    [(.after ?day #inst "2019-03-08T00:00:00.000-00:00")]
+    [(.before ?day #inst "2019-03-10T00:00:00.000-00:00")]
+    [?p :project/name ?project]
+    [?assignment :assignment/work ?work]
+    ])
 
 #_(def r (reduce (fn [s a]
-                 (if-not (contains? (set (map :assignment/id s))
-                                    (:assignment/id a))
-                   (conj s a))
-                 s) #{} (:project/assignments one-pr)))
+                   (if-not (contains? (set (map :assignment/id s))
+                                      (:assignment/id a))
+                     (conj s a))
+                   s) #{} (:project/assignments one-pr)))
 
 
 (defn find-in-grouped-by [m key]
@@ -707,3 +772,28 @@
   ;;    }
   ;;   {:gov-review-week/client-relationship-color :red})
   )
+(comment
+ (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
+                                  :assignment/task (let [db-id (d/q '[:find ?p .
+                                                                      :in $ ?id
+                                                                      
+                                                                      :where
+                                                                      [?p :task/id ?id]
+                                                                      
+                                                                      
+                                                                      ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) (uuid task-id))]
+                                                     (if db-id db-id {:task/id task-id}))
+                                  :assignment/resource resource)))
+
+
+
+(d/q '[:find ?status ?id
+       :keys project-info/status project/id
+       :in $ ?id
+                                        ;:keys resource/id resource/name resource/email-address
+       :where
+       [?p :project-info/status ?status]
+       [?p :project-info/id ?id]
+       ]  (d/db (d/connect "datomic:dev://localhost:4334/one2")) (uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"))
+
+

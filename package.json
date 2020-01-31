@@ -19,6 +19,7 @@
         "react-dropdown-select": "^3.8.1",
         "react-flag-kit": "^0.3.1",
         "react-flags": "^0.1.18",
+        "react-google-charts": "^3.0.15",
         "react-grid-layout": "^0.16.6",
         "react-icons": "^2.2.7",
         "react-number-format": "^4.3.1",

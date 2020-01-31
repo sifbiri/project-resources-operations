@@ -189,17 +189,17 @@
 
 
 
-(pc/defresolver project-status-resolver [{:keys [connection db]} {:keys [project-info/id]}]
-  {::pc/input  #{:project-info/id}
-   ::pc/output [:project-info/status]}
-  {:project-info/status
-   (d/q '[:find ?status .;?rn ?re
+(pc/defresolver project-status-resolver [{:keys [connection db]} {:keys [project/id]}]
+  {::pc/input  #{:project/id}
+   ::pc/output [:project-info/status :project/id]}
+  (first (d/q '[:find ?status ?id
+          :keys project-info/status project/id
           :in $ ?id
                                         ;:keys resource/id resource/name resource/email-address
           :where
           [?p :project-info/status ?status]
           [?p :project-info/id ?id]
-          ]  db (api/uuid id))})
+          ]  db (api/uuid id))))
 
 (pc/defmutation set-project-status [{:keys [db connection]} {:keys [project-info/id status]}]
   {::pc/sym`set-project-status
