@@ -939,9 +939,9 @@
 (defsc AdminProject [this {:keys [project/id]}]
   {:query [:project/id :project/name {:project-info/project-lead [:resource/id :resource/name]} 
            :gov-review-week/exec-summary-color
-           :gov-review-week/client-relationship-color
+          :gov-review-week/client-relationship-color
            :gov-review-week/finance-color
-           :gov-review-week/scope-schedule-color
+          :gov-review-week/scope-schedule-color
            :project-info/status]
    :ident (fn [] [:admin-project/id id])})
 
