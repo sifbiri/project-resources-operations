@@ -822,5 +822,6 @@
   (println "Done....................")
   )
 
+(def my-pool (at-at/mk-pool))
 
 (at-at/every (t/millis (t/new-duration 120 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 120 :minutes)))
