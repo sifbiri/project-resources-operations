@@ -256,7 +256,7 @@
 
                        task-end-date (:task/end-date x)
                        task-is-root (= (:parent/task-id x) (:task/id x))
-                       parent-task [:task/id (uuid (:parent/task-id x))]
+                       parent-task-id (uuid (:parent/task-id x))
 
                        parent-task-name (:parent/task-name x)
 
@@ -271,7 +271,15 @@
                    
                    
                    (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
-                                  :assignment/task {:task/id task-id}
+                                  :assignment/task (let [id (d/q '[:find ?e .
+                                                                   :in $ ?id
+                                                                   :where
+                                                                   [?e :task/id ?id]
+
+                                                                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) (uuid task-id))]
+                                                     
+                                                     {:task/name task-name :task/id (uuid task-id) ;:db/id (or id "new")
+                                                      })
                                   :assignment/resource resource)))) response)
     ))
 
@@ -310,7 +318,7 @@
 
 (def selected-project-names #{"Louboutin US" "simple" "Desjardins - Appro360"})
 
-(def task-props [:task/name :task/is-active :task/is-root? :task/parent-task :task/parent-task-name :task/project :task/is-root? :task/start-date :task/end-date])
+(def task-props [:task/name :task/is-active :task/is-root?  :task/parent-task-name :task/parent-task-id :task/is-root? :task/start-date :task/end-date :task/id])
 
 
 
@@ -365,26 +373,54 @@
                  parent-task-name (:parent/task-name x)
                  parent-task-id (uuid (:parent/task-id x))
                  
-                 task-project [:project/id (uuid (:project/id x))]]
-             
-             
-             (remove-nils (assoc
-                  (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
-                :task/name task-name
-                :task/is-active task-is-active
-                :task/is-root? task-is-root
+                 task-project [:project/id (uuid (:project/id x))]
+                 id (d/q '[:find ?e .
+                           :in $ ?tid
+                           :where
+                           [?e :task/id ?tid]
 
-                :task/parent-task-id parent-task-id
-                
-                :task/parent-task-name parent-task-name
+                           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) task-id)]
+
+
+             (println "ID 2 " (remove-nils
+                               (hash-map
+                                
+                                :task/name task-name
+                                :task/id  task-id
+                                
+                                :task/is-active task-is-active
+
+                                
+                                        ;:db/id (or id "new")
+                                :task/parent-task-id parent-task-id
+                                :task/parent-task-name parent-task-name
+                                
+                                        ;:task/parent-task-name parent-task-name
                                         ;:task/project task-project
-                :task/is-root? task-is-root
-                :task/start-date task-start-date
-                :task/end-date task-end-date
-                ))))
+                                :task/is-root? task-is-root
+                                :task/start-date task-start-date
+                                :task/end-date task-end-date)))
+             (remove-nils
+              (hash-map
+               
+               :task/name task-name
+               :task/id  task-id
+               :task/id2  #uuid "94450ca2-46cc-11ea-b77f-2e728ce88125"
+               :task/is-active task-is-active
+
+               
+                                        ;:db/id (or id "new")
+               :task/parent-task-id parent-task-id
+               :task/parent-task-name parent-task-name
+               
+                                        ;:task/parent-task-name parent-task-name
+                                        ;:task/project task-project
+               :task/is-root? task-is-root
+               :task/start-date task-start-date
+               :task/end-date task-end-date))))
          response)
 
-    (map #(select-keys % task-props) response)
+    ;(map #(select-keys % task-props) response)
     response))
 
 
@@ -824,4 +860,7 @@
 
 (def my-pool (at-at/mk-pool))
 
-(at-at/every (t/millis (t/new-duration 120 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 120 :minutes)))
+(def schedule (at-at/every (t/millis (t/new-duration 120 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 120 :minutes))))
+;(at-at/stop schedule)
+
+
