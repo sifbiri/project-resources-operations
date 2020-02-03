@@ -209,6 +209,7 @@
 (pc/defresolver finance-color-resolver  [{:keys [db]} {:keys [project-info/id]}]  
   {::pc/input  #{:project-info/id}
    ::pc/output [:gov-review-week/finance-color :project-info/id]
+   
    }
   (last (sort-by :gov-review-week/week
                  (map first (d/q '[:find (pull ?gw [:gov-review-week/finance-color :gov-review-week/week])
@@ -228,6 +229,7 @@
 (pc/defresolver project-name-resolver [{:keys [db]} {:keys [project-info/id]}]
   {::pc/input #{:project-info/id}
    ::pc/output [:project/name :project-info/id]
+   
    }
   (first (d/q  '[:find  ?pn ?id
                   :keys project/name project-info/id
@@ -244,6 +246,7 @@
 
 (pc/defresolver project-lead-resolver [{:keys [ db]} {:project-info/keys [id]}]
   {::pc/input  #{:project-info/id}
+   
    ::pc/output [{:project-info/project-lead [:resource/id]} :project-info/id]
    
    }
@@ -933,10 +936,10 @@
 
 
 (pc/defresolver all-admin-projects [{:keys [connection db]} _]
-  {::pc/output [{:all-admin-projects [:project-info/id]}]}
+  {::pc/output [{:all-admin-projects [:project/id]}]}
   {:all-admin-projects
    (d/q  '[:find ?pi  
-           :keys project-info/id
+           :keys project/id
            :where
                                         ;[?gw :gov-review-week/exec-summary-color ?c]
                                         ;[?gw :gov-review-week/project ?p]
