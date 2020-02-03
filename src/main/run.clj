@@ -1,26 +1,26 @@
-;; ;; (ns run
-;; ;;   (:require ;[com.wsscode.pathom.connect :as pc]
-;; ;;                                         ; [taoensso.timbre :as log]
-   
-   
-   
-   
-   
-   
-;; ;;                                         ;[datomic.client.api :as d]
-;; ;;    [datomic.api :as d]
-;; ;;    [app.model.api :as api]
-   
-   
-   
-;; ;;                                         ;[clojure.data.generators :as gen]
-   
-;; ;;    [clojure.pprint :as pp]
-;; ;;                                         ;[app.model.database :as db :refer [conn]]
-;; ;;    [overtone.at-at :as at-at]
-;; ;;    [clojure.core :refer :all]
-;; ;;    [tick.alpha.api :as t])
-;; ;;   )
+(ns run
+  (:require ;[com.wsscode.pathom.connect :as pc]
+                                        ; [taoensso.timbre :as log]
+
+
+
+
+
+
+                                        ;[datomic.client.api :as d]
+   [datomic.api :as d]
+   [app.model.api :as api]
+
+
+
+                                        ;[clojure.data.generators :as gen]
+
+   [clojure.pprint :as pp]
+                                        ;[app.model.database :as db :refer [conn]]
+   [overtone.at-at :as at-at]
+   [clojure.core :refer :all]
+   [tick.alpha.api :as t])
+  )
 
 
 
@@ -50,6 +50,10 @@
 
 
 (def my-pool (at-at/mk-pool))
+
+;(at-at/every (t/millis (t/new-duration 120 :minutes)) #(println "I am cool!") my-pool :initial-delay (t/millis (t/new-duration 120 :minutes)))
+
+
 ;; #_
 
 

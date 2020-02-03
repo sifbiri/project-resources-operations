@@ -5,6 +5,8 @@
    [app.model.project-model :as project]
                                         ;[app.server-components.pathom :as pathom]
    [clojure.set :as s]
+   [overtone.at-at :as at-at]
+   [tick.alpha.api :as t]
    [clojure.xml :as xml]
    [clojure.zip :as zip]
    [clojure.data.json :as json]
@@ -819,3 +821,6 @@
 
   (println "Done....................")
   )
+
+
+(at-at/every (t/millis (t/new-duration 120 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 120 :minutes)))
