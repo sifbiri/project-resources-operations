@@ -10,6 +10,13 @@
    [datomic.api :as d]))
 
 
+
+(pc/defresolver index-explorer [env _]
+  {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
+   ::pc/output [:com.wsscode.pathom.viz.index-explorer/index]}
+  {:com.wsscode.pathom.viz.index-explorer/index
+   (get env ::pc/indexes)})
+
 (def gov-review-week-keys  [:gov-review-week/week
                             :gov-review-week/status
                             :gov-review-week/exec-summary-text
@@ -111,8 +118,8 @@
                                           :in $ ?id
                                           
                                           :where
-                                          [?p :project/id ?id]
-                                          [?gw :gov-review-week/project ?p]
+                                          [?p :project-info/id ?id]
+                                          [?gw :gov-review-week/project-info ?p]
                                           [?gw :gov-review-week/status :submitted]
                                           
                                           ] db  id)
@@ -128,8 +135,8 @@
                                           :in $ ?id
                                           
                                           :where
-                                          [?p :project/id ?id]
-                                          [?gw :gov-review-week/project ?p]
+                                          [?p :project-info/id ?id]
+                                          [?gw :gov-review-week/project-info ?p]
                                           [?gw :gov-review-week/status :submitted]
                                           
                                           ] db  id)
@@ -182,16 +189,16 @@
    
    }
   (last (sort-by :gov-review-week/week
-                  (d/q '[:find ?color ?id
-                         :in $ ?id
-                         :keys gov-review-week/exec-summary-color project-info/id
-                         :where
-                         [?p :project/id ?id]
-                         [?gw :gov-review-week/project ?p]
-                         [?gw :gov-review-week/exec-summary-color ?color] 
-                         [?gw :gov-review-week/status :submitted]
-                         
-                         ] db (api/uuid id)))))
+                 (map first (d/q '[:find (pull ?gw [:gov-review-week/exec-summary-color :gov-review-week/week])
+                                    :in $ ?id
+                                    
+                                    :where
+                                    [?p :project-info/id ?id]
+                                    [?gw :gov-review-week/project-info ?p]
+                                    [?gw :gov-review-week/status :submitted]
+                                    
+                                    ] db  id)
+                       ))))
 
 
 
@@ -203,18 +210,17 @@
   {::pc/input  #{:project-info/id}
    ::pc/output [:gov-review-week/finance-color :project-info/id]
    }
-  (assoc (last (sort-by :gov-review-week/week
-                         (map first (d/q '[:find (pull ?gw [:gov-review-week/finance-color :gov-review-week/week])
-                                           :in $ ?id
-                                           
-                                           :where
-                                           [?p :project/id ?id]
-                                           [?gw :gov-review-week/project ?p]
-                                           [?gw :gov-review-week/status :submitted]
-                                           
-                                           ] db  id)
-                              )))
-    :project-info/id id))
+  (last (sort-by :gov-review-week/week
+                 (map first (d/q '[:find (pull ?gw [:gov-review-week/finance-color :gov-review-week/week])
+                                   :in $ ?id
+                                   
+                                   :where
+                                   [?p :project-info/id ?id]
+                                   [?gw :gov-review-week/project-info ?p]
+                                   [?gw :gov-review-week/status :submitted]
+                                   
+                                   ] db  id)
+                      ))))
 
 
 ;; :project/name
@@ -370,9 +376,9 @@
     {:entity (nil? entity)}))
 
 
-(pc/defmutation submit-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week resource-id project/id]}]
+(pc/defmutation submit-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week resource-id project-info/id]}]
   {::pc/sym `submit-current-gov-review-week
-   ::pc/params [:gov-review-week :resource-id :project/id]
+   ::pc/params [:gov-review-week :resource-id :project-info/id]
    ::pc/output [:gov-review-week/week
                 :gov-review-week/status
                 :gov-review-week/exec-summary-text
@@ -396,47 +402,51 @@
                    :in $ ?id ?week
                    :where
                    [?e :gov-review-week/week ?week]
-                   [?e :gov-review-week/project ?p]
-                   [?p :project/id ?id]
+                   [?e :gov-review-week/project-info ?p]
+                   [?p :project-info/id ?id]
                    ] db id week )
 
         pid (d/q '[:find ?e . 
                    :in $ ?id 
                    :where                            
-                   [?e :project/id ?id]
+                   [?e :project-info/id ?id]
                    ] db id )
         
         tx (cond-> gov-review-week
              true (assoc :db/id eid)
+             true (dissoc :gov-review-week/project)
+             true (assoc :gov-review-week/project-info [:project-info/id id])
              resource-id  (assoc :gov-review-week/submitted-by [:resource/id resource-id])
              true (assoc :gov-review-week/submitted-at now :gov-review-week/status :submitted))]
+
+    (println "TX" tx)
 
     
     @(d/transact connection
                  [tx])
     
-    #_(ffirst (d/q '[:find (pull ?e [:gov-review-week/week
-                                   :gov-review-week/status
-                                   :gov-review-week/exec-summary-text
-                                   :gov-review-week/exec-summary-color
+      ;; (ffirst (d/q '[:find (pull ?e [:gov-review-week/week
+      ;;                              :gov-review-week/status
+      ;;                              :gov-review-week/exec-summary-text
+      ;;                              :gov-review-week/exec-summary-color
                                    
-                                   :gov-review-week/client-relationship-text
-                                   :gov-review-week/client-relationship-color
-                                   :gov-review-week/finance-text
-                                   :gov-review-week/finance-color
-                                   :gov-review-week/scope-schedule-text
-                                   :gov-review-week/scope-schedule-color
-                                   {:gov-review-week/submitted-by
-                                    [:resource/id]}
-                                     :gov-review-week/submitted-at])  
-                   :in $ ?id ?week
-                   :where
-                   [?e :gov-review-week/week ?week]
-                   [?e :gov-review-week/project ?p]
-                   [?p :project/id ?id]
-                   ] db id week )
+      ;;                              :gov-review-week/client-relationship-text
+      ;;                              :gov-review-week/client-relationship-color
+      ;;                              :gov-review-week/finance-text
+      ;;                              :gov-review-week/finance-color
+      ;;                              :gov-review-week/scope-schedule-text
+      ;;                              :gov-review-week/scope-schedule-color
+      ;;                              {:gov-review-week/submitted-by
+      ;;                               [:resource/id]}
+      ;;                                :gov-review-week/submitted-at])  
+      ;;              :in $ ?id ?week
+      ;;              :where
+      ;;              [?e :gov-review-week/week ?week]
+      ;;              [?e :gov-review-week/project ?p]
+      ;;              [?p :project/id ?id]
+      ;;              ] db id week )
 
-              )
+      ;;         )
     (assoc tx :gov-review-week/submitted-by {:resource/id resource-id})))
 
 
@@ -446,9 +456,9 @@
 
 
 
-(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
+(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project-info/id]}]
   {::pc/sym `get-or-create-current-gov-review-week
-   ::pc/params [:gov-review-week/week :project/id]
+   ::pc/params [:gov-review-week/week :project-info/id]
    ::pc/output [:gov-review-week/week
                 :gov-review-week/status
                 :gov-review-week/exec-summary-text
@@ -478,8 +488,8 @@
                       :in $ ?id ?week
                       :where
                       [?e :gov-review-week/week ?week]
-                      [?e :gov-review-week/project ?p]
-                      [?p :project/id ?id]
+                      [?e :gov-review-week/project-info ?p]
+                      [?p :project-info/id ?id]
                       ] db id week)]
     
     (when (nil? entity)
@@ -487,7 +497,7 @@
 
             {:db/id "new"
              :gov-review-week/week week
-             :gov-review-week/project [:project/id id]
+             :gov-review-week/project-info [:project-info/id id]
              :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
 
              :gov-review-week/exec-summary-text ""
@@ -512,13 +522,9 @@
                             :gov-review-week/status
                             :gov-review-week/exec-summary-text
                             :gov-review-week/exec-summary-color
-                            {:gov-review-week/project
-                             [:project/id
-                              :project/name
-                              :project/start-date
-                              :project/last-published-date
-                              :project/modified-date
-                              :project/finish-date]}
+                            {:gov-review-week/project-info
+                             [:project-info/id
+                              ]}
                             :gov-review-week/client-relationship-text
                             :gov-review-week/client-relationship-color
                             :gov-review-week/finance-text
@@ -535,20 +541,20 @@
                    :in $ ?id ?week
                    :where
                    [?e :gov-review-week/week ?week]
-                   [?e :gov-review-week/project ?p]
-                   [?p :project/id ?id]
+                   [?e :gov-review-week/project-info ?p]
+                   [?p :project-info/id ?id]
                    ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week ))
     ))
 
 
-(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
+(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project-info/id]}]
   {::pc/sym `get-or-create-gov-review-week
-   ::pc/params [:gov-review-week/week :project/id]
+   ::pc/params [:gov-review-week/week :project-info/id]
    ::pc/output [:gov-review-week/week
                             :gov-review-week/status
                             :gov-review-week/exec-summary-text
                             :gov-review-week/exec-summary-color
-                            {:gov-review-week/project
+                            {:gov-review-week/project-info
                              [:project/id
                               :project/name
                               :project/start-date
@@ -573,8 +579,8 @@
                       :in $ ?id ?week
                       :where
                       [?e :gov-review-week/week ?week]
-                      [?e :gov-review-week/project ?p]
-                      [?p :project/id ?id]
+                      [?e :gov-review-week/project-info ?p]
+                      [?p :project-info/id ?id]
                       ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week)]
     
     (if (nil? entity)
@@ -582,7 +588,7 @@
 
             {:db/id "new"
              :gov-review-week/week week
-             :gov-review-week/project [:project/id id]
+             :gov-review-week/project-info [:project-info/id id]
              :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
 
              :gov-review-week/exec-summary-text ""
@@ -609,7 +615,7 @@
                                      :gov-review-week/status
                                      :gov-review-week/exec-summary-text
                                      :gov-review-week/exec-summary-color
-                                     {:gov-review-week/project
+                                     {:gov-review-week/project-info
                                       [:project/id
                                        :project/name
                                        :project/start-date
@@ -632,8 +638,8 @@
                      :in $ ?id ?week
                      :where
                      [?e :gov-review-week/week ?week]
-                     [?e :gov-review-week/project ?p]
-                     [?p :project/id ?id]
+                     [?e :gov-review-week/project-info ?p]
+                     [?p :project-info/id ?id]
                      ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week )))))
 
 
@@ -1076,7 +1082,11 @@
                  scope-schedule-color-resolver
                  project-madeup
                  project-name-resolver
-                 
+                 ;index-explorer
                  all-admin-projects
                  a b
                  ])
+
+
+
+

@@ -34,6 +34,7 @@
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [tick.alpha.api :as t]
    [com.fulcrologic.fulcro.dom.html-entities :as ent]
+   [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
    [com.fulcrologic.fulcro.dom.events :as evt]
    [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]

@@ -797,3 +797,25 @@
        ]  (d/db (d/connect "datomic:dev://localhost:4334/one2")) (uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"))
 
 
+(defn update-db []
+  (println "delete projects...........")
+  (d/transact
+   (d/connect "datomic:dev://localhost:4334/one2")
+
+   (mapv
+    (fn [id]
+
+      [:db/retractEntity id])
+
+    (d/q '[:find [?e ...]
+
+           :where
+           [?e :project/name ?n]
+
+           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))))
+
+  (println "seed projects...............")
+  @(d/transact (d/connect "datomic:dev://localhost:4334/one2")  (get-all-projects))
+
+  (println "Done....................")
+  )

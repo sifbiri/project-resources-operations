@@ -54,9 +54,18 @@
                       {::p/mutate  pc/mutate-async
                        ::p/env     {::p/reader               [p/map-reader pc/parallel-reader
                                                               pc/open-ident-reader p/env-placeholder-reader]
-                                    ::p/placeholder-prefixes #{">"}}
+                                    ::p/process-error
+                                    (fn [_ err]
+                                        ; print stack trace
+                                      (.printStackTrace err)
+
+                                        ; return error str
+                                      (p/error-str err))
+                                    
+                                    ::p/placeholder-prefixes #{">"}
+                                    ::p/thread-pool (pc/create-thread-pool (async/chan 200))}
                        ::p/plugins [(pc/connect-plugin {::pc/register all-resolvers})
-                                    (pcd/datomic-connect-plugin (assoc on-prem-config ::pcd/conn db-connection))
+                                    ;(pcd/datomic-connect-plugin (assoc on-prem-config ::pcd/conn db-connection))
                                     (p/env-wrap-plugin (fn [env]
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
                                                          ;; environment, like the server config, database connections, etc.

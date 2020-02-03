@@ -17,7 +17,7 @@
 
  {:db/id #db/id[:db.part/db]
 
-  :db/ident :gov-review-week/project
+  :db/ident :gov-review-week/project-info
 
   :db/valueType :db.type/ref
   

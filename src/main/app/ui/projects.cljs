@@ -231,10 +231,12 @@
   ;(js/console.log "props" props)
   (let [options (get props :resource/options2)]
     #_(js/console.log "PPPPPPP" props)
-    (ui-chart {:chartType "Timeline" :data [[{:type :string :id :president}
+    #_(ui-chart {:chartType "Timeline" :data [[{:type :string :id :te}
+                                             {:type :string :id :name}
                                              {:type :date :id :start}
                                              {:type :date :id :end}]
-                                            ["Trump?" (js/Date. 1789 3 30) (js/Date. 1797 2 4 )]]})
+                                            [1  "Trump?" (js/Date. 1789 3 30) (js/Date. 1797 2 4 )]
+                                            [2 "George Washington" (js/Date. 1790 3 30) (js/Date. 1795 2 4 )]]})
     ))
 
 
@@ -499,7 +501,7 @@
                     
                     (comp/transact! app [(project/get-or-create-current-gov-review-week {:gov-review-week/week (t/inst (round-to-first-day-of-week (-> (t/today)
                                                                                                                                                       (t/at (t/noon)))))
-                                                                                         :project/id (uuid (:gov-review/id params))})])
+                                                                                         :project-info/id (uuid (:gov-review/id params))})])
                     #_(df/load! app [:gov-review-week/week (round-to-first-day-of-week (-> (t/today)
                                                                                            (t/at (t/noon))))] GovReviewWeek)
                     
@@ -512,7 +514,7 @@
                         #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
                                                                      :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
                                                                      )
-                        (comp/transact! app [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project/id (uuid (:gov-review/id params))})])
+                        (comp/transact! app [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project-info/id (uuid (:gov-review/id params))})])
                         
                         (recur (rest weeks) (inc index) )))
 
@@ -615,7 +617,7 @@
                   ;; router here?
                  (js/console.log "CURRENT WEEK " current-week)
                  (ui-gov-review-week current-week)
-                 (ui-button  {:basic true :style {:alignSelf "flex-end" :position "relative" :left "380px" :marginTop "10px"} :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project/id id})]))} "Submit")
+                 (ui-button  {:basic true :style {:alignSelf "flex-end" :position "relative" :left "380px" :marginTop "10px"} :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit")
                  )))
 
 

@@ -2,6 +2,7 @@
   (:require
    [com.wsscode.pathom.connect :as pc]
    [app.model.database :refer [conn]]
+   [app.model.api :as api]
    [clojure.set :as set]
    
    [datomic.api :as d]))
@@ -12,19 +13,20 @@
 (pc/defresolver resource-resolver [{:keys [db]} {:resource/keys [id]}]
   {::pc/input  #{:resource/id}
    ::pc/output [:resource/name :resource/email-address]}
-  (first (d/q '[:find ?name ?ea ?profile ?active
-                :in $ ?id
-                :keys :resource/name :resource/email-address :resource/profile :resource/active?
-                :where
-                [?r :resource/id ?id]
-                [?r :resource/name ?name]
-                [?r :resource/email-address ?ea]
+  (when id
+    (first (d/q '[:find ?name ?ea ?profile ?active
+                 :in $ ?id
+                 :keys resource/name resource/email-address resource/profile resource/active?
+                 :where
+                 [?r :resource/id ?id]
+                 [?r :resource/name ?name]
+                 [?r :resource/email-address ?ea]
 
-                [?r :resource/profile ?profile]
-                [?r :resource/active? ?active]
+                 [?r :resource/profile ?profile]
+                 [?r :resource/active? ?active]
 
-                
-                ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id)))
+                 
+                 ] db (api/uuid id)))))
 
 
 
@@ -32,7 +34,7 @@
   {::pc/sym `set-resource-profile
    ::pc/params [:id :val]
    ::pc/output [:resource/id]}
-  (d/transact (d/connect "datomic:dev://localhost:4334/one2")
+  (d/transact connection
               [{:db/id [:resource/id id] :resource/profile value}])
   
   {:resource/id id})
@@ -43,7 +45,7 @@
   {::pc/sym `set-resource-active?
    ::pc/params [:id :val]
    ::pc/output [:resource/id]}
-  (d/transact (d/connect "datomic:dev://localhost:4334/one2")
+  (d/transact connection
               [{:db/id [:resource/id id] :resource/active? value}])
   
   {:resource/id id})
@@ -51,7 +53,7 @@
 
 (pc/defresolver all-resources-resolver [{:keys [db connection]} _]
   {::pc/output [{:resource/all-resources [:resource/id :resource/name :resource/email-address]}]}
-  {:resource/all-resources (map #(d/touch (d/entity  (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id (:resource/id %)]))
+  {:resource/all-resources (map #(d/touch (d/entity  db [:resource/id (:resource/id %)]))
                                 (flatten (seq (d/q  '[:find ?f
                                                       :keys resource/id
                                                       :where
