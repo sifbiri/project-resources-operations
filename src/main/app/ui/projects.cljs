@@ -214,29 +214,39 @@
 (def ui-chart (interop/react-factory ReactGoogleCharts/Chart))
 
 
-(defsc TimeLine [this {:keys [project/id] :as props}]
-  {:query [:project/id]
+
+(defsc Task [this {:task/keys [name id start-date end-date] :as props}]
+  {:query [:task/name :task/id :task/start-date :task/end-date]
+   :ident :task/id}
+
+  (dom/p {} "P")
+  )
+
+
+(defsc TimeLine [this {:keys [timeline/tasks] :as props}]
+  {:query [:timeline/id {:timeline/tasks (comp/get-query Task)}]
    
-   :route-segment   ["timeline"]
-   :ident   (fn [] [:component/id :timeline])
+   :route-segment   ["timeline" :timeline/id]
+   :ident  :timeline/id 
    ;:initial-state {:project/id 1 }
-   #_#_:will-enter (fn [app {:keys [project-info/id] :as params}]
-                 (js/console.log "params " params)
+   :will-enter (fn [app {:keys [timeline/id] :as params}]
                  (dr/route-deferred
-                  [:project-info/id (uuid id)]
+                  [:timeline/id (uuid id)]
                   (fn []
-                    (df/load! app [:project-info/id (uuid id)] ProjectInfo)
-                    (comp/transact! app [(dr/target-ready {:target [:project-info/id (uuid id)]})]))))}
+                                        ;(df/load! app [:project-info/id (uuid id)] ProjectInfo)
+                    ;(merge/merge-component! app TimeLine { (uuid id)})
+                    (df/load! app [:timeline/id (uuid id)] TimeLine)
+                    (comp/transact! app [(dr/target-ready {:target  [:timeline/id (uuid id)]})]))))}
 
   ;(js/console.log "props" props)
   (let [options (get props :resource/options2)]
-    #_(js/console.log "PPPPPPP" props)
-    #_(ui-chart {:chartType "Timeline" :data [[{:type :string :id :te}
-                                             {:type :string :id :name}
-                                             {:type :date :id :start}
-                                             {:type :date :id :end}]
-                                            [1  "Trump?" (js/Date. 1789 3 30) (js/Date. 1797 2 4 )]
-                                            [2 "George Washington" (js/Date. 1790 3 30) (js/Date. 1795 2 4 )]]})
+    (js/console.log "PPPPPPP"(mapv (fn [t] (dissoc t :timeline/id)) tasks))
+    
+    (ui-chart {:height "1000px" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (dissoc t :task/id))) tasks)
+                                                          [{:type :string :id :name}
+                                        ;{:type :string :id :te}
+                                                           {:type :date :id :start}
+                                                           {:type :date :id :end}]))})
     ))
 
 
@@ -631,10 +641,11 @@
   )
 (def ui-project-info2 (comp/factory ProjectInfo2))
 
-(defsc ProjectInfo [this {:project-info/keys [id  name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead status phase entity fluxod-name] :as props}]
+(defsc ProjectInfo [this {:project-info/keys [id new  name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead status phase entity fluxod-name] :as props}]
   {:query [:project-info/id :project-info/modified-date :project-info/start-date :project-info/last-published-date :project-info/finish-date :project-info/name :project-info/status
            :project-info/phase
            :project-info/entity
+           :project-info/new
            :project-info/fluxod-name
            [:resource/options2 '_]
            [df/marker-table '_]
@@ -654,8 +665,9 @@
 
   ;(js/console.log "props" props)
   (let [options (get props :resource/options2)]
-    (js/console.log "PPPPPPP" props)
-    (dom/p {} "P")
+    
+    ;(dom/p {} "P")
+    (js/console.log  "PROPS 2" new)
     (ui-grid-column {}
      (ui-form {}
               (ui-form-group {}
@@ -768,7 +780,10 @@
                                                           :value (:resource/id technical-lead)
                                                           
                                         ;:value (:resource/id lead)
-                                                          :onChange #(comp/transact! this [(project/set-technical-lead {:lead-id (.-value %2) :project-info/id id })])      
+                                                          :onChange (fn [a b](comp/transact! this [(project/set-technical-lead {:lead-id (.-value b) :project-info/id id } )])
+                                                                      
+                                                                      )
+                                                          
                                                           })
 
                                             
@@ -899,7 +914,7 @@
                                                                                                                        )} )
                               (ui-menu-item {:name "TimeLine" :active (= active-item :timeline) :onClick (fn []
                                                                                                            (comp/update-state! this assoc :active-item :timeline )
-                                                                                                           (dr/change-route this (dr/path-to  TimeLine { } ))
+                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  current-project-id} ))
                                                                                                                        )} )))
 
      (ui-grid-column {:width 12} 

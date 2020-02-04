@@ -860,7 +860,10 @@
 
 (def my-pool (at-at/mk-pool))
 
-(def schedule (at-at/every (t/millis (t/new-duration 120 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 120 :minutes))))
+(def schedule (at-at/every (t/millis (t/new-duration 400 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 400 :minutes))))
 ;(at-at/stop schedule)
+
+
+
 
 

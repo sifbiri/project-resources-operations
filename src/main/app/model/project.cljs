@@ -1,5 +1,5 @@
 (ns app.model.project
-  (:require [com.fulcrologic.fulcro.mutations :refer [defmutation]]
+  (:require [com.fulcrologic.fulcro.mutations :as mutations :refer [defmutation]]
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
@@ -133,17 +133,16 @@
   (remote [env] true))
 
 (defmutation set-technical-lead [{:keys [:project-info/id :lead-id]}]
-  (action [{:keys [state component app] :as env}]
+  (action [{:keys [state component app ref] :as env}]
                                         ;(ns/)
-          (let [ProjectInfo (comp/registry-key->class :app.ui.projects/ProjectInfo)
-                update-caller-in! (fn [{:keys [state ref] :as mutation-env} path & args]
-                                    (let [path (ns/tree-path->db-path @state (into ref path))]
-                                      (js/console.log "PATH " path)
-                                      (if (and path (ns/get-in-graph @state path))
-                                        (apply swap! state update-in path args)
-                                        @state)))]
+          (let [ProjectInfo (comp/registry-key->class :app.ui.projects/ProjectInfo)]
             
-           (swap! state (fn [state]
+
+            (mutations/set-props {:project-info/new "NEW2"})
+            (js/console.log "ERF" ref)
+                                        ;(swap! state update-in ref (fn [st] (merge st {:project-info/new "NEW"})))
+            ;(ns/update-caller! env (fn [m ](merge m {:project-info/new "NEW"})))
+            (swap! state (fn [state]
                           (-> state
                               (assoc-in [:project-info/id id :project-info/technical-lead]
                                         [:resource/id  lead-id]))))))

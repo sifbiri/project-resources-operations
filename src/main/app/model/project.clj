@@ -11,11 +11,63 @@
 
 
 
+
+
+
+
+
+
+
+
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
    ::pc/output [:com.wsscode.pathom.viz.index-explorer/index]}
   {:com.wsscode.pathom.viz.index-explorer/index
    (get env ::pc/indexes)})
+
+
+(pc/defresolver level2-tasks [{:keys [db connection] :as env} {:keys [timeline/id]}]
+  {::pc/input  #{:timeline/id}
+   ::pc/output [{:timeline/tasks [:task/id :task/name :task/start-date :task/end-date]}]}
+
+  (let [root-id (d/q '[:find ?tid .
+                       :in $ ?id
+                       :where
+                       [?e :project/id ?id]
+                       [?e :project/tasks ?t]
+                       [?t :task/is-root? true]
+                       [?t :task/id ?tid]
+                       ] db (api/uuid id))
+        top-most-id (d/q '[:find ?tid .
+                           :in $ ?id ?rtid
+                           :where
+                           [?e :project/id ?id]
+                           [?e :project/tasks ?t]
+                           [?t :task/id ?tid]
+                           [?t :task/is-root? false]
+                           [?t :task/parent-task-id ?rtid]
+                           
+                           ] db id root-id)
+        r (d/q '[:find ?tid ?tn ?ts ?te
+                 :keys task/id task/name task/start-date task/end-date
+                 :in $ ?id ?tmid 
+                 :where
+                 
+                 [?p :project/id ?id]
+                 [?p :project/tasks ?t]
+                 [?t :task/parent-task-id ?tmid]
+                 [?t :task/id ?tid]
+                 [?t :task/name ?tn]
+                 [?t :task/start-date ?ts]
+                 [?t :task/end-date ?te]
+                 ] db id top-most-id)
+        ]
+    
+
+    {:timeline/tasks (reverse (sort-by :task/start-date r))}))
+
+
+
 
 (def gov-review-week-keys  [:gov-review-week/week
                             :gov-review-week/status
@@ -305,7 +357,7 @@
                          ] db (api/uuid id)))
         
         ]
-    (println "RE" r)
+    ;(println "RE" r)
     r))
 
 
@@ -422,7 +474,7 @@
              resource-id  (assoc :gov-review-week/submitted-by [:resource/id resource-id])
              true (assoc :gov-review-week/submitted-at now :gov-review-week/status :submitted))]
 
-    (println "TX" tx)
+    ;(println "TX" tx)
 
     
     @(d/transact connection
@@ -1085,6 +1137,7 @@
                  scope-schedule-color-resolver
                  project-madeup
                  project-name-resolver
+                 level2-tasks
                  ;index-explorer
                  all-admin-projects
                  a b

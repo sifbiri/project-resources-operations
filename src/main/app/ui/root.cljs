@@ -230,7 +230,7 @@
                                         ;(def ui-collapsing-table (interop/react-factory ReactCollapsingTable))
 (def ui-timeline (interop/react-factory ReactTimeLine))
 
-
+(def x 1)
 (defn ui-money-input
   "Render a money input component. Props can contain:
 
