@@ -28,7 +28,7 @@
 
 (pc/defresolver level2-tasks [{:keys [db connection] :as env} {:keys [timeline/id]}]
   {::pc/input  #{:timeline/id}
-   ::pc/output [{:timeline/tasks [:task/id :task/name :task/start-date :task/end-date]}]}
+   ::pc/output [{:timeline/tasks [:task/id :task/name :task/start-date :task/end-date :task/outline-number]}]}
 
   (let [root-id (d/q '[:find ?tid .
                        :in $ ?id
@@ -48,8 +48,8 @@
                            [?t :task/parent-task-id ?rtid]
                            
                            ] db id root-id)
-        r (d/q '[:find ?tid ?tn ?ts ?te
-                 :keys task/id task/name task/start-date task/end-date
+        r (d/q '[:find ?tid ?tn ?ts ?te ?ton
+                 :keys task/id task/name task/start-date task/end-date task/outline-number
                  :in $ ?id ?tmid 
                  :where
                  
@@ -58,13 +58,14 @@
                  [?t :task/parent-task-id ?tmid]
                  [?t :task/id ?tid]
                  [?t :task/name ?tn]
+                 [?t :task/outline-number ?ton]
                  [?t :task/start-date ?ts]
                  [?t :task/end-date ?te]
                  ] db id top-most-id)
         ]
     
 
-    {:timeline/tasks (reverse (sort-by :task/start-date r))}))
+    {:timeline/tasks (reverse (sort-by :task/outline-number r))}))
 
 
 

@@ -216,7 +216,7 @@
 
 
 (defsc Task [this {:task/keys [name id start-date end-date] :as props}]
-  {:query [:task/name :task/id :task/start-date :task/end-date]
+  {:query [:task/name :task/id :task/start-date :task/end-date :task/outline-number]
    :ident :task/id}
 
   (dom/p {} "P")
@@ -242,7 +242,7 @@
   (let [options (get props :resource/options2)]
     (js/console.log "PPPPPPP"(mapv (fn [t] (dissoc t :timeline/id)) tasks))
     
-    (ui-chart {:height "1000px" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (dissoc t :task/id))) tasks)
+    (ui-chart {:height "1000px" :width "100%" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (dissoc t :task/id :task/outline-number))) tasks)
                                                           [{:type :string :id :name}
                                         ;{:type :string :id :te}
                                                            {:type :date :id :start}

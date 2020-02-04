@@ -356,6 +356,7 @@
      response
 
      )
+
     
 
     (map (fn [x] (update x :task/id #(uuid %))) response)
@@ -365,7 +366,8 @@
                  task-id (:task/id x)
                  task-is-active (:task/is-active x )
                  task-start-date (:task/start-date x)
-
+                 task-outline-number (:task/outline-number x)
+                 task-outline-level (:task/outline-level x)
                  task-end-date (:task/finish-date x)
                  task-is-root (= (str (:parent/task-id x)) (str (:task/id x)))
                  ;parent-task (if (= (str (:parent/task-id x)) (str (:task/id x))) nil [:task/id (uuid (:parent/task-id x))])
@@ -382,32 +384,16 @@
                            ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) task-id)]
 
 
-             (println "ID 2 " (remove-nils
-                               (hash-map
-                                
-                                :task/name task-name
-                                :task/id  task-id
-                                
-                                :task/is-active task-is-active
-
-                                
-                                        ;:db/id (or id "new")
-                                :task/parent-task-id parent-task-id
-                                :task/parent-task-name parent-task-name
-                                
-                                        ;:task/parent-task-name parent-task-name
-                                        ;:task/project task-project
-                                :task/is-root? task-is-root
-                                :task/start-date task-start-date
-                                :task/end-date task-end-date)))
+             ;(println "ID 2 " )
              (remove-nils
               (hash-map
                
                :task/name task-name
                :task/id  task-id
-               :task/id2  #uuid "94450ca2-46cc-11ea-b77f-2e728ce88125"
+               
                :task/is-active task-is-active
-
+               :task/outline-level task-outline-level
+               :task/outline-number task-outline-number
                
                                         ;:db/id (or id "new")
                :task/parent-task-id parent-task-id
