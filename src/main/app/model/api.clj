@@ -5,6 +5,7 @@
    [app.model.project-model :as project]
                                         ;[app.server-components.pathom :as pathom]
    [clojure.set :as s]
+   
    [overtone.at-at :as at-at]
    [tick.alpha.api :as t]
    [clojure.xml :as xml]
@@ -842,6 +843,8 @@
   @(d/transact (d/connect "datomic:dev://localhost:4334/one2")  (get-all-projects))
 
   (println "Done....................")
+  (show-schedule my-pool)
+;  (user/restart)
   )
 
 (def my-pool (at-at/mk-pool))
@@ -850,6 +853,6 @@
 ;(at-at/stop schedule)
 
 
-
+; 
 
 

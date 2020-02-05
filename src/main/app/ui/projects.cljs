@@ -216,15 +216,39 @@
 
 
 (defsc Task [this {:task/keys [name id start-date end-date] :as props}]
-  {:query [:task/name :task/id :task/start-date :task/end-date :task/outline-number]
+  {:query [:task/name :task/id :task/start-date :task/end-date :task/outline-number :task/parent-task-name]
    :ident :task/id}
 
   (dom/p {} "P")
   )
 
 
-(defsc TimeLine [this {:keys [timeline/tasks] :as props}]
-  {:query [:timeline/id {:timeline/tasks (comp/get-query Task)}]
+
+(defsc ActionList [this {:keys [action-list/id] :as props}]
+  {:query [ :action-list/id ]
+   
+   :route-segment   ["action-list" :action-list/id]
+   :ident  :action-list/id 
+   ;:initial-state {:project/id 1 }
+   :will-enter (fn [app {:keys [action-list/id] :as params}]
+                 (dr/route-deferred
+                  [:action-list/id (uuid id)]
+                  (fn []
+                                        ;(df/load! app [:project-info/id (uuid id)] ProjectInfo)
+                    (merge/merge-component! app ActionList {:action-list/id (uuid id)})
+                    ;(df/load! app [:timeline/id (uuid id)] TimeLine)
+                    (comp/transact! app [(dr/target-ready {:target  [:action-list/id (uuid id)]})]))))}
+
+  ;(js/console.log "props" props)
+  (let []
+    
+    (dom/p {} (str id))
+    
+    ))
+
+
+(defsc TimeLine [this {:keys [timeline/tasks-level2 timeline/tasks-level3] :as props}]
+  {:query [:timeline/id {:timeline/tasks-level2 (comp/get-query Task) } {:timeline/tasks-level3 (comp/get-query Task)}]
    
    :route-segment   ["timeline" :timeline/id]
    :ident  :timeline/id 
@@ -240,13 +264,27 @@
 
   ;(js/console.log "props" props)
   (let [options (get props :resource/options2)]
-    (js/console.log "PPPPPPP"(mapv (fn [t] (dissoc t :timeline/id)) tasks))
-    
-    (ui-chart {:height "1000px" :width "100%" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (dissoc t :task/id :task/outline-number))) tasks)
-                                                          [{:type :string :id :name}
+    (js/console.log "PPPPPPP" (reverse (conj (mapv (fn [t] (vals (select-keys t [:task/parent-task-name :task/name :task/start-date :task/end-date]))) tasks-level3)
+                                            [{:type :string :id :parent}
+                                             {:type :string :id :name}
                                         ;{:type :string :id :te}
-                                                           {:type :date :id :start}
-                                                           {:type :date :id :end}]))})
+                                             {:type :date :id :start}
+                                             {:type :date :id :end}])))
+    ;; level 2 
+    (ui-chart {:height "1000px" :width "100%" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (dissoc t :task/id :task/outline-number))) tasks-level2)
+                                                                                         [{:type :string :id :name}
+                                        ;{:type :string :id :te}
+                                                                                          {:type :date :id :start}
+                                                                                          {:type :date :id :end}]))})
+
+
+    ;; level3 
+    #_(ui-chart {:height "1000px" :width "100%" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (select-keys t [:task/parent-task-name :task/name :task/start-date :task/end-date]))) tasks-level3)
+                                                                                         [{:type :string :id :parent}
+                                                                                          {:type :string :id :name}
+                                        ;{:type :string :id :te}
+                                                                                          {:type :date :id :start}
+                                                                                          {:type :date :id :end}]))})
     ))
 
 
@@ -818,7 +856,7 @@
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine]}
+  {:router-targets [ProjectInfo GovReview TimeLine ActionList]}
   (case current-state
     :pending (dom/div "Loading...")
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -907,10 +945,11 @@
 
 
                               (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
-                                                                                                                         (comp/update-state! this assoc :active-item :risk-issues )
-                                                                                                                             )} )
+                                                                                                                   (comp/update-state! this assoc :active-item :risk-issues )
+                                                                                                                   )})
                               (ui-menu-item {:name "Action List" :active (= active-item :action-list) :onClick (fn []
-                                                                                                                       (comp/update-state! this assoc :active-item :action-list )
+                                                                                                                 (comp/update-state! this assoc :active-item :action-list )
+                                                                                                                 (dr/change-route this (dr/path-to  ActionList {:action-list/id  current-project-id} ))
                                                                                                                        )} )
                               (ui-menu-item {:name "TimeLine" :active (= active-item :timeline) :onClick (fn []
                                                                                                            (comp/update-state! this assoc :active-item :timeline )

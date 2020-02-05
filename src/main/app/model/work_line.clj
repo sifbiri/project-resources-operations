@@ -4,6 +4,7 @@
             [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
             [app.model.project-model :as project]
             [clojure.set :as s]
+            
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [clojure.data.json :as json]
@@ -148,7 +149,7 @@
 (pc/defresolver all-tasks-for-project-resolver [env {:project/keys [id]}]
   {::pc/output [{:work-line/tasks [:task/id :task/name]}]}
   (let [{:keys [project-id]} (-> env :ast :params)]
-                                        ;(println "server " project-id)
+    
     {:work-line/tasks (tasks-for-project project-id)}))
 
 (pc/defresolver all-projects-resolver [_ _]
@@ -187,6 +188,7 @@
                                            :work-line/assignment]}]}
   (let [by-day (-> env :ast :params :by-day)
         username (-> env :ast :params :username)
+        
 
         q (d/q '[:find ?a ?pn ?n  ?w
                  :in $ ?by-day ?username
@@ -205,6 +207,7 @@
 
     
     (println "date is " by-day)
+    (println "AST " (-> env :query-params))
     {:work-day/all-work-lines mapped}))
 
 

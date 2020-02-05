@@ -1,6 +1,7 @@
 (ns app.server-components.pathom
   (:require
-    [mount.core :refer [defstate]]
+   [mount.core :refer [defstate]]
+   [edn-query-language.core :as eql]
     [taoensso.timbre :as log]
     [com.wsscode.pathom.connect :as pc]
     [com.wsscode.pathom.core :as p]
@@ -49,6 +50,23 @@
   (log/debug "Pathom transaction:" (pr-str tx))
   req)
 
+;; CODE from RAD 
+
+(def query-params-to-env-plugin
+  "Adds top-level load params to env, so nested parsing layers can see them."
+  {::p/wrap-parser
+   (fn [parser]
+     (fn [env tx]
+       (let [children     (-> tx eql/query->ast :children)
+             query-params (reduce
+                           (fn [qps {:keys [type params] :as x}]
+                             (cond-> qps
+                               (and (not= :call type) (seq params)) (merge params)))
+                           {}
+                           children)
+             env          (assoc env :query-params query-params)]
+         (parser env tx))))})
+
 (defn build-parser [db-connection]
   (let [real-parser (p/parallel-parser
                       {::p/mutate  pc/mutate-async
@@ -74,6 +92,7 @@
                                                            :connection db-connection
                                                            :config config)))
                                     (preprocess-parser-plugin log-requests)
+                                    query-params-to-env-plugin
                                     p/error-handler-plugin
                                     p/request-cache-plugin
                                     (p/post-process-parser-plugin p/elide-not-found)

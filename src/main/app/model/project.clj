@@ -28,7 +28,7 @@
 
 (pc/defresolver level2-tasks [{:keys [db connection] :as env} {:keys [timeline/id]}]
   {::pc/input  #{:timeline/id}
-   ::pc/output [{:timeline/tasks [:task/id :task/name :task/start-date :task/end-date :task/outline-number]}]}
+   ::pc/output [{:timeline/tasks-level2 [:task/id :task/name :task/start-date :task/end-date :task/outline-number]}]}
 
   (let [root-id (d/q '[:find ?tid .
                        :in $ ?id
@@ -65,7 +65,28 @@
         ]
     
 
-    {:timeline/tasks (reverse (sort-by :task/outline-number r))}))
+    {:timeline/tasks-level2 (reverse (sort-by :task/outline-number r))}))
+
+
+
+(pc/defresolver level3-tasks [{:keys [db connection] :as env} {:keys [timeline/id]}]
+  {::pc/input  #{:timeline/id}
+   ::pc/output [{:timeline/tasks-level3 [:task/id :task/name :task/start-date :task/end-date :task/outline-number :task/parent-task-name]}]}
+
+  (let [r (d/q '[:find ?ptn ?name ?st ?et ?oln
+                 :keys task/parent-task-name task/name task/start-date task/end-date task/outline-number
+                 :in $ ?id
+                 :where
+                 [?t :task/outline-level 3]
+                 [?p :project/id ?id]
+                 [?p :project/tasks ?t]
+                 [?t :task/name ?name]
+                 [?t :task/start-date ?st]
+                 [?t :task/outline-number ?oln]
+                 [?t :task/end-date ?et]
+                 [?t :task/parent-task-name ?ptn]
+                 ] db id)]
+    {:timeline/tasks-level3 (sort-by :task/outline-number r)}))
 
 
 
@@ -1139,6 +1160,7 @@
                  project-madeup
                  project-name-resolver
                  level2-tasks
+                 level3-tasks
                  ;index-explorer
                  all-admin-projects
                  a b

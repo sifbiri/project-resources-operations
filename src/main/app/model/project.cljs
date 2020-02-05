@@ -2,6 +2,7 @@
   (:require [com.fulcrologic.fulcro.mutations :as mutations :refer [defmutation]]
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
+            [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
             [clojure.set :as set]
             [app.math :as math]
@@ -142,6 +143,9 @@
             (js/console.log "ERF" ref)
                                         ;(swap! state update-in ref (fn [st] (merge st {:project-info/new "NEW"})))
             ;(ns/update-caller! env (fn [m ](merge m {:project-info/new "NEW"})))
+            (js/console.log "VAL 1" (comp/get-query ProjectInfo))
+            (js/console.log "VAL 2" (denormalize/db->tree [:project-info/id {:project-info/technical-lead [:resource/name]} ] [:project-info/id  #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"] @state))
+
             (swap! state (fn [state]
                           (-> state
                               (assoc-in [:project-info/id id :project-info/technical-lead]
