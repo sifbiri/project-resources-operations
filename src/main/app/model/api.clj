@@ -843,7 +843,7 @@
   @(d/transact (d/connect "datomic:dev://localhost:4334/one2")  (get-all-projects))
 
   (println "Done....................")
-  (show-schedule my-pool)
+  ;(at-at/show-schedule my-pool)
 ;  (user/restart)
   )
 
