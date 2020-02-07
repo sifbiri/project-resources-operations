@@ -1392,7 +1392,7 @@
                      :append [:component/id :workplan :workplan/resource-lines
                               ]
                      ))
-            (println "HERE" (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team))))
+            
             (doseq [[_ id] (cond-> (:team/resources team) (:team/lead team) (conj (:team/lead team)))]
               (swap! state assoc-in [:checkbox/id id :ui/checked?] true))
             ;; (swap! state assoc-in [:component/id :workplan :workplan/resource-lines

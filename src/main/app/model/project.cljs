@@ -42,11 +42,15 @@
           (swap! state assoc-in [:action/id id :ui/saving?] true))
   (remote [env] true)
   (ok-action [{:keys [state tempid->realid] :as env}]
-             (let [id (tempid->realid id)]
+             (js/console.log "ID 1" (tempid->realid id))
+             (js/console.log "ID 2" id)
+             
+             (let [id (or (tempid->realid id) id)]
+               
                (swap! state (fn [s]
                               (-> s
-                                  (update-in [:action/id id] assoc :ui/new? false :ui/saving? false :ui/modal-open? false)
-                                  (fs/entity->pristine* [:action/id id]))))))
+                                  (fs/entity->pristine* [:action/id id])
+                                  (update-in [:action/id id] assoc :ui/new? false :ui/saving? false :ui/modal-open? false))))))
   (error-action [{:keys [state]}]
                 (js/alert "Failed to save item")
                 (swap! state (fn [s]
@@ -54,11 +58,11 @@
                                    (update-in [:action/id id] assoc :ui/saving? false))))))
 
 
-(defmutation remove-action [{:db/keys [id]}]
+(defmutation remove-action [{:db/keys [id] :keys [action-list]}]
   (action [{:keys [state]}]
           (swap! state (fn [s]
                          (-> s
-                             (merge/remove-ident* [:action/id id] [:component/id :action-list :action-list/actions])
+                             (merge/remove-ident* [:action/id id] [:action-list/id action-list :action-list/actions])
                              (update :action/id dissoc id))))))
 
 
@@ -125,7 +129,7 @@
 (defmutation populate-projects [_]
   (action [{:keys [state]}]
           (let [projects (get @state :projects)]
-            (println "HI THERE"  projects)
+            
             
             (swap! state assoc-in [:component/id :resources :resources/projects] projects)
             (swap! state assoc  :projects []))))

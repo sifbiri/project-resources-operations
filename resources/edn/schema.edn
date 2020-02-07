@@ -869,6 +869,8 @@
 
   :db/valueType :db.type/uuid
   
+  :db/unique  :db.unique/identity
+  
   :db/cardinality :db.cardinality/one
   
   }
@@ -877,6 +879,8 @@
 
   :db/ident :action-list/actions
 
+  :db/isComponent true
+  
   :db/valueType :db.type/ref
   
   :db/cardinality :db.cardinality/many

@@ -869,9 +869,8 @@
 ; 
 
 
-;; (d/transact (d/connect "datomic:dev://localhost:4334/one2") [{:action/action "Free text" :action/owner "owner"
-;;                                                               :action/due-date (t/inst (t/now)) :action/status :open}])
-
+;; 
+(get-in  @(d/transact (d/connect "datomic:dev://localhost:4334/one2") [{:action/action "Free text" :action/owner "owner" :db/id "new"}]) [:tempids "new"])
 
 
 
@@ -884,12 +883,60 @@
 ;; (d/transact (d/connect "datomic:dev://localhost:4334/one2") [:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60" :action-list/actions [{:db/id "new" :action/status :open :action/owner "Sifou" :action/}]])
 
 
-(let [id #uuid "7373cf5a-30e1-e911-b19b-9cb6d0e1bd60"
-      skip 0
-      max 2000
-      url (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/AssignmentTimephasedDataSet?$filter=ProjectId eq guid'" id "'&$skip=" (str skip) "&$top=" (str max))]
-  (-> (client/get url
-                  (project/prepare-request-options))
-      :body
-      (json/read-str :key-fn csk/->kebab-case-keyword)
-      :value))
+;; (let [id #uuid "7373cf5a-30e1-e911-b19b-9cb6d0e1bd60"
+;;       skip 0
+;;       max 2000
+;;       url (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/AssignmentTimephasedDataSet?$filter=ProjectId eq guid'" id "'&$skip=" (str skip) "&$top=" (str max))]
+;;   (-> (client/get url
+;;                   (project/prepare-request-options))
+;;       :body
+;;       (json/read-str :key-fn csk/->kebab-case-keyword)
+;;       :value))
+
+
+(def connection (d/connect "datomic:dev://localhost:4334/one2"))
+(def db (d/db connection))
+
+(def id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60")
+(def action-id 17592186409907)
+
+
+;(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
+
+
+
+
+
+
+
+
+
+(comment
+  (d/transact connection [{:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"
+                           :action-list/actions [{:action/action "Action 1"
+                                                  :db/id "new"
+                                                  :action/owner "Sifou"
+                                                  :action/status :open
+                                                  :action/due-date (t/inst (t/now))}
+                                                 {:db/id "new2"
+                                                  :action/action "Action 2"
+                                                  :action/owner "Sifou"
+                                                  :action/status :closed
+                                                  :action/due-date (t/inst (t/now))}]}])
+  
+  (mapv (comp (fn [m] (update m :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
+        )
+
+
+  (first )
+  (d/transact connection [[:db/retractEntity 17592186087466]])
+
+
+
+  (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
+
+  )
+
+
+
+

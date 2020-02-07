@@ -39,24 +39,9 @@
                        Project (comp/registry-key->class :app.ui.root/Project)
                        Resource (comp/registry-key->class :app.ui.root/Resource)
                        Team (comp/registry-key->class :app.ui.teams/Team)]
-
-
-                   
-                   
                     
-                   
                    ))}))
 
-
-
-
-
-
-
-
-
-
-                   
                    ;; (df/load app :work-line/all-projects
                    ;;          Project
                    ;;          {:post-mutation `work-line/create-project-options}

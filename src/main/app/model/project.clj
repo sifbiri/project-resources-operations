@@ -95,14 +95,24 @@
   {::pc/input  #{:action-list/id}
    ::pc/output [:action-list/id {:action-list/actions [:action/id]}]}
 
-  (let [r (d/q '[:find ?a
-                 :keys 
-                 :in $ ?id
-                 :where
-                 [?a :action-list/id ?id]
-                 [?a :action-list/actions ?e]
-                                  ] db id)]
-    {:timeline/tasks-level3 (sort-by :task/outline-number r)}))
+  (-> (d/q '[:find (pull ?al [:action-list/id {:action-list/actions [:db/id]}]) 
+             
+             :in $ ?id
+             :where
+             [?al :action-list/id ?id]
+             
+             ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))
+               id)
+      ffirst
+      (update :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))
+      ))
+
+(pc/defresolver action [{:keys [db connection] :as env} {:keys [action/id]}]
+  {::pc/input  #{:action/id}
+   ::pc/output [:db/id :action/owner :action/status :action/due-date :action/action]}
+  (d/pull db  [:db/id :action/owner :action/status :action/due-date :action/action] id))
+
+
 
 
 
@@ -586,26 +596,32 @@
                       ] db id week)]
     
     (when (nil? entity)
-      (let [tx
+      (let [not-nil? (d/pull db
+                             [:project-info/id]
+                             [:project-info/id id])
+            tx
+            (cond->
+                {:db/id "new"
+                 :gov-review-week/week week
+                 :gov-review-week/project-info [:project-info/id id]
+                 :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
 
-            {:db/id "new"
-             :gov-review-week/week week
-             :gov-review-week/project-info [:project-info/id id]
-             :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
-
-             :gov-review-week/exec-summary-text ""
-             :gov-review-week/exec-summary-color :orange
-             
-             :gov-review-week/client-relationship-text ""
-             :gov-review-week/client-relationship-color :orange
-             
-             :gov-review-week/finance-text ""
-             :gov-review-week/finance-color :orange
-             
-             :gov-review-week/scope-schedule-text ""
-             :gov-review-week/scope-schedule-color :orange
-             
-             }
+              :gov-review-week/exec-summary-text ""
+              :gov-review-week/exec-summary-color :orange
+              
+              :gov-review-week/client-relationship-text ""
+              :gov-review-week/client-relationship-color :orange
+              
+              :gov-review-week/finance-text ""
+              :gov-review-week/finance-color :orange
+              
+              :gov-review-week/scope-schedule-text ""
+              :gov-review-week/scope-schedule-color :orange
+              
+                 }
+              not-nil?
+              (assoc :gov-review-week/project-info [:project-info/id id])
+              (not not-nil?) (assoc :gov-review-week/project-info {:project-info/id id}))
             ]
         
         @(d/transact (d/connect "datomic:dev://localhost:4334/one2")
@@ -677,11 +693,18 @@
                       ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week)]
     
     (if (nil? entity)
-      (let [tx
+      (let
 
+          [not-nil? (d/pull db
+                            [:project-info/id]
+                            [:project-info/id id])
+
+           tx
+
+           (cond->
             {:db/id "new"
              :gov-review-week/week week
-             :gov-review-week/project-info [:project-info/id id]
+             
              :gov-review-week/status  (if (t/< week (t/inst (t/now))) :overdue :open)
 
              :gov-review-week/exec-summary-text ""
@@ -698,7 +721,9 @@
              :gov-review-week/scope-schedule-color :orange
              
              }
-            ]
+            not-nil?
+            (assoc :gov-review-week/project-info [:project-info/id id])
+            (not not-nil?) (assoc :gov-review-week/project-info {:project-info/id id}))]
         
         @(d/transact connection
                      [tx])
@@ -737,19 +762,23 @@
 
 
 
-(pc/defmutation save-action [{:keys [db connection]} {:db/keys [id]
-                                  :keys      [diff]}]
-  {::pc/output [:action/id]}
+(pc/defmutation save-action [{:keys [db connection]}
+                             {:db/keys [id]
+                              :keys      [diff action-list]}]
+  {::pc/params #{:db/id :diff :action-list}
+   ::pc/output [:action/id]}
                                         ;(throw (ex-info "Boo" {}))
   (let [new-values (get diff [:action/id id])
         new?       (tempid/tempid? id)]
     
     (if new?
-      (let [{:keys [tempids]} (d/transact connection [new-values])
+      (let [{:keys [tempids]} @(d/transact connection [(assoc new-values :db/id "new")])
             new-id (-> tempids vals first)]
+        @(d/transact connection [[:db/add [:action-list/id  action-list] :action-list/actions new-id]])
         {:action/id new-id :tempids {id new-id}})
       (do
-        (d/transact connection [(assoc new-values :db/id id)])
+        @(d/transact connection [(assoc new-values :db/id id)])
+        @(d/transact connection [[:db/add [:action-list/id  action-list] :action-list/actions id]])
         {:action/id id}))))
 
 
@@ -1196,6 +1225,8 @@
                  level2-tasks
                  level3-tasks
                  save-action
+                 action
+                 action-list
                  ;index-explorer
                  all-admin-projects
                  a b

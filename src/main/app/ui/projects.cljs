@@ -269,8 +269,8 @@
                                                        (dom/label 
                                                                   "Due Date")
                                                        (dom/input {:type "date" :size "mini"  
-                                                                   :onChange #(m/set-value! this :action/due-date (log/spy :info (.-value (.-target %))))
-                                                                   :value (apply str (take 10 (str due-date)))}))
+                                                                   :onChange #(m/set-value! this :action/due-date (js/Date. (.-value (.-target %))))
+                                                                   :value (apply str (take 10 (str (t/instant due-date))))}))
 
                                         )
                          )
@@ -280,7 +280,7 @@
 
 (def ui-action-form (comp/factory ActionForm {:keyfn :db/id}))
 
-(defsc ActionRow [this {:action/keys [action owner status due-date] :db/keys [id] :ui/keys [new? saving? modal-open?]  :as props} ]
+(defsc ActionRow [this {:action/keys [action owner status due-date] :db/keys [id] :ui/keys [new? saving? modal-open?]  :as props} {:keys [remove-action save-action]} ]
   {:query [:db/id :action/action :action/owner :action/status :action/due-date ;fs/form-config-join
            :ui/new?
            :ui/saving?
@@ -296,9 +296,10 @@
   
   (ui-modal {:trigger (ui-table-row {:onClick #(m/set-value! this :ui/modal-open? true)}
                                     (ui-table-cell {} action)
-                                    (ui-table-cell {} owner)
-                                    (ui-table-cell {} (name status))
-                                    (ui-table-cell {} (take 10(str due-date)))
+                                   (ui-table-cell {} owner)
+                                   (ui-table-cell {} (some-> status name clojure.string/capitalize))
+                                   ;; TODO 
+                                   (ui-table-cell {:error (t/< due-date (t/inst (t/now)))} (apply str (take 10 (str (t/instant due-date)))))
                                     )
              :open modal-open?
              ;:closeIcon true
@@ -306,14 +307,13 @@
              }
             (ui-modal-content {} (ui-action-form props))
             (ui-modal-actions {} [(ui-button {:basic true :onClick (fn [] (if new?
-                                                                            (comp/transact! this [(project/remove-action {:db/id id})])
+                                                                            (remove-action id)
                                                                             (comp/transact! this [(fs/reset-form! {})]))
                                                                      (m/toggle! this :ui/modal-open?)) }
                                              "Undo")
                                   
-                                  (ui-button {:basic true :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                                                                            (comp/transact! this [(project/try-save-action {:db/id id :diff diff})])
-                                                                            )) }
+                                  (ui-button {:basic true :loading saving?  :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                                                                              (save-action id diff))) }
                                              "Save")
                                   
                                   
@@ -325,7 +325,8 @@
 
 
 (defsc ActionList [this {:action-list/keys [id actions] :as props}]
-  {:query [:action-list/id {:action-list/actions (comp/get-query ActionRow)}]
+  {:query [:action-list/id {:action-list/actions (comp/get-query ActionRow)}
+           [df/marker-table '_]]
    
    :route-segment   ["action-list" :action-list/id]
    :ident  :action-list/id
@@ -338,26 +339,37 @@
                   [:action-list/id (uuid id)]
                   (fn []
                                         ;(df/load! app [:project-info/id (uuid id)] ProjectInfo)
-                    (df/load! app [:action-list/id (uuid id)] ActionList)
+                    (df/load! app [:action-list/id (uuid id)] ActionList {:marker :action-list})
                     ;(merge/merge-component! app ActionList {:action-list/id (uuid id) :action-list/actions [{:db/id 1 :action/action "ACTION" :action/owner "Owner" :action/status :open :action/date (t/inst (t/now))}]})
                     
                                         ;(df/load! app [:timeline/id (uuid id)] TimeLine)
                     (comp/transact! app [(dr/target-ready {:target  [:action-list/id (uuid id)]})]))))}
 
                                         ;(js/console.log "props" props)
-  (let []
+  (let [status (get-in props [df/marker-table :action-list])
+        remove-action (fn [dbid] (comp/transact! this [(project/remove-action {:db/id dbid :action-list id})]))
+        save-action (fn [dbid diff] (comp/transact! this [(project/try-save-action {:db/id dbid :diff diff :action-list id})]))]
     (js/console.log "ACTIONS" props)
     (ui-container {}
-                  (ui-table {}
-                            (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date"])))
-                            
-                            (ui-table-body {} (map ui-action-row actions ))
-                            (ui-table-footer {} (ui-table-row {}
-                                                              
-                                                              (ui-table-header-cell {:colSpan 4}
-                                                                                    (ui-button {:basic true
-                                                                                                :onClick  #()}
-                                                                                               (ui-icon {:name "plus"} )))))))
+                  (if (df/loading? status)
+                    (ui-loader {})
+                    (ui-table {}
+                              (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date"])))
+                              
+                              (ui-table-body {} (map (fn [action] (ui-action-row (comp/computed action {:remove-action remove-action :save-action save-action}) )) actions ))
+                              (ui-table-footer {} (ui-table-row {}
+                                                                
+                                                                (ui-table-header-cell {:colSpan 4}
+                                                                                      (ui-button {:basic true
+                                                                                                  :onClick  #(merge/merge-component! this ActionRow
+                                                                                                                                     {:ui/new? true
+                                                                                                                                      :db/id (tempid/tempid)
+                                                                                                                                      :action/action ""
+                                                                                                                                      :action/owner ""
+                                                                                                                                      :action/status :open
+                                                                                                                                      :action/due-date (-> t/now t/inst)}
+                                                                                                                                     :append [:action-list/id id :action-list/actions])}
+                                                                                                 (ui-icon {:name "plus"} ))))))))
     
     ))
 
