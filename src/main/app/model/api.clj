@@ -185,104 +185,113 @@
     (if (number? (:db/id id)) id (remove-nils resource-server))))
 
 
-
-
-
-
-
 (defn assignement-phased-project-id
+  [id skip]
+  (let [max 2000
+        url (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/AssignmentTimephasedDataSet?$filter=ProjectId eq guid'" id "'&$skip=" (str skip) "&$top=" (str max))]
+    (as-> (-> (client/get url
+                         (project/prepare-request-options))
+              :body
+              (json/read-str :key-fn csk/->kebab-case-keyword)
+              :value
+             ;; just to have one.
+             ;; first
+             
+             ) response
+
+      
+      (cske/transform-keys
+      (fn [x]
+        (keyword (clojure.string/replace-first (name x) #"-" "/")) )
+      response)
+
+     
+
+      (map #(select-keys % assignment-phased-keys) response)
+
+      
+
+     (map
+      (fn [x] (update x :assignment/work #(when-not (nil? %)
+                                            (clojure.edn/read-string %))))
+      response)
+
+     (map
+      (fn [x] (update x :time/by-day  #(when-not (nil? %)
+                                         (clojure.instant/read-instant-date %))))
+      response)
+
+     (map
+      (fn [x] (update x :assignment/modified-date
+                      #(when-not (nil? %)
+                         (clojure.instant/read-instant-date %))))
+      response)
+
+     (map
+      (fn [x] (update x :task/start-date
+                      #(when-not (nil? %)
+                         (clojure.instant/read-instant-date %))))
+      response
+
+      )
+
+     (map
+      (fn [x] (update x :task/end-date
+                      #(when-not (nil? %)
+                         (clojure.instant/read-instant-date %))))
+      response
+
+      )
+
+     (map #(s/rename-keys % {:time/by-day :assignment/by-day}) response)
+
+     
+
+     (map (fn [x] (update x :task/id #(uuid %))) response)
+     (map (fn [x] (update x :project/id #(uuid %))) response)
+     (map (fn [x] (update x :assignment/id #(uuid %))) response)
+     (map (fn [x] (update x :resource/id #(uuid %))) response)
+
+     
+     (map (fn [x] (let [task-name (:task/name x)
+                        task-id (:task/id x)
+                        task-is-active (:task/is-active x )
+                        task-start-date (:task/start-date x)
+
+                        task-end-date (:task/end-date x)
+                        task-is-root (= (:parent/task-id x) (:task/id x))
+                        parent-task-id (uuid (:parent/task-id x))
+
+                        parent-task-name (:parent/task-name x)
+
+                        task-project [:project/id (uuid (:project/id x))]
+
+
+                        
+                        resource (get-resource (:resource/id x))
+                        
+                        
+                        ]
+                    
+                    
+                    (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
+                                   :assignment/task {:task/name task-name :task/id (uuid task-id) }
+                                   :assignment/resource resource)))) response)
+     
+     response)))
+
+(defn all-assignments 
   [id]
-  (as-> (-> (client/get (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/AssignmentTimephasedDataSet?$filter=ProjectId eq guid'" id "'")
-                        (project/prepare-request-options))
-            :body
-            (json/read-str :key-fn csk/->kebab-case-keyword)
-            :value
-            ;; just to have one.
-            ;; first
-            
-            ) response
-
-    (cske/transform-keys
-     (fn [x]
-       (keyword (clojure.string/replace-first (name x) #"-" "/")) )
-     response)
-
-    
-
-    (map #(select-keys % assignment-phased-keys) response)
-
-    (map
-     (fn [x] (update x :assignment/work #(when-not (nil? %)
-                                           (clojure.edn/read-string %))))
-     response)
-
-    (map
-     (fn [x] (update x :time/by-day  #(when-not (nil? %)
-                                        (clojure.instant/read-instant-date %))))
-     response)
-
-    (map
-     (fn [x] (update x :assignment/modified-date
-                     #(when-not (nil? %)
-                        (clojure.instant/read-instant-date %))))
-     response)
-
-    (map
-     (fn [x] (update x :task/start-date
-                     #(when-not (nil? %)
-                        (clojure.instant/read-instant-date %))))
-     response
-
-     )
-
-    (map
-     (fn [x] (update x :task/end-date
-                     #(when-not (nil? %)
-                        (clojure.instant/read-instant-date %))))
-     response
-
-     )
-
-    (map #(s/rename-keys % {:time/by-day :assignment/by-day}) response)
-
-    (map (fn [x] (update x :task/id #(uuid %))) response)
-    (map (fn [x] (update x :project/id #(uuid %))) response)
-    (map (fn [x] (update x :assignment/id #(uuid %))) response)
-    (map (fn [x] (update x :resource/id #(uuid %))) response)
-    
-    (map (fn [x] (let [task-name (:task/name x)
-                       task-id (:task/id x)
-                       task-is-active (:task/is-active x )
-                       task-start-date (:task/start-date x)
-
-                       task-end-date (:task/end-date x)
-                       task-is-root (= (:parent/task-id x) (:task/id x))
-                       parent-task-id (uuid (:parent/task-id x))
-
-                       parent-task-name (:parent/task-name x)
-
-                       task-project [:project/id (uuid (:project/id x))]
+  (loop [r []
+         skip 0]
+    (let [one-r (assignement-phased-project-id id skip)]
+      (if (seq one-r)
+        (do
+          (println "R" one-r)
+          (recur (concat r one-r) (+ skip 2000)))
+        r))))
 
 
-                       
-                       resource (get-resource (:resource/id x))
-                       
-                       
-                       ]
-                   
-                   
-                   (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
-                                  :assignment/task (let [id (d/q '[:find ?e .
-                                                                   :in $ ?id
-                                                                   :where
-                                                                   [?e :task/id ?id]
-
-                                                                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) (uuid task-id))]
-                                                     
-                                                     {:task/name task-name :task/id (uuid task-id) ;:db/id (or id "new")
-                                                      })
-                                  :assignment/resource resource)))) response)
-    ))
 
 (def all-project-names '("LeFrak"
                          "RBC - IVALUA - S2C"
@@ -492,7 +501,11 @@
         result9
         (map
          (fn [x] (let
-                     [assignments (assignement-phased-project-id (str (:project/id x)))]
+                     [assignments
+
+
+                      
+                      (all-assignments (str (:project/id x)))]
 
                    (remove-nils (assoc x
                                   :project/tasks (tasks-for-project (str (:project/id x)))
@@ -856,3 +869,27 @@
 ; 
 
 
+;; (d/transact (d/connect "datomic:dev://localhost:4334/one2") [{:action/action "Free text" :action/owner "owner"
+;;                                                               :action/due-date (t/inst (t/now)) :action/status :open}])
+
+
+
+
+;; #uuid "5f045544-f9d3-e911-b092-00155de43b0b" hugo
+
+;; #uuid "7373cf5a-30e1-e911-b19b-9cb6d0e1bd60" vacations
+
+;; https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/AssignmentTimephasedDataSet?$filter=ProjectId eq guid'7373cf5a-30e1-e911-b19b-9cb6d0e1bd60'
+
+;; (d/transact (d/connect "datomic:dev://localhost:4334/one2") [:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60" :action-list/actions [{:db/id "new" :action/status :open :action/owner "Sifou" :action/}]])
+
+
+(let [id #uuid "7373cf5a-30e1-e911-b19b-9cb6d0e1bd60"
+      skip 0
+      max 2000
+      url (str "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/AssignmentTimephasedDataSet?$filter=ProjectId eq guid'" id "'&$skip=" (str skip) "&$top=" (str max))]
+  (-> (client/get url
+                  (project/prepare-request-options))
+      :body
+      (json/read-str :key-fn csk/->kebab-case-keyword)
+      :value))

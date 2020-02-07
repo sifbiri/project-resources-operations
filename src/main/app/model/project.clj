@@ -1,6 +1,7 @@
 (ns app.model.project
   (:require
    [com.wsscode.pathom.connect :as pc]
+   [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [app.model.database :refer [conn]]
    [clojure.core.async :refer [go]]
    [clojure.set :as set]
@@ -86,6 +87,21 @@
                  [?t :task/end-date ?et]
                  [?t :task/parent-task-name ?ptn]
                  ] db id)]
+    {:timeline/tasks-level3 (sort-by :task/outline-number r)}))
+
+
+
+(pc/defresolver action-list  [{:keys [db connection] :as env} {:keys [action-list/id]}]
+  {::pc/input  #{:action-list/id}
+   ::pc/output [:action-list/id {:action-list/actions [:action/id]}]}
+
+  (let [r (d/q '[:find ?a
+                 :keys 
+                 :in $ ?id
+                 :where
+                 [?a :action-list/id ?id]
+                 [?a :action-list/actions ?e]
+                                  ] db id)]
     {:timeline/tasks-level3 (sort-by :task/outline-number r)}))
 
 
@@ -721,6 +737,24 @@
 
 
 
+(pc/defmutation save-action [{:keys [db connection]} {:db/keys [id]
+                                  :keys      [diff]}]
+  {::pc/output [:action/id]}
+                                        ;(throw (ex-info "Boo" {}))
+  (let [new-values (get diff [:action/id id])
+        new?       (tempid/tempid? id)]
+    
+    (if new?
+      (let [{:keys [tempids]} (d/transact connection [new-values])
+            new-id (-> tempids vals first)]
+        {:action/id new-id :tempids {id new-id}})
+      (do
+        (d/transact connection [(assoc new-values :db/id id)])
+        {:action/id id}))))
+
+
+
+
 
 (pc/defmutation set-functional-lead [{:keys [db connection]} {:keys [project-info/id lead-id]}]
   {::pc/sym`set-functional-lead
@@ -1161,6 +1195,7 @@
                  project-name-resolver
                  level2-tasks
                  level3-tasks
+                 save-action
                  ;index-explorer
                  all-admin-projects
                  a b

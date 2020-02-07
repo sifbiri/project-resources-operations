@@ -10,7 +10,7 @@
   
   :db/cardinality :db.cardinality/one
 
-  ;:db/unique  :db.unique/value
+                                        ;:db/unique  :db.unique/value
   
   }
 
@@ -814,6 +814,76 @@
   
   
   }
+
+ ;; ACTIONS
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :action/action
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+
+                                        ;:db/unique  :db.unique/value
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :action/owner
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :action/status
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+  
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :action/due-date
+
+  :db/valueType :db.type/instant
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ ;; Action List
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :action-list/id
+
+  :db/valueType :db.type/uuid
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :action-list/actions
+
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/many
+  
+  }
+
+ 
  
  ]
 

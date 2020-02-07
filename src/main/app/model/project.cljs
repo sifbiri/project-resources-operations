@@ -6,12 +6,85 @@
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
             [clojure.set :as set]
             [app.math :as math]
+            
             [com.fulcrologic.fulcro.algorithms.form-state :as fs]
             [com.fulcrologic.fulcro.algorithms.denormalize :as fdn]
             [taoensso.timbre :as log]
             [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]))
 
+
+
+;; Actions 
+
+(defn action-valid?
+  [{:action/keys [action owner] :as form} field]
+  (try
+    (case field
+      :action/owner (boolean (seq owner))
+      :action/action (boolean (seq action))
+      true)
+    (catch :default _
+      false)))
+
+
+(def action-validator (fs/make-validator action-valid?))
+
+
+
+
+(defmutation save-action
+  "Unchecked mutation. Sends the given diff to the server without checking validity. See try-save-item."
+  [{:db/keys [id]
+    :keys      [diff]
+    :as        params}]
+  (action [{:keys [app state]}]
+          (swap! state assoc-in [:action/id id :ui/saving?] true))
+  (remote [env] true)
+  (ok-action [{:keys [state tempid->realid] :as env}]
+             (let [id (tempid->realid id)]
+               (swap! state (fn [s]
+                              (-> s
+                                  (update-in [:action/id id] assoc :ui/new? false :ui/saving? false :ui/modal-open? false)
+                                  (fs/entity->pristine* [:action/id id]))))))
+  (error-action [{:keys [state]}]
+                (js/alert "Failed to save item")
+                (swap! state (fn [s]
+                               (-> s
+                                   (update-in [:action/id id] assoc :ui/saving? false))))))
+
+
+(defmutation remove-action [{:db/keys [id]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [s]
+                         (-> s
+                             (merge/remove-ident* [:action/id id] [:component/id :action-list :action-list/actions])
+                             (update :action/id dissoc id))))))
+
+
+(defmutation try-save-action [{:db/keys [id]
+                             :keys      [diff]
+                             :as        params}]
+
+  
+  (action [{:keys [app state]}]
+          (let [state-map       @state
+                ident           [:action/id id]
+                completed-state (fs/mark-complete* state-map ident)
+                action            (get-in completed-state ident)
+                ActionRow (comp/registry-key->class :app.ui.projects/ActionRow)
+                action-props      (fdn/db->tree (comp/get-query ActionRow)  action completed-state)
+                valid?          (= :valid (action-validator (log/spy :info action-props)))]
+
+            (js/console.log " ACTION -" (action-validator  action-props))
+            (js/console.log "id " id)
+            (if valid?
+              (comp/transact! app [(save-action params)])
+              (reset! state completed-state)))))
+
+;; TODO organize 
+
+;; GOV REVIEW WEEK
 
 
 (defmutation get-or-create-current-gov-review-week [{:keys [gov-review-week/week]}]
