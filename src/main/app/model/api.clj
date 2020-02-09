@@ -508,12 +508,6 @@
 
 
 ;; TODO transact per project
-
-(defn first-time-db []
-  (println "seeding schema")
-  (transact-all (d/connect db-url) "resources/edn/schema.edn")
-  (update-db))
-
 (defn update-db []
   (println "delete projects...........")
   (d/transact
@@ -538,6 +532,16 @@
                                         ;(at-at/show-schedule my-pool)
                                         ;  (user/restart)
   )
+
+
+(defn first-time-db []
+  (println "seeding schema")
+  (transact-all (d/connect db-url) "resources/edn/schema.edn")
+  (update-db))
+
+
+
+
 
                                         ;(def my-pool (at-at/mk-pool))
 
