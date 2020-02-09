@@ -31,6 +31,21 @@
             
             }
 
+           fulcrologic/fulcro-rad
+           {:git/url "https://github.com/fulcrologic/fulcro-rad.git" :sha "355dc83387b32529193a5444f3674bbadbbee4ed"
+            
+            }
+
+
+           fulcrologic/fulcro-rad-datomic
+           {:git/url "https://github.com/fulcrologic/fulcro-rad-datomic.git" :sha "57874e04e8e1d1d83e3a742780cd3f92c2b6dc27"
+            
+            }
+
+
+           org.postgresql/postgresql {:mvn/version "9.3-1102-jdbc41"}
+
+
            
            
 

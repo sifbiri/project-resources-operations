@@ -15,6 +15,7 @@
     [app.model.project :as project]
     [app.model.session :as session]
     [app.model.resource :as resource]
+    [com.fluxym.components.auto-resolvers :refer [automatic-resolvers]]
     [app.model.item :as item]
     [app.model.team :as team]
     [datomic.api :as d]
@@ -29,7 +30,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers])
+(def all-resolvers [automatic-resolvers project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -51,6 +52,7 @@
   req)
 
 ;; CODE from RAD 
+
 
 (def query-params-to-env-plugin
   "Adds top-level load params to env, so nested parsing layers can see them."

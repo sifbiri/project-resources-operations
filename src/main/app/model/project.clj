@@ -101,7 +101,7 @@
              :where
              [?al :action-list/id ?id]
              
-             ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))
+             ] db
                id)
       ffirst
       (update :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))
@@ -155,10 +155,10 @@
 
 
 
-(def db-url "datomic:dev://localhost:4334/one2")
+;(def db-url "datomic:dev://localhost:4334/one2")
 
 
-(def conn2 (d/connect db-url))
+;(def conn2 (d/connect db-url))
 (def alias-project-info-project-panel (pc/alias-resolver2 :project-panel/id :project-info/id))
 
 
@@ -262,7 +262,7 @@
 
     
     (if (not (nil? entity))
-      @(d/transact (d/connect db-url) [{:db/id pid
+      @(d/transact connection [{:db/id pid
                                 :project-info/project-lead lid
                                }])
       @(d/transact connection [{:db/id "new"
@@ -559,7 +559,7 @@
 
 
 
-(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project-info/id]}]
+(pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
   {::pc/sym `get-or-create-current-gov-review-week
    ::pc/params [:gov-review-week/week :project-info/id]
    ::pc/output [:gov-review-week/week
@@ -586,6 +586,7 @@
                   :resource/active?
                   :resource/profile]} 
                 :gov-review-week/submitted-at]}
+  (println " ID " id)
 
   (let [entity (d/q '[:find ?e . 
                       :in $ ?id ?week
@@ -624,7 +625,7 @@
               (not not-nil?) (assoc :gov-review-week/project-info {:project-info/id id}))
             ]
         
-        @(d/transact (d/connect "datomic:dev://localhost:4334/one2")
+        @(d/transact connection
                      [tx])))
     
     (ffirst (d/q '[:find (pull ?e [:gov-review-week/week
@@ -652,11 +653,11 @@
                    [?e :gov-review-week/week ?week]
                    [?e :gov-review-week/project-info ?p]
                    [?p :project-info/id ?id]
-                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week ))
+                   ] db id week ))
     ))
 
 
-(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project-info/id]}]
+(pc/defmutation get-or-create-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
   {::pc/sym `get-or-create-gov-review-week
    ::pc/params [:gov-review-week/week :project-info/id]
    ::pc/output [:gov-review-week/week
@@ -690,7 +691,7 @@
                       [?e :gov-review-week/week ?week]
                       [?e :gov-review-week/project-info ?p]
                       [?p :project-info/id ?id]
-                      ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week)]
+                      ] db id week)]
     
     (if (nil? entity)
       (let
@@ -758,7 +759,7 @@
                      [?e :gov-review-week/week ?week]
                      [?e :gov-review-week/project-info ?p]
                      [?p :project-info/id ?id]
-                     ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) id week )))))
+                     ] db id week )))))
 
 
 
@@ -773,8 +774,13 @@
     
     (if new?
       (let [{:keys [tempids]} @(d/transact connection [(assoc new-values :db/id "new")])
-            new-id (-> tempids vals first)]
-        @(d/transact connection [[:db/add [:action-list/id  action-list] :action-list/actions new-id]])
+            new-id (-> tempids vals first)
+            action-list-entity (d/entity db [:action-list/id action-list])]
+        (if action-list-entity
+          @(d/transact connection [[:db/add [:action-list/id  action-list] :action-list/actions new-id]])
+          (do
+            @(d/transact connection [[:db/add "new-action-list" :action-list/id action-list]
+                                     [:db/add "new-action-list" :action-list/actions new-id]])))
         {:action/id new-id :tempids {id new-id}})
       (do
         @(d/transact connection [(assoc new-values :db/id id)])
@@ -1142,28 +1148,14 @@
                                    [?a :assignment/task ?t]
                                    [?t :task/name ?tn]
                                    [?a :assignment/by-day ?bd]
-                                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) resource-id project-id)))}))
+                                   ] db resource-id project-id)))}))
 
 
 
 
 
 
-#_(map (fn [row] (zipmap [:assignment/id :assignment/name :assignment/day :assignment/work] row))
-       (seq (d/q '[:find ?a ?tn ?bd ?w
-                   :in $ ?ri ?pid
-                   :where
-                   [?p :project/id ?pid]
-                   [?r :resource/id ?ri]
-                   [?a :assignment/resource ?r]
-                   [?a :assignment/work ?w]
-                   [?p :project/assignments ?a]
-                   [?a :assignment/task ?t]
-                   [?t :task/name ?tn]
-                   [?a :assignment/by-day ?bd]
-                   ] (d/db (d/connect "datomic:dev://localhost:4334/one2"))
-                     
-                     )))
+
 
 ;; (d/q  '[:find ?pn ?pi
 ;;         :in $ ?id

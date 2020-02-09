@@ -25,10 +25,10 @@
                         :work-line/hours 22}}))
 
 ;(require '[datomic.api :as d])
-(def uri "datomic:dev://localhost:4334/one2")
+;(def uri "datomic:dev://localhost:4334/one2")
 ;(d/create-database uri)
-(def conn (d/connect uri))
-(def db (d/db conn))
+;(def conn (d/connect uri))
+;(def db (d/db conn))
 
 ;(require '[datomic.api :as d])
 ;; (def uri "datomic:free://localhost:4334/test")
@@ -202,7 +202,7 @@
                  [?a :assignment/resource ?r]
                  [?r :resource/email-address ?username]
                  [?a :assignment/work ?w]
-                 ] (d/db conn) by-day username)
+                 ] db by-day username)
         mapped (map (fn [x](zipmap [:work-line/id :work-line/project :work-line/assignment :work-line/hour] x) ) q)]
 
     

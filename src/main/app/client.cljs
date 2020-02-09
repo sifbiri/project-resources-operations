@@ -7,12 +7,30 @@
     [com.fulcrologic.fulcro.data-fetch :as df]
     [com.fulcrologic.fulcro.ui-state-machines :as uism]
     [com.fulcrologic.fulcro.components :as comp]
+    [com.fluxym.model :as model]
     [com.fulcrologic.fulcro-css.css-injection :as cssi]
     [app.model.session :as session]
     [taoensso.timbre :as log]
     [com.fulcrologic.fulcro.algorithms.denormalize :as fdn]
     [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
-    [com.fulcrologic.fulcro.inspect.inspect-client :as inspect]))
+    [com.fulcrologic.fulcro.inspect.inspect-client :as inspect]
+
+
+    ;; RAD
+    [clojure.string :as str]
+    [edn-query-language.core :as eql]
+    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
+    [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.fulcro.dom :as dom :refer [div label input]]
+    [com.fulcrologic.fulcro.routing.dynamic-routing :refer [defrouter]]
+    [com.fulcrologic.rad.authorization :as auth]
+    [com.fulcrologic.rad.form :as form :refer [defsc-form]]
+    [com.fulcrologic.rad.ids :refer [new-uuid]]
+    [com.fulcrologic.rad.report :as report :refer [defsc-report]]
+    [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
+    [com.fulcrologic.rad.type-support.decimal :as math]
+    [com.fulcrologic.rad.type-support.date-time :as datetime]))
 
 (defn ^:export refresh []
   (log/info "Hot code Remount")
@@ -21,6 +39,8 @@
 
 (defn ^:export init []
   (log/info "Application starting.")
+  ;(form/install-ui-controls! SPA ui/all-controls)
+  (attr/register-attributes! model/all-attributes)
   (cssi/upsert-css "componentcss" {:component root/Root})
   ;(inspect/app-started! SPA)
   (app/set-root! SPA root/Root {:initialize-state? true})

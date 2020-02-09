@@ -17,6 +17,20 @@
                                              "shadow.cljs.devtools.server.worker.impl"]}
 
  ;; The ssl-redirect defaulted to off, but for security should probably be on in production.
+
+
+ :com.fulcrologic.rad.database-adapters.datomic/databases
+ {:main {:datomic/schema           :dev
+         :datomic/driver           :postgresql
+         :datomic/database         "one2"
+         :datomic/prevent-changes? true
+         :postgresql/host          "localhost"
+         :postgresql/port          5432
+         :postgresql/user          "datomic"
+         :postgresql/password      "datomic"
+         :postgresql/database      "datomic"
+         }}
+ 
  :ring.middleware/defaults-config
                              {:params    {:keywordize true
                                           :multipart  true

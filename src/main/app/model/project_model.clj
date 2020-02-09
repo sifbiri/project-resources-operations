@@ -52,12 +52,14 @@
 
         ]
 
-    {:cookie-store cs ;:oauth-token security-token
+    {;:async? true
+     :cookie-store cs ;:oauth-token security-token
      :headers {"X-RequestDigest" digest
                "If-Match" "*"}
      
      :accept :json
      }
+    
 
     ))
 

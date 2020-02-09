@@ -2,7 +2,9 @@
   (:require
     [mount.core :refer [defstate args]]
     [com.fulcrologic.fulcro.server.config :refer [load-config!]]
-    [taoensso.timbre :as log]))
+    [taoensso.timbre :as log]
+    [com.fulcrologic.rad.attributes :as attr]
+    [com.fluxym.model :as model]))
 
 
 (defn configure-logging! [config]
@@ -15,6 +17,7 @@
   :start (let [{:keys [config] :or {config "config/dev.edn"}} (args)
                configuration (load-config! {:config-path config})]
            (log/info "Loaded config" config)
+           (attr/register-attributes! model/all-attributes)
            (configure-logging! configuration)
            configuration))
 

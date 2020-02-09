@@ -10,7 +10,7 @@
         "highlight.js": "^9.13.1",
         "interactjs": "^1.7.3",
         "js-joda": "^1.11.0",
-        "js-joda-timezone": "2.0.1",
+        "js-joda-timezone": "^2.1.1",
         "pure-react-carousel": "^1.24.1",
         "react-calendar-timeline": "^0.26.7",
         "react-collapsing-table": "^1.0.1",
