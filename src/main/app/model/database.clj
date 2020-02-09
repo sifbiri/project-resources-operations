@@ -13,12 +13,14 @@
 (def schema {:account/id {:db/cardinality :db.cardinality/one
                           :db/unique      :db.unique/identity}})
 
-(defn new-database [] (d2/create-conn schema))
 
-;(def db-url "datomic:sql://ops?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic")
 
-(def db-url "datomic:dev://localhost:4334/one2")
+(def db-url "datomic:sql://ops?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic")
 
-(d/create-database db-url)
+(defn new-database [] (d/create-database db-url))
+
+;(def db-url "datomic:dev://localhost:4334/one2")
+
+;(d/create-database db-url)
 
 (defstate conn :start (d/connect db-url))

@@ -150,21 +150,21 @@
        (keyword (clojure.string/replace-first (name x) #"-" "/")) )
      response)
 
-    (map #(select-keys % resource-keys) response)
-    (map
+    (pmap #(select-keys % resource-keys) response)
+    (pmap
      (fn [x] (update x :resource/created-date #(when-not (nil? %)
                                                  (clojure.instant/read-instant-date %))))
      response)
 
-    (map
+    (pmap
      (fn [x] (update x :resource/modified-date #(when-not (nil? %)
                                                   (clojure.instant/read-instant-date %))))
      response)
 
 
-    (map (fn [x] (update x :resource/id #(uuid %))) response)
+    (pmap (fn [x] (update x :resource/id #(uuid %))) response)
     
-    ;; (map (fn [x] (assoc x
+    ;; (pmap (fn [x] (assoc x
     ;;                ;:resource/active? true
     ;;                     ;:resource/profile :profile/user
     ;;                     )) response)
@@ -208,27 +208,27 @@
 
       
 
-      (map #(select-keys % assignment-phased-keys) response)
+      (pmap #(select-keys % assignment-phased-keys) response)
 
       
 
-      (map
+      (pmap
        (fn [x] (update x :assignment/work #(when-not (nil? %)
                                              (clojure.edn/read-string %))))
        response)
 
-      (map
+      (pmap
        (fn [x] (update x :time/by-day  #(when-not (nil? %)
                                           (clojure.instant/read-instant-date %))))
        response)
 
-      (map
+      (pmap
        (fn [x] (update x :assignment/modified-date
                        #(when-not (nil? %)
                           (clojure.instant/read-instant-date %))))
        response)
 
-      (map
+      (pmap
        (fn [x] (update x :task/start-date
                        #(when-not (nil? %)
                           (clojure.instant/read-instant-date %))))
@@ -236,7 +236,7 @@
 
        )
 
-      (map
+      (pmap
        (fn [x] (update x :task/end-date
                        #(when-not (nil? %)
                           (clojure.instant/read-instant-date %))))
@@ -244,17 +244,17 @@
 
        )
 
-      (map #(s/rename-keys % {:time/by-day :assignment/by-day}) response)
+      (pmap #(s/rename-keys % {:time/by-day :assignment/by-day}) response)
 
       
 
-      (map (fn [x] (update x :task/id #(uuid %))) response)
-      (map (fn [x] (update x :project/id #(uuid %))) response)
-      (map (fn [x] (update x :assignment/id #(uuid %))) response)
-      (map (fn [x] (update x :resource/id #(uuid %))) response)
+      (pmap (fn [x] (update x :task/id #(uuid %))) response)
+      (pmap (fn [x] (update x :project/id #(uuid %))) response)
+      (pmap (fn [x] (update x :assignment/id #(uuid %))) response)
+      (pmap (fn [x] (update x :resource/id #(uuid %))) response)
 
       
-      (map (fn [x] (let [task-name (:task/name x)
+      (pmap (fn [x] (let [task-name (:task/name x)
                          task-id (:task/id x)
                          task-is-active (:task/is-active x )
                          task-start-date (:task/start-date x)
@@ -352,7 +352,7 @@
        (keyword (clojure.string/replace-first (name x) #"-" "/")) )
      response)
 
-    (map
+    (pmap
      (fn [x] (update x :task/start-date
                      #(when-not (nil? %)
                         (clojure.instant/read-instant-date %))))
@@ -360,7 +360,7 @@
 
      )
 
-    (map
+    (pmap
      (fn [x] (update x :task/finish-date
                      #(when-not (nil? %)
                         (clojure.instant/read-instant-date %))))
@@ -370,9 +370,9 @@
 
     
 
-    (map (fn [x] (update x :task/id #(uuid %))) response)
+    (pmap (fn [x] (update x :task/id #(uuid %))) response)
 
-    (map (fn [x]
+    (pmap (fn [x]
            (let [task-name (:task/name x)
                  task-id (:task/id x)
                  task-is-active (:task/is-active x )
@@ -417,7 +417,7 @@
                :task/end-date task-end-date))))
          response)
 
-                                        ;(map #(select-keys % task-props) response)
+                                        ;(pmap #(select-keys % task-props) response)
     response))
 
 
@@ -433,39 +433,39 @@
                      (json/read-str :key-fn keyword)
                      :value)]
     (->> response
-         ;(map #(select-keys % [:Name :Id]) )
-         (mapv #(s/rename-keys % {:Name :project/name :Id :project/id}) )
+         ;(pmap #(select-keys % [:Name :Id]) )
+         (pmap #(s/rename-keys % {:Name :project/name :Id :project/id}) )
          (cske/transform-keys csk/->kebab-case-keyword )
          (cske/transform-keys
           (fn [x]
             (keyword (clojure.string/replace-first (name x) #"-" "/")) )             )
-         (map #(select-keys % project-keys) )
-         (map (fn [x] (update x :project/id #(uuid %))))
-         (map
+         (pmap #(select-keys % project-keys) )
+         (pmap (fn [x] (update x :project/id #(uuid %))))
+         (pmap
           (fn [x] (update x :project/start-date #(when-not (nil? %)
                                                    (clojure.instant/read-instant-date %)))))
-         (map
+         (pmap
           (fn [x] (update x :project/finish-date #(when-not (nil? %)
                                                     (clojure.instant/read-instant-date %)))))
-         (map
+         (pmap
           (fn [x] (update x :project/work #(when-not (nil? %)
                                              (clojure.edn/read-string %)))))
-         (map
+         (pmap
           (fn [x] (update x :project/created-date #(when-not (nil? %)
 
                                                      (clojure.instant/read-instant-date %))))
           )
          
-         (map
+         (pmap
           (fn [x] (update x :project/modified-date #(when-not (nil? %)
 
                                                       (clojure.instant/read-instant-date %)))))
-         (map
+         (pmap
           (fn [x] (update x :project/last-published-date #(when-not (nil? %)
 
                                                             (clojure.instant/read-instant-date %))))
           )
-         #_(map
+         #_(pmap
           (fn [x] (let
                       [assignments
 
@@ -475,7 +475,7 @@
 
                     (remove-nils (assoc x
                                    
-                                   :project/assignments (mapv (fn [x] (dissoc x :project/name))  assignments)))))
+                                   :project/assignments (pmap (fn [x] (dissoc x :project/name))  assignments)))))
           ))))
 
 
@@ -508,12 +508,18 @@
 
 
 ;; TODO transact per project
+
+(defn first-time-db []
+  (println "seeding schema")
+  (transact-all (d/connect db-url) "resources/edn/schema.edn")
+  (update-db))
+
 (defn update-db []
   (println "delete projects...........")
   (d/transact
    (d/connect db-url)
 
-   (mapv
+   (pmap
     (fn [id]
 
       [:db/retractEntity id])
@@ -561,7 +567,7 @@
                                                   :action/status :closed
                                                   :action/due-date (t/inst (t/now))}]}])
   
-  (mapv (comp (fn [m] (update m :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
+  (pmap (comp (fn [m] (update m :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
         )
 
 
