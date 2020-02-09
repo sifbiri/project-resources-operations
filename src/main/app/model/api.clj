@@ -38,6 +38,7 @@
                    :project/finish-date
                    #_:project/author-name  :project/start-date
                    :project/name
+                   :project/work
                    :project/created-date
                    :project/modified-date
                    :project/last-published-date
@@ -465,8 +466,8 @@
 
                                                             (clojure.instant/read-instant-date %))))
           )
-         #_(pmap
-          (fn [x] (let
+         (pmap
+            (fn [x] (let
                       [assignments
 
 
@@ -535,7 +536,9 @@
 
 
 (defn first-time-db []
+  (d/create-database db-url)
   (println "seeding schema")
+  
   (transact-all (d/connect db-url) "resources/edn/schema.edn")
   (update-db))
 
