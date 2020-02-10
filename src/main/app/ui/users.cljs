@@ -175,7 +175,7 @@
                 
                 (ui-list-content {:floated :right}
                                  email-address)
-                (ui-list-content {} name)
+                (ui-list-content {:floated :left} name)
                 ))
 
 

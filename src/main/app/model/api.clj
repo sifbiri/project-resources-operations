@@ -182,7 +182,7 @@
 (defn get-resource
   [id]
   (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
-        val  (d/entity (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:resource/id  id])]
+        val  (d/entity (d/db (d/connect db-url)) [:resource/id  id])]
     
     (if (number? (:db/id id)) id (remove-nils resource-server))))
 
@@ -289,7 +289,7 @@
     (let [one-r (assignement-phased-project-id id skip)]
       (if (seq one-r)
         (do
-          (println "R" one-r)
+          
           (recur (concat r one-r) (+ skip 2000)))
         r))))
 
@@ -334,6 +334,7 @@
 
 
 
+
 (defn tasks-for-project
   [id]
   (as-> (-> (client/get
@@ -348,7 +349,7 @@
             
             ) response
 
-    (cske/transform-keys
+   (cske/transform-keys
      (fn [x]
        (keyword (clojure.string/replace-first (name x) #"-" "/")) )
      response)
@@ -388,12 +389,7 @@
                  parent-task-id (uuid (:parent/task-id x))
                  
                  task-project [:project/id (uuid (:project/id x))]
-                 id (d/q '[:find ?e .
-                           :in $ ?tid
-                           :where
-                           [?e :task/id ?tid]
-
-                           ] (d/db (d/connect "datomic:dev://localhost:4334/one2")) task-id)]
+                 ]
 
 
                                         ;(println "ID 2 " )
@@ -466,18 +462,15 @@
 
                                                             (clojure.instant/read-instant-date %))))
           )
+         (pmap remove-nils)
          (pmap
-            (fn [x] (let
-                      [assignments
-
-
-                       
-                       (all-assignments (str (:project/id x)))]
-
-                    (remove-nils (assoc x
-                                   
-                                   :project/assignments (pmap (fn [x] (dissoc x :project/name))  assignments)))))
-          ))))
+          (fn [x] (remove-nils (assoc x
+                                 :project/assignments (pmap (fn [x] (dissoc x :project/name))  (all-assignments (str (:project/id x))))
+                                 :project/tasks (tasks-for-project (str (:project/id x))))))
+            
+            )
+         ;(pmap (fn [x] (:assoc)))
+         )))
 
 
 
@@ -574,7 +567,7 @@
                                                   :action/status :closed
                                                   :action/due-date (t/inst (t/now))}]}])
   
-  (pmap (comp (fn [m] (update m :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
+  (pmap (comp (fn [m] (update m :action-list/actions (fn [x] (pmap #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
         )
 
 
@@ -586,6 +579,5 @@
   (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
 
   )
-
 
 

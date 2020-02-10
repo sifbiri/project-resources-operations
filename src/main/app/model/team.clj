@@ -8,13 +8,13 @@
    [datomic.api :as d]))
 
 
-(pc/defresolver team-resolver [env {:team/keys [name]}]
+(pc/defresolver team-resolver [{:keys [db connection]} {:team/keys [name]}]
   {::pc/input  #{:team/name}
    ::pc/output [:team/name :team/type :db/id
                 {:team/lead [:resource/name :resource/id :resource/email-address]}
                 {:team/resources [:resource/name :resource/id :resource/email-address]} ]}
   
-  (d/pull (d/db (d/connect "datomic:dev://localhost:4334/one2")) [:db/id :team/name :team/type {:team/resources [:resource/name :resource/email-address :resource/id]} {:team/lead [:resource/name :resource/email-address :resource/id]} ] [:team/name name]))
+  (d/pull db [:db/id :team/name :team/type {:team/resources [:resource/name :resource/email-address :resource/id]} {:team/lead [:resource/name :resource/email-address :resource/id]} ] [:team/name name]))
 
 
 
@@ -129,7 +129,7 @@
                   :keys team/name
                   :where
                   [?e :team/name ?name]
-                  ] (d/db (d/connect "datomic:dev://localhost:4334/one2")))})
+                  ] db)})
 
 
 

@@ -561,7 +561,7 @@
 
 (pc/defmutation get-or-create-current-gov-review-week [{:keys [db connection]} {:keys [gov-review-week/week project/id]}]
   {::pc/sym `get-or-create-current-gov-review-week
-   ::pc/params [:gov-review-week/week :project-info/id]
+   ::pc/params [:gov-review-week/week :project/id]
    ::pc/output [:gov-review-week/week
                 :gov-review-week/status
                 :gov-review-week/exec-summary-text
