@@ -4,8 +4,11 @@
   *look* of a real back-end without having quite the amount of setup to understand for a beginner."
   (:require
    [datomic.api :as d]
+   [com.fulcrologic.rad.database-adapters.datomic :as datomic]
+   [com.fluxym.model :refer [all-attributes]]
+   [app.server-components.config :refer [config]]
    [datascript.core :as d2]
-    [mount.core :refer [defstate]]))
+   [mount.core :refer [defstate]]))
 
 ;; In datascript just about the only thing that needs schema
 ;; is lookup refs and entity refs.  You can just wing it on
@@ -22,3 +25,9 @@
 ;(d/create-database db-url)
 
 (defstate conn :start (d/connect db-url))
+
+(defstate ^{:on-reload :noop} datomic-connections
+  :start
+  (datomic/start-databases all-attributes config))
+
+

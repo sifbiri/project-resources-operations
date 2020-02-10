@@ -19,6 +19,10 @@
     [app.model.item :as item]
     [app.model.team :as team]
     [datomic.api :as d]
+    [com.fulcrologic.rad.database-adapters.datomic :as datomic]
+    [app.model.database :refer [datomic-connections]]
+    [com.fulcrologic.rad.form :as form]
+    
     [app.server-components.config :refer [config]]
     [app.model.database :as db]))
 
@@ -30,7 +34,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [automatic-resolvers project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers])
+(def all-resolvers [automatic-resolvers form/save-form form/delete-entity project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -89,10 +93,14 @@
                                     (p/env-wrap-plugin (fn [env]
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
                                                          ;; environment, like the server config, database connections, etc.
-                                                         (assoc env
-                                                           :db (d/db db-connection) ; real datomic would use (d/db db-connection)
-                                                           :connection db-connection
-                                                           :config config)))
+                                                         
+                                                         (-> env
+
+                                                             (datomic/add-datomic-env {:dev (:ops datomic-connections)})
+                                                             (assoc 
+                                                               :db (d/db db-connection) ; real datomic would use (d/db db-connection)
+                                                               :connection db-connection
+                                                               :config config))))
                                     (preprocess-parser-plugin log-requests)
                                     query-params-to-env-plugin
                                     p/error-handler-plugin

@@ -3,10 +3,13 @@
    [com.fulcrologic.rad.attributes :as attr :refer [defattr]]))
 
 (defattr id :account/id :uuid
-  {::attr/identity? true})
+  {::attr/identity? true
+   :com.fulcrologic.rad.database-adapters.datomic/schema :dev})
 
-(defattr account-name :account/name :string
-  {::attr/required? true})
+(defattr name2 :account/name2 :string
+  {:com.fulcrologic.rad.database-adapters.datomic/schema :dev
+   :com.fulcrologic.rad.database-adapters.datomic/entity-ids #{:account/id}
+   ::attr/required? true})
 
-(def attributes [id name])
+(def attributes [id name2])
 (def resolvers [])

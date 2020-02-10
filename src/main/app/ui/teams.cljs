@@ -117,11 +117,6 @@
 
    ))
 
-
-
-
-
-
 ;; TODO make it remote
 
 
@@ -135,10 +130,7 @@
            [:resource/options '_]]
    :ident (fn [] [:team/id (:db/id props)])
    :souldComponentUpdate (fn [_ _ _ ] true)
-   :initial-state (fn [params] {})
-   
-
-   }
+   :initial-state (fn [params] {})}
   
   (let [filtered-resources (filterv #(not= (:resource/profile %) :profile/user) options2)]
     

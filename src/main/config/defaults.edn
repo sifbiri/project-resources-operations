@@ -20,9 +20,9 @@
 
 
  :com.fulcrologic.rad.database-adapters.datomic/databases
- {:main {:datomic/schema           :dev
+ {:ops {:datomic/schema           :dev
          :datomic/driver           :postgresql
-         :datomic/database         "one2"
+         :datomic/database         "ops"
          :datomic/prevent-changes? true
          :postgresql/host          "localhost"
          :postgresql/port          5432

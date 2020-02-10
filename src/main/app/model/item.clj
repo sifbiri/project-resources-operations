@@ -25,7 +25,7 @@
    ::pc/output [:item/title :item/in-stock :item/price {:item/category [:category/id]}]}
   (get @items id))
 
-(pc/defresolver all-items-resolver [env params]
+#_(pc/defresolver all-items-resolver [env params]
   {::pc/output [{:item/all-items [:item/id]}]}
   
   (let [v (get-in env [:ast :params :work-day])]
@@ -58,4 +58,4 @@
     (cond-> {:item/id real-id}
       new? (assoc :tempids {id real-id}))))
 
-(def resolvers [item-resolver all-items-resolver save-item])
+(def resolvers [item-resolver #_all-items-resolver save-item])

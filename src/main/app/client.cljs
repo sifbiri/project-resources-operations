@@ -15,7 +15,7 @@
     [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
     [com.fulcrologic.fulcro.inspect.inspect-client :as inspect]
 
-
+    [com.fulcrologic.rad.rendering.semantic-ui.semantic-ui-controls :as ui-controls]
     ;; RAD
     [clojure.string :as str]
     [edn-query-language.core :as eql]
@@ -39,10 +39,11 @@
 
 (defn ^:export init []
   (log/info "Application starting.")
-  ;(form/install-ui-controls! SPA ui/all-controls)
+  (form/install-ui-controls! SPA ui-controls/all-controls)
   (attr/register-attributes! model/all-attributes)
   (cssi/upsert-css "componentcss" {:component root/Root})
-  ;(inspect/app-started! SPA)
+
+  (inspect/app-started! SPA)
   (app/set-root! SPA root/Root {:initialize-state? true})
   (dr/initialize! SPA)
   (log/info "Starting session machine.")

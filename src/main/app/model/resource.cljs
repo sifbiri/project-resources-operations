@@ -28,11 +28,16 @@
                 r2 (into []
                          (map #(set/rename-keys % {:resource/id   :value
                                         ;:resource/email-address :checkbox/key
-                                                :resource/name :text})
-                           resources-reduced))]
+                                                   :resource/name :text})
+                              resources-reduced))
+                r3 (into []
+                         (map #(-> % (select-keys [:resource/name] ) (set/rename-keys {:resource/name :title}))
+                              resources-reduced))]
             
             (swap! state assoc :resource/options r)
             (swap! state assoc :resource/options2 r2)
+            (swap! state assoc :resource/suggestions r3)
+            
             
 
             

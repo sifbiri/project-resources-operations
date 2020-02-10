@@ -4,6 +4,7 @@
 
 
    [app.ui.users :as users]
+   [com.fluxym.model.account :as account]
    
    [app.model.project :as project]
 
@@ -28,7 +29,7 @@
    ["semantic-ui-react/dist/commonjs/modules/Dropdown/Dropdown" :default Dropdown]
    [clojure.set :as set]
    [clojure.string :as str]
-   [app.math :as math]
+   [app.math :as math2]
    ["react-number-format" :as NumberFormat]
    ["react-country-flag" :as  ReactCountryFlag]
                                         ;["react-collapsing-table" :as ReactCollapsingTable]
@@ -46,7 +47,10 @@
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
-   [app.model.item :as item]
+   [app.model.item :as item2]
+   [com.fulcrologic.rad.type-support.decimal :as math]
+   [com.fluxym.model.line-item :as line-item]
+   [com.fluxym.model.item :as item]
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
    [com.fulcrologic.fulcro.ui-state-machines :as uism :refer [defstatemachine]]
@@ -110,12 +114,18 @@
 
 
    [com.fulcrologic.semantic-ui.elements.step.ui-step :refer [ui-step]]
+   [com.fulcrologic.semantic-ui.modules.search.ui-search :refer [ui-search]]
+   
+   [com.fulcrologic.semantic-ui.modules.search.ui-search-category :refer [ui-search-category]]
+   [com.fulcrologic.semantic-ui.modules.search.ui-search-result :refer [ui-search-result]]
+   [com.fulcrologic.semantic-ui.modules.search.ui-search-results :refer [ui-search-results]]
    [com.fulcrologic.semantic-ui.elements.step.ui-step-content :refer [ui-step-content]]
    [com.fulcrologic.semantic-ui.elements.step.ui-step-description :refer [ui-step-description]]
    [com.fulcrologic.semantic-ui.elements.step.ui-step-group :refer [ui-step-group]]
    [com.fulcrologic.semantic-ui.elements.step.ui-step-title :refer [ui-step-title]]
 
-   
+   [com.fulcrologic.rad.form :as form :refer [defsc-form]]
+   [com.fulcrologic.rad.ids :refer [new-uuid]]
 
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [cljs-time.core :as tt]
@@ -232,10 +242,13 @@
   )
 
 
-(defsc ActionForm [this {:action/keys [action owner status due-date ] :ui/keys [new? loading?] :db/keys [id] :as props} ]
+(defsc ActionForm [this {:action/keys [action owner status due-date ] :ui/keys [new? loading? search-result] :db/keys [id] :as props} ]
   {:query [:db/id :action/action :action/owner :action/status :action/due-date :ui/new? :ui/loading? fs/form-config-join
-           [:resource/options2 '_]]
+           :ui/search-result
+           [:resource/options2 '_]
+           ]
    :ident [:action/id :db/id]
+   :initial-state {:ui/search-result [{:title "Sardine"}]}
    #_#_:pre-merge   (fn [{:keys [data-tree]}]
                       (js/console.log "DATA TREE" data-tree)
                       (fs/add-form-config ActionForm data-tree))
@@ -243,10 +256,10 @@
 
    }
   
-  (let [options (get props :resource/options2)
-        options2 (map (fn [{:keys [text] :as m}] (-> m (assoc :value text))) options)]
+  (let [suggestions (get props :resource/suggestions)
+        ]
     
-    (js/console.log "OPTIONS " props)
+    (js/console.log "SERACH" search-result)
     (ui-container {:fluid true}
                  (ui-form {}
                           (ui-form-group {}
@@ -265,7 +278,7 @@
                                                                       :onChange #(m/set-string! this :action/owner :value (str (.-value %2)))
                                                                      ; :onClick #(js/console.log "X" %1 "Y" %2)
                                                                       ;:onSearchChange #(m/set-string! this :action/owner :value (str (.-value %2))) 
-                                                                      :options options2
+                                                                      ;:options options2
                                                                       :selectOnBlur false
                                                                       ;:searchQuery owner
                                                                       :noResultsMessage ""
@@ -273,10 +286,30 @@
                                         ; :searchQuery owner
                                                                       }
                                                                      ))
-                                         (ui-form-input  {:label "Owner" :type "input" 
+
+
+                                         
+                                         
+
+                                         #_(ui-form-input  {:label "Owner" :type "input" 
                                                           :value owner
                                                           :error (= :invalid (project/action-validator props :action/owner))
                                                           :onChange #(m/set-string! this :action/owner :event %)})
+
+                                         (ui-form-field {}
+                                                        (dom/label {} "Owner")
+                                                        (ui-search {:icon (ui-icon {})
+                                                                    :results search-result
+                                                                    :selectFirstResult false
+                                                                    :onResultSelect #(m/set-string! this :action/owner :value (-> %2 (.-result) (.-title)))
+                                                                    :showNoResults false
+                                                                    :onSearchChange (fn [x y]
+                                                                                      
+                                                                                      (let [val (.-value y)
+                                                                                            filtred-result (filter (fn [x] (str/includes? (str/lower-case (:title x)) (str/lower-case val))) suggestions)]
+                                                                                        (m/set-string! this :action/owner :value (.-value y))
+                                                                                        (m/set-value! this :ui/search-result filtred-result)))
+                                                                    :value owner}))
 
                                          (ui-form-field { }
                                                         (dom/label {} "Status")
@@ -293,7 +326,9 @@
                                                         (dom/input {:type "date" :size "mini"  
                                                                     :onChange #(m/set-value! this :action/due-date (js/Date. (.-value (.-target %))))
                                                                     :value (apply str (take 10 (str (t/instant due-date))))}))
-                          )
+                                         )
+                          (ui-form-group {}
+                                         )
                  #_(ui-button {:basic true :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
                                                              (comp/transact! this [(project/try-save-action {:db/id id :diff diff})]))) }
                               "Save")))))
@@ -304,8 +339,9 @@
   {:query [:db/id :action/action :action/owner :action/status :action/due-date ;fs/form-config-join
            :ui/new?
            :ui/saving?
+           :ui/search-result
            :ui/modal-open?
-           [:resource/options2 '_]
+           [:resource/suggestions '_]
            fs/form-config-join]
    :ident [:action/id :db/id]
    :form-fields #{:action/action :action/owner :action/status :action/due-date}
@@ -860,9 +896,11 @@
                                                                                                                 :replace [:component/id :gov-review :gov-review/new-action])) } "Action")
                                                           (ui-dropdown-item {} "Risk"))))
 
+                  
+                  
 
 
-                  (ui-button  {:basic true #_#_:style {:alignSelf "flex-end" :position "relative" :left "380px" :marginTop "10px"} :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit")
+                  (ui-button  {:basic true :style {:marginLeft "25px"} :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit")
                   
                   (ui-modal {:open (:ui/modal-open? new-action) :onClose #(comp/transact! this [(close-new-modal {:action-id (:db/id new-action) :action-list-id id})])}
                             (ui-modal-content {} (ui-action-form new-action))
@@ -1072,6 +1110,26 @@
 (declare ProjectPanel)
 (declare AdminProjects)
 
+(form/defsc-form AccountForm [this props]
+  {::form/id                account/id
+   ::form/attributes        [account/name2]
+   ::form/cancel-route      (dr/path-to ProjectInfo)
+   ::form/route-prefix      "address"})
+
+
+
+(form/defsc-form LineItemForm [this props]
+  {::form/id           line-item/id
+   ::form/attributes   [line-item/item line-item/quantity]
+   ::form/cancel-route ["landing-page"]
+   ::form/route-prefix "line-item"
+   ::form/layout       [[:line-item/item :line-item/quantity]]
+   ::form/subforms     {:line-item/item {::form/ui       form/ToOneEntityPicker
+                                         ::form/pick-one {:options/query-key :item/all-items
+                                                          :options/subquery  [:item/id :item/name :item/price]
+                                                          :options/transform (fn [{:item/keys [id name price]}]
+                                                                               {:text (str name " - " (math/numeric->currency-str price)) :value [:item/id id]})}}}})
+
 (defsc RiskIssues [this {:keys [] :as props}]
   {:query []
    :ident (fn [] [:component/id :risk-issues])
@@ -1082,7 +1140,7 @@
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine ActionList RiskIssues]}
+  {:router-targets [ProjectInfo GovReview TimeLine ActionList RiskIssues AccountForm LineItemForm]}
   (case current-state
     :pending (dom/div "Loading...")
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -1157,7 +1215,8 @@
 
                               (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
                                                                                                                    (m/set-value! this :ui/active-item :risk-issues)
-                                                                                                                   (dr/change-route this (dr/path-to RiskIssues ))
+                                                                                                                   (dr/change-route this (dr/path-to RiskIssues {}))
+                                                                                                                   ;(dr/change-route this (dr/path-to RiskIssues ))
                                                                                                                    )})
                               (ui-menu-item {:name "Action List" :active (= active-item :action-list) :onClick (fn []
                                                                                                                  (m/set-value! this :ui/active-item :action-list)
