@@ -596,7 +596,7 @@
                       [?p :project-info/id ?id]
                       ] db id week)]
     
-    (when (nil? entity)
+    (if (nil? entity)
       (let [not-nil? (d/pull db
                              [:project-info/id]
                              [:project-info/id id])
@@ -626,9 +626,10 @@
             ]
         
         @(d/transact connection
-                     [tx])))
-    
-    (ffirst (d/q '[:find (pull ?e [:gov-review-week/week
+                     [tx])
+        tx)
+      
+      (ffirst (d/q '[:find (pull ?e [:gov-review-week/week
                             :gov-review-week/status
                             :gov-review-week/exec-summary-text
                             :gov-review-week/exec-summary-color
@@ -653,7 +654,10 @@
                    [?e :gov-review-week/week ?week]
                    [?e :gov-review-week/project-info ?p]
                    [?p :project-info/id ?id]
-                   ] db id week ))
+                   ] db id week )))
+    
+    
+    
     ))
 
 
