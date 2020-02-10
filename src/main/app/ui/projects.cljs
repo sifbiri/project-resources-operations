@@ -380,7 +380,7 @@
     (ui-container {}
                   (if (df/loading? status)
                     (ui-loader {})
-                    (ui-table {:color :blue :striped true }
+                    (ui-table {:color :blue :striped true :celled true}
                               (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date"])))
                               
                               (ui-table-body {} (map (fn [action] (ui-action-row (comp/computed action {:remove-action remove-action :save-action save-action}) )) actions ))
@@ -1072,10 +1072,17 @@
 (declare ProjectPanel)
 (declare AdminProjects)
 
+(defsc RiskIssues [this {:keys [] :as props}]
+  {:query []
+   :ident (fn [] [:component/id :risk-issues])
+   :route-segment ["risk-issues"]
+   :initial-state {}}
+  (ui-container {:text true}
+                (ui-segment {:textAlign :center} "Comming soon.")))
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine ActionList]}
+  {:router-targets [ProjectInfo GovReview TimeLine ActionList RiskIssues]}
   (case current-state
     :pending (dom/div "Loading...")
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -1150,7 +1157,7 @@
 
                               (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
                                                                                                                    (m/set-value! this :ui/active-item :risk-issues)
-                                                                                                                   
+                                                                                                                   (dr/change-route this (dr/path-to RiskIssues ))
                                                                                                                    )})
                               (ui-menu-item {:name "Action List" :active (= active-item :action-list) :onClick (fn []
                                                                                                                  (m/set-value! this :ui/active-item :action-list)
@@ -1193,9 +1200,7 @@
 
 
 
-(defsc RiskIssues [this {:keys [] :as props}]
-  {:route-segment ["risk-issues"]}
-  (dom/p {} "Risk & Issues"))
+
 
 (defsc AdminProject [this {:keys [project/id]}]
   {:query [:project/id :project/name {:project-info/project-lead [:resource/id :resource/name]} 

@@ -536,23 +536,12 @@
   (update-db))
 
 
-
-
-
 (def my-pool (at-at/mk-pool))
 
 (def schedule (at-at/every (t/millis (t/new-duration 250 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 400 :minutes))))
                                         ;(at-at/stop schedule)
-                                        ;
+                                        ;(def db-uri "datomic:dev://localhost:4334/one2")
                                         ;(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
-
-
-
-
-
-
-
-
 
 (comment
   (d/transact connection [{:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"
@@ -579,5 +568,6 @@
   (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
 
   )
+
 
 
