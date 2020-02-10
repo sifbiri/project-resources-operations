@@ -380,7 +380,7 @@
     (ui-container {}
                   (if (df/loading? status)
                     (ui-loader {})
-                    (ui-table {}
+                    (ui-table {:color :blue :striped true }
                               (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date"])))
                               
                               (ui-table-body {} (map (fn [action] (ui-action-row (comp/computed action {:remove-action remove-action :save-action save-action}) )) actions ))
@@ -1100,17 +1100,16 @@
   
   )
 
-(defsc ProjectPanel [this {:keys [project-panel/router project-panel/current-project project-panel/current-project-id] :as props}]
+(defsc ProjectPanel [this {:keys [project-panel/router project-panel/current-project project-panel/current-project-id ui/active-item] :as props}]
   {:query           [:project-panel/current-project-id { :project-panel/router (comp/get-query ProjectPanelRouter) } {:project-panel/current-project (comp/get-query Project) }
-                     [::uism/asm-id '_]]
+                     [::uism/asm-id '_]
+                     :ui/active-item]
    :ident   (fn [] [:component/id :project-panel])
-   :initial-state {:project-panel/router {}}
+   :initial-state {:project-panel/router {} :ui/active-item :info}
    :route-segment   ["project-panel" :project-panel/current-project-id]
                                         ;:form-fields #{:project-panel/project-lead :project-panel/functional-lead :project-panel/technical-lead}
                                         ;:pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config ProjectPanel data-tree))
-   :initLocalState (fn [this props]
-                     {:active-item :info
-                      :all? false})
+   
    
    :will-enter (fn [app {:keys [project-panel/current-project-id] :as params}]
                  (js/console.log "params2" current-project-id)
@@ -1132,48 +1131,35 @@
                             )}
 
   
-  (let [active-item (comp/get-state this :active-item)]
-    
-    
-    
-
-                                        ;(dom/h3 {:style {:textAlign "center"}} name)
-    
-
-
-    
-    (js/console.log "PROPS" (comp/get-initial-state ProjectPanel))
-
+  (let []
     [(dom/h3 {:style {:color "#3281b9"}} (:project/name current-project))
      (ui-grid-column {:width 4} 
                      (ui-menu {:fluid true :vertical true :tabular true}
                               (ui-menu-item {:name "Info" :active (= active-item :info) :onClick (fn [e]
-                                                                                                   (comp/update-state! this assoc :active-item :info )
+                                                                                                   ;(comp/update-state! this assoc :active-item :info )
+                                                                                                   (m/set-value! this :ui/active-item :info)
                                                                                                    (js/console.log "current-project-id" current-project-id)
                                                                                                    (dr/change-route this (dr/path-to ProjectInfo {:project-info/id current-project-id})))} )
                               (ui-menu-item {:name "Governance Review" :active (= active-item :governance-review) :onClick (fn []
-                                                                                                                             
-                                                                                                                             (comp/update-state! this assoc :active-item :governance-review)
+                                                                                                                             (m/set-value! this :ui/active-item :governance-review)
 
-                                                                                                                             
-                                        ;
-                                        ;(merge/merge-component! this GovReviewWeek {:db/id 1})
                                                                                                                              (js/console.log "CONSOLE ")
                                                                                                                              ;; check this out! TODO 
                                                                                                                              (dr/change-route this (dr/path-to  GovReview {:gov-review/id current-project-id  } )))} )
 
 
                               (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
-                                                                                                                   (comp/update-state! this assoc :active-item :risk-issues )
+                                                                                                                   (m/set-value! this :ui/active-item :risk-issues)
+                                                                                                                   
                                                                                                                    )})
                               (ui-menu-item {:name "Action List" :active (= active-item :action-list) :onClick (fn []
-                                                                                                                 (comp/update-state! this assoc :active-item :action-list )
+                                                                                                                 (m/set-value! this :ui/active-item :action-list)
+                                                                                                                 
                                                                                                                  (dr/change-route this (dr/path-to  ActionList {:action-list/id  current-project-id} ))
                                                                                                                  )} )
                               (ui-menu-item {:name "TimeLine" :active (= active-item :timeline) :onClick (fn []
-                                                                                                           (comp/update-state! this assoc :active-item :timeline )
-                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  current-project-id} ))
-                                                                                                           )} )))
+                                                                                                           (m/set-value! this :ui/active-item :timeline)
+                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  current-project-id} ))                                                                                                           )} )))
 
      (ui-grid-column {:width 12} 
                      (ui-project-panel-router router))]
