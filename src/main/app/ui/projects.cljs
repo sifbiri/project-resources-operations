@@ -358,7 +358,7 @@
   {:query [:action-list-label/count :action-list-label/overdue? :tempids]
    :initial-state {:action-list-label/count :param/count :action-list-label/overdue? :param/overdue?}}
 
-  (ui-label {:circular true :color (if overdue? "red" "grey") :style {:position "relative" :top "-3px"} } count))
+  (ui-label {:circular true :color (if overdue? "red" "grey") :style {:position "relative" :top "-3px"} } (if (nil? count) 0 count)))
 
 (defsc ProjectPanelQ [this {:keys [  ] :as props}]
   {:query           [ :project-panel/id
