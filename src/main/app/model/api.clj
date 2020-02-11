@@ -569,5 +569,11 @@
 
   )
 
+"datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
+
+;(d/transact (d/db (d/connect db-url)) [{:action-list/id #uuid  :action-list/actions [new-values]}] )
+
+
+
 
 

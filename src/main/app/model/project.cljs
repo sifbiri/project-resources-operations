@@ -3,6 +3,8 @@
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
             [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
+            [com.fulcrologic.fulcro.data-fetch :as df]
+            [app.application :as a :refer [SPA]]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
             [clojure.set :as set]
             [app.math :as math]
@@ -39,18 +41,23 @@
     :keys      [diff]
     :as        params}]
   (action [{:keys [app state]}]
-          (swap! state assoc-in [:action/id id :ui/saving?] true))
-  (remote [env] true)
+          (swap! state assoc-in [:action/id id :ui/saving?] true)
+          (let [ProjectPanelQ (comp/registry-key->class :app.ui.projects/ProjectPanelQ)]
+            ))
+  (remote [env] #_(let [ActionListLabel (comp/registry-key->class :app.ui.projects/ActionListLabel)]
+                    (-> env
+                        (m/returning ActionListLabel)
+                        (m/with-target
+                          [:component/id :project-panel :>/action-list-label])))
+          env)
+  
   (ok-action [{:keys [state tempid->realid] :as env}]
-             (js/console.log "ID 1" (tempid->realid id))
-             (js/console.log "ID 2" id)
-             
              (let [id (or (tempid->realid id) id)]
-               
                (swap! state (fn [s]
                               (-> s
                                   (fs/entity->pristine* [:action/id id])
-                                  (update-in [:action/id id] assoc :ui/new? false :ui/saving? false :ui/modal-open? false))))))
+                                  (update-in [:action/id id] assoc :ui/new? false :ui/saving? false :ui/modal-open? false))))
+               ))
   (error-action [{:keys [state]}]
                 (js/alert "Failed to save item")
                 (swap! state (fn [s]

@@ -44,6 +44,7 @@
    [com.fulcrologic.fulcro.dom.html-entities :as ent]
    [com.fulcrologic.fulcro.dom.events :as evt]
    [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
+   [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
@@ -242,6 +243,16 @@
   )
 
 
+
+
+
+
+(defmutation set-due-date [{:keys [ref date]}]
+  (action [{:keys [state ref] :as env}]
+          (js/console.log "REF" date)
+          (ns/update-caller! env  assoc :action/due-date date)
+          ))
+
 (defsc ActionForm [this {:action/keys [action owner status due-date ] :ui/keys [new? loading? search-result] :db/keys [id] :as props} ]
   {:query [:db/id :action/action :action/owner :action/status :action/due-date :ui/new? :ui/loading? fs/form-config-join
            :ui/search-result
@@ -324,18 +335,55 @@
                                                         (dom/label 
                                                          "Due Date")
                                                         (dom/input {:type "date" :size "mini"  
-                                                                    :onChange #(m/set-value! this :action/due-date (js/Date. (.-value (.-target %))))
+                                                                    :onChange (fn [x y]
+                                                                                ;(m/set-value! this :action/due-date (js/Date. (.-value (.-target %))))
+                                                                                (comp/transact! this [(set-due-date {:date (js/Date. (.-value (.-target x))) :ref [:action/id id]})] {:refresh []}))
                                                                     :value (apply str (take 10 (str (t/instant due-date))))}))
                                          )
                           (ui-form-group {}
                                          )
                  #_(ui-button {:basic true :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                                                             (comp/transact! this [(project/try-save-action {:db/id id :diff diff})]))) }
+                                                             (comp/transact! this [(project/try-save-action {:db/id id :diff diff}) ]))) }
                               "Save")))))
 
 (def ui-action-form (comp/factory ActionForm {:keyfn :db/id}))
 
-(defsc ActionRow [this {:action/keys [action owner status due-date] :db/keys [id] :ui/keys [new? saving? modal-open?]  :as props} {:keys [remove-action save-action]} ]
+
+(defsc Project
+  [this {:project/keys [id name]}]
+  {:query [:project/id :project/name :project/start-date  :project/last-published-date :project/modified-date :project/finish-date]
+   :ident :project/id})
+
+(defsc ActionListLabel [this {:action-list-label/keys [count overdue?]}]
+  {:query [:action-list-label/count :action-list-label/overdue? :tempids]
+   :initial-state {:action-list-label/count :param/count :action-list-label/overdue? :param/overdue?}}
+
+  (ui-label {:circular true :color (if overdue? "red" "grey") :style {:position "relative" :top "-3px"} } count))
+
+(defsc ProjectPanelQ [this {:keys [  ] :as props}]
+  {:query           [ :project-panel/id
+                     {:>/action-list-label (comp/get-query ActionListLabel)}
+                     {:>/current-project (comp/get-query Project)}
+                     :ui/active-item]
+   :ident        (fn [] [:component/id :project-panel])
+   
+   
+   
+   })
+
+
+(defsc ProjectPanelQ2 [this {:keys [  ] :as props}]
+  {:query           [ :project-panel/id
+                     {:>/action-list-label (comp/get-query ActionListLabel)}
+                     ]
+   :ident        (fn [] [:component/id :project-panel])
+   
+   
+   
+   })
+
+
+(defsc ActionRow [this {:action/keys [action owner status due-date] :db/keys [id] :ui/keys [new? saving? modal-open?]  :as props} {:keys [remove-action save-action load-action-label]} ]
   {:query [:db/id :action/action :action/owner :action/status :action/due-date ;fs/form-config-join
            :ui/new?
            :ui/saving?
@@ -372,7 +420,12 @@
                                               "Undo")
                                    
                                    (ui-button {:basic true :loading saving?  :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                                                                                               (save-action id diff))) }
+                                                                                               (when (seq diff)
+                                                                                                 (save-action id diff)
+                                                                                                 (load-action-label)
+                                                                                                 
+                                                                                                 )
+                                                                                               )) }
                                               "Save")
                                    
                                    
@@ -384,6 +437,10 @@
 
 
 
+
+
+
+
 (defsc ActionList [this {:action-list/keys [id actions] :as props}]
   {:query [:action-list/id {:action-list/actions (comp/get-query ActionRow)}
            [df/marker-table '_]
@@ -392,26 +449,23 @@
    
    :route-segment   ["action-list" :action-list/id]
    :ident  :action-list/id
-   #_#_:pre-merge (fn [{:keys [data-tree current-normalized state-map query]}]
-                    (js/console.log "HHHHHHHHHHHHHHHXS " current-normalized)
-                    data-tree)
+  
    
    :will-enter (fn [app {:keys [action-list/id] :as params}]
                  (dr/route-deferred
                   [:action-list/id (uuid id)]
                   (fn []
-                                        ;(df/load! app [:project-info/id (uuid id)] ProjectInfo)
                     (df/load! app [:action-list/id (uuid id)] ActionList {:marker :action-list})
-                                        ;(merge/merge-component! app ActionList {:action-list/id (uuid id) :action-list/actions [{:db/id 1 :action/action "ACTION" :action/owner "Owner" :action/status :open :action/date (t/inst (t/now))}]})
-                    
-                                        ;(df/load! app [:timeline/id (uuid id)] TimeLine)
                     (comp/transact! app [(dr/target-ready {:target  [:action-list/id (uuid id)]})]))))}
 
                                         ;(js/console.log "props" props)
   (let [status (get-in props [df/marker-table :action-list])
         ;options(get  props :resource/options2)
         remove-action (fn [dbid] (comp/transact! this [(project/remove-action {:db/id dbid :action-list id})]))
-        save-action (fn [dbid diff] (comp/transact! this [(project/try-save-action {:db/id dbid :diff diff :action-list id})]))]
+        save-action (fn [dbid diff] (comp/transact! this [(project/try-save-action {:db/id dbid :diff diff :action-list id})]))
+        load-action-label (fn [] (df/load! this :project-panel ActionListLabel {:target [:component/id :project-panel :>/action-list-label] :params {:pathom/context {:project/id id}}
+                                                                                :referesh [:action-list-label/count :action-list-label/overdue?]}))
+        ]
     
     (ui-container {}
                   (if (df/loading? status)
@@ -419,7 +473,7 @@
                     (ui-table {:color :blue :striped true :celled true}
                               (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date"])))
                               
-                              (ui-table-body {} (map (fn [action] (ui-action-row (comp/computed action {:remove-action remove-action :save-action save-action}) )) actions ))
+                              (ui-table-body {} (map (fn [action] (ui-action-row (comp/computed action {:remove-action remove-action :save-action save-action :load-action-label load-action-label}) )) actions ))
                               (ui-table-footer {} (ui-table-row {:textAlign :right}
                                                                 
                                                                 (ui-table-header-cell {:colSpan 4}
@@ -498,10 +552,7 @@
           (dr/change-route this target)))
 
 
-(defsc Project
-  [this {:project/keys [id name]}]
-  {:query [:project/id :project/name :project/start-date  :project/last-published-date :project/modified-date :project/finish-date]
-   :ident :project/id})
+
 
 
 
@@ -910,7 +961,8 @@
                                                   
                                                   (ui-button {:basic true  :onClick (fn [] (let [diff (fs/dirty-fields new-action false {:new-entity? true})]
 
-                                                                                                              (comp/transact! this [(project/try-save-action {:db/id (:db/id new-action) :diff diff :action-list id})])
+                                                                                             (comp/transact! this [(project/try-save-action {:db/id (:db/id new-action) :diff diff :action-list id})])
+                                                                                             
                                                                                                               )) }
                                                              "Save")
                                                   
@@ -1165,12 +1217,22 @@
   
   )
 
-(defsc ProjectPanel [this {:keys [project-panel/router project-panel/current-project project-panel/current-project-id ui/active-item] :as props}]
-  {:query           [:project-panel/current-project-id { :project-panel/router (comp/get-query ProjectPanelRouter) } {:project-panel/current-project (comp/get-query Project) }
+
+
+
+(def ui-action-list-label (comp/factory ActionListLabel))
+
+
+
+
+(defsc ProjectPanel [this {:keys [>/current-project ui/active-item >/action-list-label project-panel/router  project-panel/id] :as props}]
+  {:query           [:project-panel/id { :project-panel/router (comp/get-query ProjectPanelRouter) } {:>/current-project (comp/get-query Project) }
+                     :project-panel/id
                      [::uism/asm-id '_]
+                     {:>/action-list-label (comp/get-query ActionListLabel)}
                      :ui/active-item]
-   :ident   (fn [] [:component/id :project-panel])
-   :initial-state {:project-panel/router {} :ui/active-item :info}
+   :ident        (fn [] [:component/id :project-panel])
+   :initial-state {:project-panel/router {} :ui/active-item :info }
    :route-segment   ["project-panel" :project-panel/current-project-id]
                                         ;:form-fields #{:project-panel/project-lead :project-panel/functional-lead :project-panel/technical-lead}
                                         ;:pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config ProjectPanel data-tree))
@@ -1181,14 +1243,13 @@
                  (dr/route-deferred
                   [:component/id :project-panel]
                   (fn []
-                    #_(df/load! app [:project-info/id id] ProjectInfo)
-                    #_(merge/merge-component! app ProjectPanel  {:project-panel/current-project {:project/id (uuid current-project-id)} } )
-
-                    (df/load! app [:project/id (uuid current-project-id)] Project {:target [:component/id :project-panel :project-panel/current-project]})
-                    (comp/transact! app [(set-current-project-id {:current-project-id current-project-id})])
-                    #_(comp/transact! app [
-
-                                           ]))))
+                    (df/load! app  :project-panel ProjectPanelQ {:taget [:component/id :project-panel]
+                                                                 :params {:pathom/context {:project/id (uuid current-project-id)}}
+                                                                 :post-mutation `dr/target-ready
+                                                                 :post-mutation-params {:target [:component/id :project-panel]}})
+                    ;(comp/transact! app [(dr/target-ready {:target [:project-panel/id (uuid current-project-id)]})])
+                    ;(comp/transact! app [(set-current-project-id {:current-project-id current-project-id})])
+                    )))
 
    
    #_#_:componentDidMount (fn [this]
@@ -1196,21 +1257,21 @@
                             )}
 
   
-  (let []
+  (let [current-project-id (:project/id current-project)]
+    (js/console.log "PROJECT ID" id)
     [(dom/h3 {:style {:color "#3281b9"}} (:project/name current-project))
      (ui-grid-column {:width 4} 
                      (ui-menu {:fluid true :vertical true :tabular true}
                               (ui-menu-item {:name "Info" :active (= active-item :info) :onClick (fn [e]
                                                                                                    ;(comp/update-state! this assoc :active-item :info )
                                                                                                    (m/set-value! this :ui/active-item :info)
-                                                                                                   (js/console.log "current-project-id" current-project-id)
-                                                                                                   (dr/change-route this (dr/path-to ProjectInfo {:project-info/id current-project-id})))} )
+                                                                                                   (dr/change-route this (dr/path-to ProjectInfo {:project-info/id id})))} )
                               (ui-menu-item {:name "Governance Review" :active (= active-item :governance-review) :onClick (fn []
                                                                                                                              (m/set-value! this :ui/active-item :governance-review)
 
                                                                                                                              (js/console.log "CONSOLE ")
                                                                                                                              ;; check this out! TODO 
-                                                                                                                             (dr/change-route this (dr/path-to  GovReview {:gov-review/id current-project-id  } )))} )
+                                                                                                                             (dr/change-route this (dr/path-to  GovReview {:gov-review/id id  } )))} )
 
 
                               (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
@@ -1221,11 +1282,13 @@
                               (ui-menu-item {:name "Action List" :active (= active-item :action-list) :onClick (fn []
                                                                                                                  (m/set-value! this :ui/active-item :action-list)
                                                                                                                  
-                                                                                                                 (dr/change-route this (dr/path-to  ActionList {:action-list/id  current-project-id} ))
-                                                                                                                 )} )
+                                                                                                                 (dr/change-route this (dr/path-to  ActionList {:action-list/id  id} ))
+                                                                                                                 )
+                                             :icon (ui-action-list-label action-list-label)}
+                                            )
                               (ui-menu-item {:name "TimeLine" :active (= active-item :timeline) :onClick (fn []
                                                                                                            (m/set-value! this :ui/active-item :timeline)
-                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  current-project-id} ))                                                                                                           )} )))
+                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  id} ))                                                                                                           )} )))
 
      (ui-grid-column {:width 12} 
                      (ui-project-panel-router router))]

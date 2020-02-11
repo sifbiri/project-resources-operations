@@ -2,6 +2,9 @@
   (:require
    [com.wsscode.pathom.connect :as pc]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
+   ;[cljs-time.core :as tt]
+   ;[cljs-time.format :as tf]
+   ;[cljs-time.coerce :as tc]
    [app.model.database :refer [conn]]
    [clojure.core.async :refer [go]]
    [clojure.set :as set]
@@ -768,10 +771,11 @@
 
 
 (pc/defmutation save-action [{:keys [db connection]}
+
                              {:db/keys [id]
                               :keys      [diff action-list]}]
   {::pc/params #{:db/id :diff :action-list}
-   ::pc/output [:action/id]}
+   ::pc/output [:project/id :tempids]}
                                         ;(throw (ex-info "Boo" {}))
   (let [new-values (get diff [:action/id id])
         new?       (tempid/tempid? id)]
@@ -785,14 +789,40 @@
           (do
             @(d/transact connection [[:db/add "new-action-list" :action-list/id action-list]
                                      [:db/add "new-action-list" :action-list/actions new-id]])))
-        {:action/id new-id :tempids {id new-id}})
+        
+        {:tempids {id new-id} :project/id action-list})
+      (do
+        @(d/transact connection [(assoc new-values :db/id id)])
+        @(d/transact connection [[:db/add [:action-list/id action-list] :action-list/actions id]])
+
+        {:project/id action-list}))))
+
+
+#_(pc/defmutation save-action [{:keys [db connection]}
+                             {:db/keys [id]
+                              :keys      [diff action-list]}]
+  {::pc/params #{:db/id :diff :action-list}
+   ::pc/output [:project/id :tempids :action-list-label/count]}
+                                        ;(throw (ex-info "Boo" {}))
+  (let [new-values (get diff [:action/id id])
+        ]
+    
+    (if (tempid/tempid? id)
+      (let []
+        (d/transact connection [{:action-list/id action-list :action-list/actions [new-values]}] )
+        )
+
+      
       (do
         @(d/transact connection [(assoc new-values :db/id id)])
         @(d/transact connection [[:db/add [:action-list/id  action-list] :action-list/actions id]])
-        {:action/id id}))))
-
-
-
+        {:project/id action-list :action-list-label/count (d/q '[:find (count ?action) .
+                                                                 :in $ ?id
+                                                                 :where
+                                                                 [?a :action/due-date ?action]
+                                                                 [?al :action-list/id ?id]
+                                                                 [?al :action-list/actions ?a]]
+                                                               db id)}))))
 
 
 (pc/defmutation set-functional-lead [{:keys [db connection]} {:keys [project-info/id lead-id]}]
@@ -1022,6 +1052,7 @@
            ] db (api/uuid id))})
 
 (def alias-project-id (pc/alias-resolver2 :project/id :project-info/id))
+(def alias-project-panel (pc/alias-resolver2 :project/id :project-panel/id))
 
 
 (pc/defresolver project-resolver [env {:keys [project/id]}]
@@ -1075,6 +1106,52 @@
                            
                            [?p :project/id ?pi]
                            ] (d/db conn))}))
+
+
+(pc/defresolver project-panel [env _]
+  {
+   ::pc/output [{:project-panel [:project/id :project-panel/id]}]}
+  (let [id (get-in env [:ast :params :pathom/context :project/id])]
+    (do
+      (println "IYYYYYYYYYYY " id)
+      {:project-panel
+       {:project/id id
+        :project-panel/id id}})))
+
+(pc/defresolver action-list-label-overdue? [{:keys [db connection]} {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:action-list-label/overdue?]
+   }
+  {:action-list-label/overdue?
+   (not (empty? (d/q '[:find [?due-date ...]
+                       :in $ ?id
+                       :where
+                       [?a :action/due-date ?due-date]
+                       [?al :action-list/id ?id]
+                       [?al :action-list/actions ?a]
+                       [(tick.alpha.api/< ?due-date (tick.alpha.api/inst (tick.alpha.api/now)))]]
+                     db id)))
+   :project/id id})
+
+
+(pc/defresolver action-list-label-count [{:keys [db connection]} {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:action-list-label/count]
+   }
+  (do
+    
+    {:action-list-label/count
+    (d/q '[:find (count ?a) .
+           :in $ ?id
+           :where
+           [?al :action-list/id ?id]
+           [?al :action-list/actions ?a]]
+         db id)
+    :project/id id}))
+
+
+
+
 
 
 
@@ -1218,11 +1295,15 @@
                  scope-schedule-color-resolver
                  project-madeup
                  project-name-resolver
+                 project-panel
                  level2-tasks
+                 alias-project-panel
                  level3-tasks
                  save-action
                  action
                  action-list
+                 action-list-label-overdue?
+                 action-list-label-count
                  ;index-explorer
                  all-admin-projects
                  a b
