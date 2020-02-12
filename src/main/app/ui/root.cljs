@@ -628,10 +628,7 @@
    :route-segment ["main"]}
 
 
-  (div (ui-date date)
-       )
-
-  )
+  (div (ui-date date)))
 
 
 
