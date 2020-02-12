@@ -466,7 +466,7 @@
                     (comp/transact! app [(dr/target-ready {:target  [:action-list/id (uuid id)]})]))))}
 
                                         ;(js/console.log "props" props)
-  (let [status (get-in props [df/marker-table :action-list])
+  (let [status (get props [df/marker-table :action-list])
         ;options(get  props :resource/options2)
         remove-action (fn [dbid] (comp/transact! this [(project/remove-action {:db/id dbid :action-list id})]))
         save-action (fn [dbid diff] (comp/transact! this [(project/try-save-action {:db/id dbid :diff diff :action-list id})]))
@@ -1399,7 +1399,7 @@
                              (m/set-value! this :admin-projects/admin-projects
                                            (vec (if (= clicked-column :project/name)
                                                   (sort-by :project/name admin-projects)
-                                                  (sort-by (juxt (comp :resource/name :project-info/project-lead) :project/name) admin-projects))))
+                                                  (sort-by  (comp :resource/name :project-info/project-lead) admin-projects))))
                              (m/set-value! this :ui/direction :ascending))
                            (do
                              (m/set-value! this :admin-projects/admin-projects (reverse admin-projects))
@@ -1500,9 +1500,12 @@
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0} } "Scope & Schedule")))
                                    (ui-table-body {}
                                                   (mapv (fn [p] (ui-table-row {:onClick (fn [e]
-                                                                                          
-
+                                                                                         
                                                                                           (dr/change-route this (dr/path-to ProjectPanel ProjectInfo {:project-info/id (:project/id p) :project-panel/current-project-id (:project/id p)}))
+                                                                                          (comp/transact! this [(project/set-info-as-active-menu)])
+                                                                                          (m/set-value! this :ui/active-item :info)
+                                        ; (dr/change-route this (dr/path-to ProjectPanel ProjectInfo {:project-info/id (:project/id p) :project-panel/current-project-id (:project/id p)}))
+                                                                                          
                                                                                           
                                         ;(dr/change-route this (dr/path-to ProjectPanel {:id (:project/id p)} ))
 

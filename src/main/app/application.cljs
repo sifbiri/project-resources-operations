@@ -8,6 +8,7 @@
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.rendering.keyframe-render2 :as kr]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
+            [com.wsscode.pathom.core :as p]
             [app.model.work-line :as work-line]))
                                         ;[app.ui.root :as root]))
 
@@ -19,6 +20,22 @@
 
 
 
+(defn contains-error?
+  "Check to see if the response contains Pathom error indicators."
+  [body]
+  (when (map? body)
+    (let [values (vals body)]
+      (reduce
+       (fn [error? v]
+         (if (or
+              (and (map? v) (contains? (set (keys v)) ::p/reader-error))
+              (= v ::p/reader-error))
+           (reduced true)
+           error?))
+       false
+       values))))
+
+
 
 (defonce SPA (app/fulcro-app
               {;; This ensures your client can talk to a CSRF-protected server.
@@ -27,7 +44,16 @@
                                   {:url                "/api"
                                    :request-middleware secured-request-middleware})}
 
-               :remote-error?    (fn [{:keys [status-code body]}]
+               :remote-error?
+
+               (fn [{:keys [body] :as result}]
+                 (or
+                  (app/default-remote-error? result)
+                  (contains-error? body)))
+
+               
+               
+               #_(fn [{:keys [status-code body]}]
                                    (or
                                     #_(has-reader-error? body)
                                     (not= 200 status-code)))

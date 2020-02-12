@@ -74,6 +74,17 @@
   (remote [env] true))
 
 
+(defmutation set-info-as-active-menu [params]
+  (action [{:keys [state] :as env}]
+          (swap! state (fn [s]
+                         (-> s
+                             (update-in [:component/id :project-panel :ui/active-item] (constantly :info)))))))
+
+
+
+
+
+
 (defmutation try-save-action [{:db/keys [id]
                              :keys      [diff]
                              :as        params}]
