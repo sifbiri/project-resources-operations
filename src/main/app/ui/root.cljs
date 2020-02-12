@@ -977,7 +977,7 @@
       (tr (td {:colSpan 8}
 
               (ui-loader {:active true :inline :centered} ))))))
-(def ui-resource-line (comp/factory ResourceLine))
+(def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id} ))
 
 
 
