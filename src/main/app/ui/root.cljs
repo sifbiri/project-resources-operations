@@ -910,7 +910,7 @@
                          (df/load! this :projects projects/Project
                                     {:marker :resource-line-loader
                                      :params               {:resource/id resource-line-id}
-
+                                     :parallel true
                                      :target [:resource-line/id  resource-line-id :resource-line/projects]
                                         ;:post-mutation        `project/populate-projects
                                      :post-mutation `set-projects-lines
@@ -990,7 +990,8 @@
            (swap! state assoc-in [:project-line/id id :project-line/id] id)
 
            (swap! state (df/load   :assignments Assignment
-                                   {:params               {:resource/id (:resource/id resource)
+                                   {:parallel true
+                                    :params               {:resource/id (:resource/id resource)
                                                            :project/id (:project/id project)}
                                     :target [:project-line/id id :project-line/assignments]
                                     
@@ -1094,7 +1095,9 @@
 
                  
                  (df/load! SPA :assignments Assignment
-                           {:params               {:resource/id (:resource/id resource-resolved)
+                           
+                           {:parallel true
+                            :params               {:resource/id (:resource/id resource-resolved)
                                                    :project/id (:project/id c-project)}
                             :target [:project-line/id project-line-id :project-line/assignments]
                             #_:post-mutation})
@@ -1124,7 +1127,8 @@
                               )
                       )
                (df/load! SPA :assignments Assignment
-                         {:params               {:resource/id (:resource/id resource-resolved)
+                         {:parallel true
+                          :params               {:resource/id (:resource/id resource-resolved)
                                                  :project/id (:project/id (last projects-resolved))}
                           :target [:project-line/id project-line-id :project-line/assignments]
                           :post-mutation `set-totals
@@ -1515,9 +1519,10 @@
                                                                           [:component/id :admin-users :admin-users/resources]})
                     (df/load! app :teams teams/Team
 
-                              {:target 
+                              {:parallel true
+                               :target 
 
-
+                               
                                (targeting/multiple-targets
                                         ;(targeting/append-to [:component/id :admin-teams :teams/teams])
                                 (targeting/replace-at [:component/id :workplan :workplan/teams])

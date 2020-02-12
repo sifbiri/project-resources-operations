@@ -995,34 +995,42 @@
   )
 (def ui-project-info2 (comp/factory ProjectInfo2))
 
-(defsc ProjectInfo [this {:project-info/keys [id new  name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead status phase entity fluxod-name] :as props}]
+(defsc ProjectInfo [this {:project-info/keys [id new  name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead status phase entity fluxod-name] :ui/keys [loading?] :as props}]
   {:query [:project-info/id :project-info/modified-date :project-info/start-date :project-info/last-published-date :project-info/finish-date :project-info/name :project-info/status
            :project-info/phase
            :project-info/entity
            :project-info/new
+           :ui/loading?
            :project-info/fluxod-name
            [:resource/options2 '_]
            [df/marker-table '_]
+           
            fs/form-config-join
            {:project-info/project-lead (comp/get-query users/Resource)} {:project-info/functional-lead (comp/get-query users/Resource)} {:project-info/technical-lead (comp/get-query users/Resource)}]
    
    :route-segment   ["project-info" :project-info/id]
    :ident   (fn [] [:project-info/id id])
-   :initial-state (fn [p] {:project-info/id 1 })
+   :initial-state (fn [p] {:ui/loading true})
    :will-enter (fn [app {:keys [project-info/id] :as params}]
-                 (js/console.log "params " params)
+                 
                  (dr/route-deferred
                   [:project-info/id (uuid id)]
                   (fn []
-                    (df/load! app [:project-info/id (uuid id)] ProjectInfo)
-                    (comp/transact! app [(dr/target-ready {:target [:project-info/id (uuid id)]})]))))}
+                    
+                    (df/load! app [:project-info/id (uuid id)] ProjectInfo {:marker :project-info :post-mutation `dr/target-ready :post-mutation-params {:target [:project-info/id (uuid id)]}})
+                    
+                    
+                    
+
+                    )))}
 
                                         ;(js/console.log "props" props)
-  (let [options (get props :resource/options2)]
-    
-                                        ;(dom/p {} "P")
-    (js/console.log  "PROPS 2" new)
+  (let [status (get props df/marker-table)
+        
+        options (get props :resource/options2)]
+                                        
     (ui-grid-column {}
+                    
                     (ui-form {}
                              (ui-form-group {}
                                             #_(ui-form-field {:width 6}(ui-form-input {:label "Name" :placeholder "Project Name" :readOnly true :value name})))
@@ -1337,6 +1345,16 @@
    :ident (fn [] [:admin-project/id id])})
 
 
+(defmutation testm [{:keys []}]
+  (action [{:keys [state ref] :as env}]
+          (ns/swap!-> state
+                      (merge/merge-idents ['*] {[:new1/id 1] {:new1/id 1
+                                                              :new1/props 100}
+                                                [:new2/id 2] {:new2/id 2
+                                                              :new2/props 200}}
+                                          {}))))
+
+
 (defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction] :as props}]
   {:query         [{:admin-projects/admin-projects  (comp/get-query AdminProject)}
                    {:admin-projects/router (comp/get-query ProjectPanelRouter)}
@@ -1362,7 +1380,8 @@
                   (fn []
                     
                     (df/load! app :all-admin-projects AdminProject
-                              {:target [:component/id :admin-projects :admin-projects/admin-projects]
+                              {:parallel true
+                               :target [:component/id :admin-projects :admin-projects/admin-projects]
                                :marker :admin-projects
                                })
                     (comp/transact! app [(dr/target-ready {:target [:component/id :admin-projects]})]))))
@@ -1468,7 +1487,7 @@
                          #_(dom/h3 {:style {:textAlign "center"}} "Projects" )
                          (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true :sortable true :fixed true}
                                    (ui-table-header {}
-                                                    (ui-table-row {}
+                                                    (ui-table-row {:textAlign :center}
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0 } :sorted (when (= column :project/name) direction)
                                                                                          :onClick #(sort-by-column :project/name) } "Project Name")
 
@@ -1513,7 +1532,9 @@
                                                                                                                                  #(= (:project-info/status %) :closed)
                                                                                                                                  cancelled?
                                                                                                                                  #(= (:project-info/status %) :cancelled))) p)))
-                                                                                           identity) admin-projects)))))]
+                                                                                           identity) admin-projects)))
+                                   )
+                         #_(ui-button {:onClick (df/load-field! this :admin-projects/admin-projects J{}) :basic true} "No Name"))]
         )
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))))

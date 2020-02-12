@@ -211,11 +211,13 @@
                                                                  
                                                                  } :celled true :striped true :color :blue    }
                                                         (ui-table-header {}
-                                                                         (ui-table-row {} (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) [ "Name" "Action"])))
+                                                                         (ui-table-row {} (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) [ "Name" "Delete"])))
                                                         (ui-table-body {}
                                                                        (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})])) :icon (ui-icon {:name "times"}) :basic true })) ) resources)
                                                                        )
                                                         )
+
+                                              
                                               )
                                 
                                 ))
@@ -267,12 +269,12 @@
                               (ui-table-row
                                {:style {:backgroundColor "red"}}
 
-                               (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Action"])
+                               (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Team Name" "Team Type" "Lead" "Nb Resource" "Delete"])
                                ))
                              
                              (ui-table-body {}
                                             (map ui-team (remove nil? teams)))
-                             (ui-table-footer {} (ui-table-row {}
+                             (ui-table-footer {} (ui-table-row {:textAlign :right}
                                                                (ui-table-header-cell {:colSpan 5} (ui-button {:basic true :onClick
                                                                                                               (fn [e]
                                                                                                                 (merge/merge-component! this Team
