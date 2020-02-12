@@ -1025,10 +1025,11 @@
                     )))}
 
                                         ;(js/console.log "props" props)
-  (let [status (get props df/marker-table)
+  (let [load-status (get props df/marker-table)
         
         options (get props :resource/options2)]
                                         
+    (js/console.log "STATUS" load-status)
     (ui-grid-column {}
                     
                     (ui-form {}
