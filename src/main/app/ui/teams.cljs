@@ -139,7 +139,7 @@
                                       (ui-table-cell {} (clojure.string/capitalize (apply str (rest (str type)))))
                                       (ui-table-cell {} (:resource/name lead))
                                       (ui-table-cell {} (count resources))
-                                      (ui-table-cell {} (ui-button {:onClick (fn [e] (comp/transact! this  [(team/delete-team {:team-id id}) :teams/teams :workplan/team-checkboxes]))} "Delete"))
+                                      (ui-table-cell {} (ui-button {:icon (ui-icon {:name "times"}) :basic true :onClick (fn [e] (comp/transact! this  [(team/delete-team {:team-id id}) :teams/teams :workplan/team-checkboxes]))}))
                                       
                                       )
                :size :small
@@ -213,7 +213,7 @@
                                                         (ui-table-header {}
                                                                          (ui-table-row {} (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) [ "Name" "Action"])))
                                                         (ui-table-body {}
-                                                                       (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})]))} "Delete")) ) resources)
+                                                                       (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})])) :icon (ui-icon {:name "times"}) :basic true })) ) resources)
                                                                        )
                                                         )
                                               )

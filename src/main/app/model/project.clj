@@ -798,6 +798,17 @@
         {:project/id action-list}))))
 
 
+
+
+(pc/defmutation remove-action  [{:keys [db connection]} {:keys [db/id action-list]}]
+  {::pc/sym`remove-action
+   ::pc/params [:db/id :action-list]
+   ::pc/output [:project/id]}
+  (do 
+    (d/transact connection [[:db/retract [:action-list/id action-list] :action-list/actions id]])
+    {:project/id action-list}))
+
+
 #_(pc/defmutation save-action [{:keys [db connection]}
                              {:db/keys [id]
                               :keys      [diff action-list]}]
@@ -1303,6 +1314,7 @@
                  action
                  action-list
                  action-list-label-overdue?
+                 remove-action
                  action-list-label-count
                  ;index-explorer
                  all-admin-projects

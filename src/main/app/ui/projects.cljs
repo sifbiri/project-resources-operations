@@ -406,11 +406,18 @@
                                      (ui-table-cell {} owner)
                                      (ui-table-cell {} (some-> status name clojure.string/capitalize))
                                      ;; TODO 
+
                                      (ui-table-cell {:error (t/< due-date (t/inst (t/now)))} (apply str (take 10 (str (t/instant due-date)))))
-                                     )
+                                     (ui-table-cell {} (ui-button {:icon (ui-icon {:name "times"})
+                                                                   :basic true
+                                                                   :onClick (fn []
+                                                                              (if (js/confirm  "Are you sure?")
+                                                                                (do (remove-action id)
+                                                                                    (load-action-label))
+                                                                                (m/set-value! this :ui/modal-open? false)))} )))
               :open modal-open?
                                         ;:closeIcon true
-              :onClose #(m/set-value! this :ui/modal-open? false)
+               :onClose #(m/set-value! this :ui/modal-open? false)
               }
              (ui-modal-content {} (ui-action-form props))
              (ui-modal-actions {} [(ui-button {:basic true :onClick (fn [] (if new?
@@ -471,12 +478,12 @@
                   (if (df/loading? status)
                     (ui-loader {})
                     (ui-table {:color :blue :striped true :celled true}
-                              (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date"])))
+                              (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %) ["Action" "Owner" "Status" "Due date" "Delete"])))
                               
                               (ui-table-body {} (map (fn [action] (ui-action-row (comp/computed action {:remove-action remove-action :save-action save-action :load-action-label load-action-label}) )) actions ))
                               (ui-table-footer {} (ui-table-row {:textAlign :right}
                                                                 
-                                                                (ui-table-header-cell {:colSpan 4}
+                                                                (ui-table-header-cell {:colSpan 5}
                                                                                       (ui-button {:basic true
                                                                                                   :onClick  #(merge/merge-component! this ActionRow
                                                                                                                                      {:ui/new? true
@@ -1192,7 +1199,7 @@
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine ActionList RiskIssues AccountForm LineItemForm]}
+  {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm LineItemForm]}
   (case current-state
     :pending (dom/div "Loading...")
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -1274,11 +1281,7 @@
                                                                                                                              (dr/change-route this (dr/path-to  GovReview {:gov-review/id id  } )))} )
 
 
-                              (ui-menu-item {:name "Risk & Issues" :active (= active-item :risk-issues) :onClick (fn []
-                                                                                                                   (m/set-value! this :ui/active-item :risk-issues)
-                                                                                                                   (dr/change-route this (dr/path-to RiskIssues {}))
-                                                                                                                   ;(dr/change-route this (dr/path-to RiskIssues ))
-                                                                                                                   )})
+                              
                               (ui-menu-item {:name "Action List" :active (= active-item :action-list) :onClick (fn []
                                                                                                                  (m/set-value! this :ui/active-item :action-list)
                                                                                                                  
@@ -1324,7 +1327,7 @@
 
 
 
-(defsc AdminProject [this {:keys [project/id]}]
+(defsc AdminProject [this {:keys [project/id ]}]
   {:query [:project/id :project/name {:project-info/project-lead [:resource/id :resource/name]} 
            :gov-review-week/exec-summary-color
            :gov-review-week/client-relationship-color
@@ -1334,11 +1337,14 @@
    :ident (fn [] [:admin-project/id id])})
 
 
-(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales?] :as props}]
+(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction] :as props}]
   {:query         [{:admin-projects/admin-projects  (comp/get-query AdminProject)}
                    {:admin-projects/router (comp/get-query ProjectPanelRouter)}
                    [::uism/asm-id ::session/session]
 
+                   :ui/column
+                   :ui/direction
+                   
                    :ui/in-progress?
                    :ui/closed?
                    :ui/sales?
@@ -1347,7 +1353,7 @@
                    [df/marker-table :admin-projects]]
    
    :ident         (fn [] [:component/id :admin-projects])
-   :initial-state (fn [p] {:ui/in-progress? true :ui/cancelled? false :ui/closed? false :ui/sales? false})
+   :initial-state (fn [p] {:ui/in-progress? true :ui/cancelled? false :ui/closed? false :ui/sales? false :ui/column nil :ui/direction nil})
    :initLocalState (fn [this props]
                      {:active-index -1})
    :will-enter (fn [app route-params]
@@ -1366,8 +1372,19 @@
    
    }
 
-  
-  (let [
+  (js/console.log "RESULT" admin-projects)
+  (let [sort-by-column (fn [clicked-column]
+                         (if (not= column clicked-column)
+                           (do
+                             (m/set-value! this :ui/column clicked-column)
+                             (m/set-value! this :admin-projects/admin-projects
+                                           (vec (if (= column :project/name)
+                                                  (sort-by :project/name admin-projects)
+                                                  (sort-by (juxt (comp :resource/name :project-info/project-lead) :project/name) admin-projects))))
+                             (m/set-value! this :ui/direction :ascending))
+                           (do
+                             (m/set-value! this :admin-projects/admin-projects (reverse admin-projects))
+                             (m/set-value! this :ui/direction (if (= direction :ascending) :descending :ascending)))))
 
         current-state (uism/get-active-state this ::session/session)
         active-index (comp/get-state this :active-index)
@@ -1379,7 +1396,7 @@
                         ))
         logged-in? (= :state/logged-in current-state)
         marker (get props [df/marker-table :admin-projects])]
-    (js/console.log "MARKER" props)
+    
 
     (if logged-in?
       
@@ -1449,11 +1466,15 @@
                            ))
          (ui-grid-column {:width 13}
                          #_(dom/h3 {:style {:textAlign "center"}} "Projects" )
-                         (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true}
+                         (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true :sortable true :fixed true}
                                    (ui-table-header {}
                                                     (ui-table-row {}
-                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Name")
-                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} } "Project Lead")
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0 } :sorted (when (= column :project/name) direction)
+                                                                                         :onClick #(sort-by-column :project/name) } "Project Name")
+
+
+                                                                  (ui-table-header-cell {:style {:position "sticky" :top 0} :sorted (when (= column :project-info/project-lead) direction)
+                                                                                         :onClick #(sort-by-column :project-info/project-lead) } "Project Lead")
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0} } "Overall")
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0} } "Client Relationship")
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0} } "Finance")

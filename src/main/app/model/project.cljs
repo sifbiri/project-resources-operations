@@ -70,7 +70,8 @@
           (swap! state (fn [s]
                          (-> s
                              (merge/remove-ident* [:action/id id] [:action-list/id action-list :action-list/actions])
-                             (update :action/id dissoc id))))))
+                             (update :action/id dissoc id)))))
+  (remote [env] true))
 
 
 (defmutation try-save-action [{:db/keys [id]
