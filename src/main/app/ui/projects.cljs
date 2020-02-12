@@ -1378,7 +1378,7 @@
                            (do
                              (m/set-value! this :ui/column clicked-column)
                              (m/set-value! this :admin-projects/admin-projects
-                                           (vec (if (= column :project/name)
+                                           (vec (if (= clicked-column :project/name)
                                                   (sort-by :project/name admin-projects)
                                                   (sort-by (juxt (comp :resource/name :project-info/project-lead) :project/name) admin-projects))))
                              (m/set-value! this :ui/direction :ascending))
