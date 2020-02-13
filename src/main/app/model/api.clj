@@ -520,7 +520,11 @@
            ] (d/db (d/connect db-url)))))
 
   (println "seed projects...............")
-  @(d/transact (d/connect db-url)  (get-all-projects))
+  (try
+    @(d/transact (d/connect db-url)  (get-all-projects))
+    (catch Exception e
+      (println (.getMessage e))
+      (update-db)))
 
   (println "Done....................")
                                         ;(at-at/show-schedule my-pool)
@@ -572,6 +576,7 @@
 "datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
 
 ;(d/transact (d/db (d/connect db-url)) [{:action-list/id #uuid  :action-list/actions [new-values]}] )
+
 
 
 
