@@ -2,7 +2,7 @@
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
 
-
+   
    [app.ui.users :as users]
    [com.fluxym.model.account :as account]
    
@@ -45,6 +45,7 @@
    [com.fulcrologic.fulcro.dom.events :as evt]
    [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
    [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
+   [com.fulcrologic.fulcro.algorithms.normalize :as normalize]
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
@@ -132,7 +133,9 @@
    [cljs-time.core :as tt]
    [cljs-time.format :as tf]
    [cljs-time.coerce :as tc]
-   [taoensso.timbre :as log]
+   [taoensso.timbre :as log :refer-macros [log  trace  debug  info  warn  error  fatal  report
+                                           logf tracef debugf infof warnf errorf fatalf reportf
+                                           spy get-env]] 
    [tick.alpha.api :as t]
    [goog.date]
 
@@ -933,13 +936,14 @@
                                                                        :action/due-date (-> t/now t/inst)}
                                                                       :append [:action-list/id id :action-list/actions]
                                                                       :replace [:component/id :gov-review :gov-review/new-action])))})
-                  (ui-menu {:vertical true :size :tiny :compact true :borderless true
-                            :style {:paddingBottom "0px" :position "relative ":top "-2px" :selfAlign :right}
+                  (ui-menu {#_#_:vertical true :size :tiny :compact true :borderless true   :basic true
+                            :style {:paddingBottom "0px" :position "relative ":top "-2px" :selfAlign :right
+                                    :border "0.5px solid #dedede"}
                             }
 
 
-                           (ui-dropdown {:item true :text "Add"}
-                                        (ui-dropdown-menu {}
+                           (ui-dropdown {:item true :text "Add" :style {:border "5px"}}
+                                        (ui-dropdown-menu {:style {:border "1px"}}
                                                           (ui-dropdown-item {:onClick (fn [e d]
                                                                                         (m/toggle! this :ui/modal-open?)
                                                                                         (merge/merge-component! this ActionRow
@@ -952,13 +956,13 @@
                                                                                                                  :action/due-date (-> t/now t/inst)}
                                                                                                                 :append [:action-list/id id :action-list/actions]
                                                                                                                 :replace [:component/id :gov-review :gov-review/new-action])) } "Action")
-                                                          (ui-dropdown-item {} "Risk"))))
+                                                          #_(ui-dropdown-item {} "Risk"))))
 
                   
                   
 
 
-                  (ui-button  {:basic true :style {:marginLeft "25px"} :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit")
+                  (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit")
                   
                   (ui-modal {:open (:ui/modal-open? new-action) :onClose #(comp/transact! this [(close-new-modal {:action-id (:db/id new-action) :action-list-id id})])}
                             (ui-modal-content {} (ui-action-form new-action))
@@ -1208,7 +1212,7 @@
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm LineItemForm]}
+  {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm ]}
   (case current-state
     :pending (dom/div "Loading...")
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -1348,12 +1352,10 @@
 
 (defmutation testm [{:keys []}]
   (action [{:keys [state ref] :as env}]
-          (ns/swap!-> state
-                      (merge/merge-idents ['*] {[:new1/id 1] {:new1/id 1
-                                                              :new1/props 100}
-                                                [:new2/id 2] {:new2/id 2
-                                                              :new2/props 200}}
-                                          {}))))
+          (let [ProjectInfo (comp/registry-key->class :app.ui.projects/ProjectInfo)]
+            (js/console.log  (normalize/tree->db  ProjectInfo {:project-info/id 2
+                                                               :project-info/project-lead {:resource/id 2
+                                                                                           :resource/name "X"}} false) ))))
 
 
 (defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction] :as props}]
@@ -1538,7 +1540,7 @@
                                                                                                                                  #(= (:project-info/status %) :cancelled))) p)))
                                                                                            identity) admin-projects)))
                                    )
-                         #_(ui-button {:onClick (df/load-field! this :admin-projects/admin-projects J{}) :basic true} "No Name"))]
+                         #_(ui-button {:onClick (fn [] (comp/transact! this [(testm)])) :basic true} "No Name"))]
         )
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))))
