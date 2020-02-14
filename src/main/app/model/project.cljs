@@ -44,12 +44,12 @@
           (swap! state assoc-in [:action/id id :ui/saving?] true)
           (let [ProjectPanelQ (comp/registry-key->class :app.ui.projects/ProjectPanelQ)]
             ))
-  (remote [env] #_(let [ActionListLabel (comp/registry-key->class :app.ui.projects/ActionListLabel)]
-                    (-> env
+  (remote [env] (let [ActionListLabel (comp/registry-key->class :app.ui.projects/ActionListLabel)]
+                    #_(-> env
                         (m/returning ActionListLabel)
                         (m/with-target
-                          [:component/id :project-panel :>/action-list-label])))
-          env)
+                          [:component/id :project-panel :>/action-list-label]))
+                    true))
   
   (ok-action [{:keys [state tempid->realid] :as env}]
              (let [id (or (tempid->realid id) id)]

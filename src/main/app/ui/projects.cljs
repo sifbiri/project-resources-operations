@@ -6,6 +6,7 @@
    [app.ui.users :as users]
    [com.fluxym.model.account :as account]
    
+   
    [app.model.project :as project]
 
    [com.fulcrologic.semantic-ui.elements.input.ui-input :refer [ui-input]]
@@ -432,10 +433,7 @@
                                    (ui-button {:basic true :loading saving?  :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
                                                                                                (when (seq diff)
                                                                                                  (save-action id diff)
-                                                                                                 (load-action-label)
-                                                                                                 
-                                                                                                 )
-                                                                                               )) }
+                                                                                                 (load-action-label)))) }
                                               "Save")
                                    
                                    
@@ -1351,11 +1349,9 @@
 
 
 (defmutation testm [{:keys []}]
-  (action [{:keys [state ref] :as env}]
-          (let [ProjectInfo (comp/registry-key->class :app.ui.projects/ProjectInfo)]
-            (js/console.log  (normalize/tree->db  ProjectInfo {:project-info/id 2
-                                                               :project-info/project-lead {:resource/id 2
-                                                                                           :resource/name "X"}} false) ))))
+  (action [{:keys [state ref app] :as env}]
+          (let [Root (comp/registry-key->class :app.ui.root/Root)]
+            (js/console.log (comp/get-initial-state Root {})))))
 
 
 (defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction] :as props}]
