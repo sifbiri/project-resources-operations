@@ -1,6 +1,6 @@
 (ns user
   (:require
-    [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
+   [clojure.tools.namespace.replq :as tools-ns :refer [set-refresh-dirs]]
     [expound.alpha :as expound]
     [clojure.spec.alpha :as s]
     [mount.core :as mount]

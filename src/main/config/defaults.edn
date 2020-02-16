@@ -1,6 +1,6 @@
-{:legal-origins              #{"localhost" "dev.lvh.me"}
+{:legal-origins              #{"localhost" "dev.lvh.me" "0.0.0.0/0"}
 
- :org.httpkit.server/config {:port 80}
+ :org.httpkit.server/config {:port 3000}
 
  :taoensso.timbre/logging-config
                              {:level        :info
@@ -49,3 +49,4 @@
                                           :frame-options  :sameorigin
                                           :xss-protection {:enable? true
                                                            :mode    :block}}}}
+

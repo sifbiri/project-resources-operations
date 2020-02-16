@@ -2,9 +2,9 @@
   (:require
    [com.wsscode.pathom.connect :as pc]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
-   ;[cljs-time.core :as tt]
-   ;[cljs-time.format :as tf]
-   ;[cljs-time.coerce :as tc]
+                                        ;[cljs-time.core :as tt]
+                                        ;[cljs-time.format :as tf]
+                                        ;[cljs-time.coerce :as tc]
    [app.model.database :refer [conn]]
    [clojure.core.async :refer [go]]
    [clojure.set :as set]
@@ -12,16 +12,6 @@
    [tick.alpha.api :as t]
    
    [datomic.api :as d]))
-
-
-
-
-
-
-
-
-
-
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
@@ -109,6 +99,8 @@
       ffirst
       (update :action-list/actions (fn [x] (map #(clojure.set/rename-keys %  {:db/id :action/id}) x)))
       ))
+
+
 
 (pc/defresolver action [{:keys [db connection] :as env} {:keys [action/id]}]
   {::pc/input  #{:action/id}

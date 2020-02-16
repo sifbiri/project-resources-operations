@@ -27,7 +27,7 @@
 
             fulcrologic/fulcro
 
-           {:git/url "https://github.com/fulcrologic/fulcro" :sha "32ae3cfdcf566a11e9eb91c5d98d084a44d3428d"
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "c1bb6ae9aba59afc6782286da2821aa9d51cc052"
             
             }
 
@@ -41,6 +41,8 @@
            {:git/url "https://github.com/fulcrologic/fulcro-rad-datomic.git" :sha "57874e04e8e1d1d83e3a742780cd3f92c2b6dc27"
             
             }
+
+           dk.ative/docjure {:mvn/version "1.14.0-SNAPSHOT"}
            
 
            org.postgresql/postgresql {:mvn/version "9.3-1102-jdbc41"}

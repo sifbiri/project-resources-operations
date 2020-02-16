@@ -3,14 +3,20 @@
     [app.server-components.config :refer [config]]
     [app.server-components.pathom :refer [parser]]
     [mount.core :refer [defstate]]
+    [tick.alpha.api :as t]
     [com.fulcrologic.fulcro.server.api-middleware :refer [handle-api-request
                                                           wrap-transit-params
                                                           wrap-transit-response]]
     [ring.middleware.defaults :refer [wrap-defaults]]
+    [ring.middleware.multipart-params :refer [wrap-multipart-params]]
+
     [ring.middleware.gzip :refer [wrap-gzip]]
     [ring.util.response :refer [response file-response resource-response]]
     [ring.util.response :as resp]
     [hiccup.page :refer [html5]]
+    ;[com.fulcrologic.fulcro.networking.http-remote :as net]
+    [com.fulcrologic.fulcro.networking.file-upload :as file-upload]
+    
     [taoensso.timbre :as log]))
 
 (def ^:private not-found-handler
@@ -84,18 +90,50 @@
       :else
       (ring-handler req))))
 
+(defn file-response? [{:keys [body]}]
+  (when (map? body)
+    (let [values    (vals body)
+          has-file? (some :file/source values)
+          multiple? (> (count values) 1)]
+      (when (and has-file? multiple?)
+        (throw (ex-info "A resolver is trying to respond with a file, but there were multiple elements in the request!" {:response body})))
+      has-file?)))
+
+(defn wrap-file-response
+  "Middleware that converts responses that indicate the response is a file. "
+  {:arglists '([handler] [handler options])}
+  [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (if (file-response? response)
+        (let [{:file/keys [source mime-type name]} (some-> response :body vals first)]
+          (if source
+            (-> (resp/response source)
+                (cond->
+                    mime-type (resp/header "Content-Type" mime-type))
+                (resp/header "Content-Disposition" (str "attachment; filename=\"" (or name "file") "\""))
+                (resp/header "Last-Modified" (ring.util.time/format-date (new java.util.Date))))
+            {:status 404}))
+        response))))
+
 (defstate middleware
   :start
   (let [defaults-config (:ring.middleware/defaults-config config)
         legal-origins   (get config :legal-origins #{"localhost"})]
     (-> not-found-handler
-      (wrap-api "/api")
+        (wrap-api "/api")
+        (wrap-file-response)
+        (file-upload/wrap-mutation-file-uploads {})
       wrap-transit-params
       wrap-transit-response
+      wrap-multipart-params
       (wrap-html-routes)
       ;; If you want to set something like session store, you'd do it against
       ;; the defaults-config here (which comes from an EDN file, so it can't have
       ;; code initialized).
       ;; E.g. (wrap-defaults (assoc-in defaults-config [:session :store] (my-store)))
       (wrap-defaults defaults-config)
-      wrap-gzip)))
+      wrap-gzip
+      
+
+      )))

@@ -8,11 +8,13 @@
     [com.wsscode.common.async-clj :refer [let-chan]]
     [clojure.core.async :as async]
     [app.model.account :as acct]
+    [app.model.user :as user]
     [app.model.work-line :as wol]
     ;; [app.model.project :as project]
     [com.wsscode.pathom.connect.datomic :as pcd]
     [com.wsscode.pathom.connect.datomic.on-prem :refer [on-prem-config]]
     [app.model.project :as project]
+    [app.model.import :as import]
     [app.model.session :as session]
     [app.model.resource :as resource]
     [com.fluxym.components.auto-resolvers :refer [automatic-resolvers]]
@@ -34,7 +36,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [automatic-resolvers form/save-form form/delete-entity project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers])
+(def all-resolvers [automatic-resolvers form/save-form form/delete-entity project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers import/resolvers user/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.

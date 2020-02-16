@@ -276,79 +276,79 @@
     
     (js/console.log "SERACH" search-result)
     (ui-container {:fluid true}
-                 (ui-form {}
-                          (ui-form-group {}
-                                         (ui-form-input  {:label "Action" :type "input"
-                                                          :error (= :invalid (project/action-validator props :action/action))
-                                                          :value action
-                                                          
-                                                          :onChange #(m/set-string! this :action/action :event %)
-                                                          })
-                                         ;; todo add dropdown
+                  (ui-form {}
+                           (ui-form-group {}
+                                          (ui-form-input  {:label "Action" :type "input"
+                                                           :error (= :invalid (project/action-validator props :action/action))
+                                                           :value action
+                                                           
+                                                           :onChange #(m/set-string! this :action/action :event %)
+                                                           })
+                                          ;; todo add dropdown
 
-                                         #_(ui-form-field {}
-                                                        (dom/label {} "Owner")
-                                                        (ui-dropdown {:search true :selection true :placeholder "Owner"
-                                                                      :onBlur (fn [x y] (m/set-string! this :action/owner :value (evt/target-value x)))
-                                                                      :onChange #(m/set-string! this :action/owner :value (str (.-value %2)))
-                                                                     ; :onClick #(js/console.log "X" %1 "Y" %2)
-                                                                      ;:onSearchChange #(m/set-string! this :action/owner :value (str (.-value %2))) 
-                                                                      ;:options options2
-                                                                      :selectOnBlur false
-                                                                      ;:searchQuery owner
-                                                                      :noResultsMessage ""
-                                                                      ;:value owner
+                                          #_(ui-form-field {}
+                                                           (dom/label {} "Owner")
+                                                           (ui-dropdown {:search true :selection true :placeholder "Owner"
+                                                                         :onBlur (fn [x y] (m/set-string! this :action/owner :value (evt/target-value x)))
+                                                                         :onChange #(m/set-string! this :action/owner :value (str (.-value %2)))
+                                        ; :onClick #(js/console.log "X" %1 "Y" %2)
+                                        ;:onSearchChange #(m/set-string! this :action/owner :value (str (.-value %2))) 
+                                        ;:options options2
+                                                                         :selectOnBlur false
+                                        ;:searchQuery owner
+                                                                         :noResultsMessage ""
+                                        ;:value owner
                                         ; :searchQuery owner
-                                                                      }
-                                                                     ))
+                                                                         }
+                                                                        ))
 
 
-                                         
-                                         
+                                          
+                                          
 
-                                         #_(ui-form-input  {:label "Owner" :type "input" 
-                                                          :value owner
-                                                          :error (= :invalid (project/action-validator props :action/owner))
-                                                          :onChange #(m/set-string! this :action/owner :event %)})
+                                          #_(ui-form-input  {:label "Owner" :type "input" 
+                                                             :value owner
+                                                             :error (= :invalid (project/action-validator props :action/owner))
+                                                             :onChange #(m/set-string! this :action/owner :event %)})
 
-                                         (ui-form-field {}
-                                                        (dom/label {} "Owner")
-                                                        (ui-search {:icon (ui-icon {})
-                                                                    :results search-result
-                                                                    :selectFirstResult false
-                                                                    :onResultSelect #(m/set-string! this :action/owner :value (-> %2 (.-result) (.-title)))
-                                                                    :showNoResults false
-                                                                    :onSearchChange (fn [x y]
-                                                                                      
-                                                                                      (let [val (.-value y)
-                                                                                            filtred-result (filter (fn [x] (str/includes? (str/lower-case (:title x)) (str/lower-case val))) suggestions)]
-                                                                                        (m/set-string! this :action/owner :value (.-value y))
-                                                                                        (m/set-value! this :ui/search-result filtred-result)))
-                                                                    :value owner}))
+                                          (ui-form-field {}
+                                                         (dom/label {} "Owner")
+                                                         (ui-search {:icon (ui-icon {})
+                                                                     :results search-result
+                                                                     :selectFirstResult false
+                                                                     :onResultSelect #(m/set-string! this :action/owner :value (-> %2 (.-result) (.-title)))
+                                                                     :showNoResults false
+                                                                     :onSearchChange (fn [x y]
+                                                                                       
+                                                                                       (let [val (.-value y)
+                                                                                             filtred-result (filter (fn [x] (str/includes? (str/lower-case (:title x)) (str/lower-case val))) suggestions)]
+                                                                                         (m/set-string! this :action/owner :value (.-value y))
+                                                                                         (m/set-value! this :ui/search-result filtred-result)))
+                                                                     :value owner}))
 
-                                         (ui-form-field { }
-                                                        (dom/label {} "Status")
-                                                        (ui-dropdown  {:label "Status"
-                                                                       :search true
-                                                                       :selection true
-                                                                       :value status
-                                                                       :options [{:text "Open" :value :open} {:text "Closed" :value :closed} {:text "Cancelled" :value :cancelled}]
-                                                                       :onChange #(m/set-value! this :action/status (keyword (.-value %2)))}))
+                                          (ui-form-field { }
+                                                         (dom/label {} "Status")
+                                                         (ui-dropdown  {:label "Status"
+                                                                        :search true
+                                                                        :selection true
+                                                                        :value status
+                                                                        :options [{:text "Open" :value :open} {:text "Closed" :value :closed} {:text "Cancelled" :value :cancelled}]
+                                                                        :onChange #(m/set-value! this :action/status (keyword (.-value %2)))}))
 
-                                         (ui-form-field {}
-                                                        (dom/label 
-                                                         "Due Date")
-                                                        (dom/input {:type "date" :size "mini"  
-                                                                    :onChange (fn [x y]
-                                                                                ;(m/set-value! this :action/due-date (js/Date. (.-value (.-target %))))
-                                                                                (comp/transact! this [(set-due-date {:date (js/Date. (.-value (.-target x))) :ref [:action/id id]})] {:refresh []}))
-                                                                    :value (apply str (take 10 (str (t/instant due-date))))}))
-                                         )
-                          (ui-form-group {}
-                                         )
-                 #_(ui-button {:basic true :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                                                             (comp/transact! this [(project/try-save-action {:db/id id :diff diff}) ]))) }
-                              "Save")))))
+                                          (ui-form-field {}
+                                                         (dom/label 
+                                                          "Due Date")
+                                                         (dom/input {:type "date" :size "mini"  
+                                                                     :onChange (fn [x y]
+                                        ;(m/set-value! this :action/due-date (js/Date. (.-value (.-target %))))
+                                                                                 (comp/transact! this [(set-due-date {:date (js/Date. (.-value (.-target x))) :ref [:action/id id]})] {:refresh []}))
+                                                                     :value (apply str (take 10 (str (t/instant due-date))))}))
+                                          )
+                           (ui-form-group {}
+                                          )
+                           #_(ui-button {:basic true :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                                                       (comp/transact! this [(project/try-save-action {:db/id id :diff diff}) ]))) }
+                                        "Save")))))
 
 (def ui-action-form (comp/factory ActionForm {:keyfn :db/id}))
 
@@ -406,39 +406,39 @@
   (let [options props]
     (js/console.log "ACTION ROW OPTIONS " options)
     (ui-modal {:trigger (ui-table-row {:onClick #(m/set-value! this :ui/modal-open? true)}
-                                     (ui-table-cell {} action)
-                                     (ui-table-cell {} owner)
-                                     (ui-table-cell {} (some-> status name clojure.string/capitalize))
-                                     ;; TODO 
+                                      (ui-table-cell {} action)
+                                      (ui-table-cell {} owner)
+                                      (ui-table-cell {} (some-> status name clojure.string/capitalize))
+                                      ;; TODO 
 
-                                     (ui-table-cell {:error (t/< due-date (t/inst (t/now)))} (apply str (take 10 (str (t/instant due-date)))))
-                                     (ui-table-cell {} (ui-button {:icon (ui-icon {:name "times"})
-                                                                   :basic true
-                                                                   :onClick (fn []
-                                                                              (if (js/confirm  "Are you sure?")
-                                                                                (do (remove-action id)
-                                                                                    (load-action-label))
-                                                                                (m/set-value! this :ui/modal-open? false)))} )))
-              :open modal-open?
+                                      (ui-table-cell {:error (t/< due-date (t/inst (t/now)))} (apply str (take 10 (str (t/instant due-date)))))
+                                      (ui-table-cell {} (ui-button {:icon (ui-icon {:name "times"})
+                                                                    :basic true
+                                                                    :onClick (fn []
+                                                                               (if (js/confirm  "Are you sure?")
+                                                                                 (do (remove-action id)
+                                                                                     (load-action-label))
+                                                                                 (m/set-value! this :ui/modal-open? false)))} )))
+               :open modal-open?
                                         ;:closeIcon true
                :onClose #(m/set-value! this :ui/modal-open? false)
-              }
-             (ui-modal-content {} (ui-action-form props))
-             (ui-modal-actions {} [(ui-button {:basic true :onClick (fn [] (if new?
-                                                                             (remove-action id)
-                                                                             (comp/transact! this [(fs/reset-form! {})]))
-                                                                      (m/toggle! this :ui/modal-open?)) }
-                                              "Undo")
-                                   
-                                   (ui-button {:basic true :loading saving?  :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
-                                                                                               (when (seq diff)
-                                                                                                 (save-action id diff)
-                                                                                                 (load-action-label)))) }
-                                              "Save")
-                                   
-                                   
-                                   ])
-             ))
+               }
+              (ui-modal-content {} (ui-action-form props))
+              (ui-modal-actions {} [(ui-button {:basic true :onClick (fn [] (if new?
+                                                                              (remove-action id)
+                                                                              (comp/transact! this [(fs/reset-form! {})]))
+                                                                       (m/toggle! this :ui/modal-open?)) }
+                                               "Undo")
+                                    
+                                    (ui-button {:basic true :loading saving?  :onClick (fn [] (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                                                                                (when (seq diff)
+                                                                                                  (save-action id diff)
+                                                                                                  (load-action-label)))) }
+                                               "Save")
+                                    
+                                    
+                                    ])
+              ))
   )
 
 (def ui-action-row (comp/factory ActionRow {:keyfn :db/id}))
@@ -452,12 +452,12 @@
 (defsc ActionList [this {:action-list/keys [id actions] :as props}]
   {:query [:action-list/id {:action-list/actions (comp/get-query ActionRow)}
            [df/marker-table '_]
-           ;[:resource/options2 '_]
+                                        ;[:resource/options2 '_]
            ]
    
    :route-segment   ["action-list" :action-list/id]
    :ident  :action-list/id
-  
+   
    
    :will-enter (fn [app {:keys [action-list/id] :as params}]
                  (dr/route-deferred
@@ -468,7 +468,7 @@
 
                                         ;(js/console.log "props" props)
   (let [status (get props [df/marker-table :action-list])
-        ;options(get  props :resource/options2)
+                                        ;options(get  props :resource/options2)
         remove-action (fn [dbid] (comp/transact! this [(project/remove-action {:db/id dbid :action-list id})]))
         save-action (fn [dbid diff] (comp/transact! this [(project/try-save-action {:db/id dbid :diff diff :action-list id})]))
         load-action-label (fn [] (df/load! this :project-panel ActionListLabel {:target [:component/id :project-panel :>/action-list-label] :params {:pathom/context {:project/id id}}
@@ -887,32 +887,32 @@
                                           )
                            
                            (ui-icon {:style {:position "relative" :left "3px"} :name "chevron right" :onClick (fn [e]
-                                                                                                                 (let [last-week (:gov-review-week/week (last current-weeks))
-                                                                                                                       next-weeks (next-weeks last-week)]
+                                                                                                                (let [last-week (:gov-review-week/week (last current-weeks))
+                                                                                                                      next-weeks (next-weeks last-week)]
 
 
-                                                                                                                   (loop [weeks next-weeks
-                                                                                                                          index 0]
-                                                                                                                     
-                                                                                                                     (when (seq weeks)
-                                                                                                                       (js/console.log "loop")
-                                                                                                                       #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
-                                                                                                                                                                    :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
-                                                                                                                                                                    )
-                                                                                                                       (comp/transact! this [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project/id id})])
-                                                                                                                       
-                                                                                                                       (recur (rest weeks) (inc index) )))
+                                                                                                                  (loop [weeks next-weeks
+                                                                                                                         index 0]
+                                                                                                                    
+                                                                                                                    (when (seq weeks)
+                                                                                                                      (js/console.log "loop")
+                                                                                                                      #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
+                                                                                                                                                                   :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
+                                                                                                                                                                   )
+                                                                                                                      (comp/transact! this [(project/get-or-create-gov-review-week {:gov-review-week/week (first weeks) :index index :project/id id})])
+                                                                                                                      
+                                                                                                                      (recur (rest weeks) (inc index) )))
 
-                                                                                                                   
-                                                                                                                   #_(doseq [
-                                                                                                                             ]
-                                                                                                                       (merge/merge-component! SPA GovReviewWeek {:gov-review-week/week week
-                                                                                                                                                                  :gov-review-week/status :open}))
+                                                                                                                  
+                                                                                                                  #_(doseq [
+                                                                                                                            ]
+                                                                                                                      (merge/merge-component! SPA GovReviewWeek {:gov-review-week/week week
+                                                                                                                                                                 :gov-review-week/status :open}))
 
 
-                                                                                                                   #_(m/set-value! this :gov-review/current-weeks (mapv (fn [week] [:gov-review-week/week week])
-                                                                                                                                                                        previous-weeks)))
-                                                                                                                 #_(comp/transact! this [(move-current-weeks-next {:last-week (last current-weeks)})]))  }))
+                                                                                                                  #_(m/set-value! this :gov-review/current-weeks (mapv (fn [week] [:gov-review-week/week week])
+                                                                                                                                                                       previous-weeks)))
+                                                                                                                #_(comp/transact! this [(move-current-weeks-next {:last-week (last current-weeks)})]))  }))
 
 
                   ;; router here?
@@ -920,20 +920,20 @@
                   (ui-gov-review-week current-week)
 
                   #_(ui-dropdown{:text "Add"
-                                :options [{:text "Action" :value :add-action} {:text "Risk" :value :add-risk}]
-                                :onChange (fn [x y]
-                                            (js/console.log "X" x "Y" (.-value y))
-                                            (m/toggle! this :ui/modal-open?)
-                                            (let [new-action-row (tempid/tempid)]
-                                              (merge/merge-component! this ActionRow
-                                                                      {:ui/new? true
-                                                                       :db/id (tempid/tempid)
-                                                                       :action/action ""
-                                                                       :action/owner ""
-                                                                       :action/status :open
-                                                                       :action/due-date (-> t/now t/inst)}
-                                                                      :append [:action-list/id id :action-list/actions]
-                                                                      :replace [:component/id :gov-review :gov-review/new-action])))})
+                                 :options [{:text "Action" :value :add-action} {:text "Risk" :value :add-risk}]
+                                 :onChange (fn [x y]
+                                             (js/console.log "X" x "Y" (.-value y))
+                                             (m/toggle! this :ui/modal-open?)
+                                             (let [new-action-row (tempid/tempid)]
+                                               (merge/merge-component! this ActionRow
+                                                                       {:ui/new? true
+                                                                        :db/id (tempid/tempid)
+                                                                        :action/action ""
+                                                                        :action/owner ""
+                                                                        :action/status :open
+                                                                        :action/due-date (-> t/now t/inst)}
+                                                                       :append [:action-list/id id :action-list/actions]
+                                                                       :replace [:component/id :gov-review :gov-review/new-action])))})
                   (ui-menu {#_#_:vertical true :size :tiny :compact true :borderless true   :basic true
                             :style {:paddingBottom "0px" :position "relative ":top "-2px" :selfAlign :right
                                     :border "0.5px solid #dedede"}
@@ -972,13 +972,13 @@
 
                                                                                              (comp/transact! this [(project/try-save-action {:db/id (:db/id new-action) :diff diff :action-list id})])
                                                                                              
-                                                                                                              )) }
+                                                                                             )) }
                                                              "Save")
                                                   
                                                   
                                                   ]))
                   (js/console.log "NEW ACTION" new-action)
-                                    
+                  
 
                   
 
@@ -997,8 +997,15 @@
   )
 (def ui-project-info2 (comp/factory ProjectInfo2))
 
-(defsc ProjectInfo [this {:project-info/keys [id new  name start-date modified-date last-published-date finish-date project-lead functional-lead technical-lead status phase entity fluxod-name] :ui/keys [loading?] :as props}]
-  {:query [:project-info/id :project-info/modified-date :project-info/start-date :project-info/last-published-date :project-info/finish-date :project-info/name :project-info/status
+(defsc ProjectInfo [this {:project-info/keys [start-date modified-date finish-date id new  name    finish-date project-lead functional-lead
+                                              technical-lead status phase entity fluxod-name fluxod-project-names]
+                           
+                          :ui/keys [loading?] :as props}]
+  {:query [:project-info/id :project-info/modified-date :project-info/start-date  :project-info/finish-date
+           :project-info/last-published-date
+           
+           :project-info/last-published-date :project-info/finish-date :project-info/name :project-info/status
+           :project-info/fluxod-project-names
            :project-info/phase
            :project-info/entity
            :project-info/new
@@ -1013,13 +1020,19 @@
    :route-segment   ["project-info" :project-info/id]
    :ident   (fn [] [:project-info/id id])
    :initial-state (fn [p] {:ui/loading true})
+   :pre-merge (fn [current-normalized data-tree]
+                (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"]))
    :will-enter (fn [app {:keys [project-info/id] :as params}]
                  
                  (dr/route-deferred
                   [:project-info/id (uuid id)]
                   (fn []
                     
-                    (df/load! app [:project-info/id (uuid id)] ProjectInfo {:marker :project-info :post-mutation `dr/target-ready :post-mutation-params {:target [:project-info/id (uuid id)]}})
+                    (df/load!
+                     app
+                     [:project-info/id (uuid id)]
+                     ProjectInfo
+                     {:marker :project-info :post-mutation `dr/target-ready :post-mutation-params {:target [:project-info/id (uuid id)]}})
                     
                     
                     
@@ -1028,152 +1041,175 @@
 
                                         ;(js/console.log "props" props)
   (let [load-status (get props df/marker-table)
-        
+        str-date #(some->> % t/date-time str (take 16) (apply str))
         options (get props :resource/options2)]
-                                        
+    
     (js/console.log "STATUS" load-status)
-    (ui-grid-column {}
-                    
-                    (ui-form {}
-                             (ui-form-group {}
-                                            #_(ui-form-field {:width 6}(ui-form-input {:label "Name" :placeholder "Project Name" :readOnly true :value name})))
+    (ui-grid-column
+     {}
+     
+     (ui-form
+      {}
+      (ui-form-group
+       {}
+       #_(ui-form-field {:width 6}(ui-form-input {:label "Name" :placeholder "Project Name" :readOnly true :value name})))
 
-                             (ui-form-group {}
-                                            (ui-form-field {}
-                                                           (dom/label {} "Project Status")
-                                                           (ui-dropdown {:placeholder "Project Status"
-                                                                         :selection true
-                                                                         :search true
-                                                                         :options  
-                                                                         [{:text "Sales" :value :sales}
-                                                                          {:text "In Progress" :value :in-progress}
-                                                                          {:text "Closed" :value :closed}
-                                                                          {:text "Cancelled" :value :cancelled}]
-                                                                         :value status
-                                                                         
-                                                                         :onChange (fn [e d]
-                                                                                     (js/console.log "id" id)
-                                                                                     (comp/transact! this [(project/set-project-status {:status (keyword (.-value d))  :project-info/id id })]))}))
-                                            (ui-form-field {}
-                                                           (dom/label {} "Project Phase")
-                                                           (ui-dropdown {:placeholder "Project Phase"
-                                                                         :selection true
-                                                                         :search true
-                                                                         :options  [{:text "Mobilize" :value :mobilize}
-                                                                                    {:text "Design" :value :design}
-                                                                                    {:text "Build" :value :build}
-                                                                                    {:text "Test" :value :test}
-                                                                                    {:text "Training" :value :training}
-                                                                                    {:text "HyperCare" :value :hyper-care}]
-                                                                         :value phase 
-                                                                         
-                                                                         :onChange #(comp/transact! this [(project/set-project-phase {:phase (keyword (.-value %2))  :project-info/id id })])}))
-
-
-                                            (ui-form-field {}
-                                                           (dom/label {} "Fluxym Entity")
-                                                           (ui-dropdown {:placeholder "Fluxym Entity"
-                                                                         :selection true
-                                                                         :search true
-                                                                         :options  [{:text "APAC" :value :apac}
-                                                                                    {:text "FRANCE" :value :france}
-                                                                                    {:text "NORAM" :value :noram}
-                                                                                    
-                                                                                    ]
-                                                                         :value (or entity :noram) 
-                                                                         
-                                                                         :onChange #(comp/transact! this [(project/set-project-entity {:entity (keyword (.-value %2))  :project-info/id id })])}))
-                                            )
-                             (ui-divider {})
-
-                             (ui-form-group {}
-
-                                            (ui-form-input  {:label "Modified Date" :type "datetime-local" :readOnly true
-                                                             :value
-                                                             (apply str (take 16 (str (t/date-time modified-date))))
-
-                                                             :onChange
-                                                             (fn [e d] (js/console.log "data" (.-value (.-target e)) "datein" modified-date ))})
-                                            
-                                            (ui-form-input  {:label "Start Date" :type "datetime-local" :readOnly true
-                                                             :value
-                                                             (apply str (take 16 (str (t/date-time start-date))))
-                                                             
-                                                             })
-                                            (ui-form-input  {:label "End Date" :type "datetime-local" :readOnly true
-                                                             :value
-                                                             (apply str (take 16 (str (t/date-time finish-date))))
-                                                             
-                                                             }))
-                             (ui-divider {})
-
-                             
-                             (ui-form-group {}
+      (ui-form-group
+       {}
+       (ui-form-field
+        {}
+        (dom/label
+         {} "Project Status")
+        (ui-dropdown
+         {:placeholder "Project Status"
+          :selection true
+          :search true
+          :options  
+          [{:text "Sales" :value :sales}
+           {:text "In Progress" :value :in-progress}
+           {:text "Closed" :value :closed}
+           {:text "Cancelled" :value :cancelled}]
+          :value status
+          
+          :onChange (fn [e d]
+                      (js/console.log "id" id)
+                      (comp/transact! this [(project/set-project-status {:status (keyword (.-value d))  :project-info/id id })]))}))
+       (ui-form-field {}
+                      (dom/label {} "Project Phase")
+                      (ui-dropdown {:placeholder "Project Phase"
+                                    :selection true
+                                    :search true
+                                    :options  [{:text "Mobilize" :value :mobilize}
+                                               {:text "Design" :value :design}
+                                               {:text "Build" :value :build}
+                                               {:text "Test" :value :test}
+                                               {:text "Training" :value :training}
+                                               {:text "HyperCare" :value :hyper-care}]
+                                    :value phase 
+                                    
+                                    :onChange #(comp/transact! this [(project/set-project-phase {:phase (keyword (.-value %2))  :project-info/id id })])}))
 
 
-                                            (ui-form-field {}
-                                                           (dom/label {} "Project Lead")
-                                                           (ui-dropdown {:placeholder "Team Lead"
-                                                                         :selection true
-                                                                         :search true
-                                                                         :options  options
-                                                                         :value (:resource/id project-lead)
-                                                                         
-                                                                         :onChange (fn [e d]
-                                                                                     (js/console.log "id " id)
-                                                                                     (comp/transact! this [(project/set-project-lead {:lead-id (.-value d) :project-info/id id })]))}))
+       (ui-form-field {}
+                      (dom/label {} "Fluxym Entity")
+                      (ui-dropdown {:placeholder "Fluxym Entity"
+                                    :selection true
+                                    :search true
+                                    :options  [{:text "APAC" :value :apac}
+                                               {:text "FRANCE" :value :france}
+                                               {:text "NORAM" :value :noram}
+                                               
+                                               ]
+                                    :value (or entity :noram) 
+                                    
+                                    :onChange #(comp/transact! this [(project/set-project-entity {:entity (keyword (.-value %2))  :project-info/id id })])}))
+       )
+      (ui-divider {})
 
-                                            (ui-form-field {}
-                                                           (dom/label {} "Functional Lead")
-                                                           (ui-dropdown {:placeholder "Functional Lead"
-                                                                         :selection true
-                                                                         :search true
-                                                                         :options  options
-                                                                         :value (:resource/id functional-lead)
+      (ui-form-group {}
+                     (js/console.log "date is " modified-date )
+                     (ui-form-input  {:label "Modified Date" :type "datetime-local" :readOnly true
+                                      :value
+                                        (str-date modified-date )
+
+                                      :onChange
+                                      (fn [e d] (js/console.log "data" (.-value (.-target e)) "datein" modified-date ))})
+                     
+                     (ui-form-input  {:label "Start Date" :type "datetime-local" :readOnly true
+                                      :value (str-date start-date)
+                                      
+                                      
+                                      
+                                      })
+                     (ui-form-input  {:label "End Date" :type "datetime-local" :readOnly true
+                                      :value
+                                        (str-date finish-date)
+                                      
+                                      }))
+      (ui-divider {})
+
+      
+      (ui-form-group {}
+
+
+                     (ui-form-field {}
+                                    (dom/label {} "Project Lead")
+                                    (ui-dropdown {:placeholder "Project Lead"
+                                                  :selection true
+                                                  :search true
+                                                  :options  options
+                                                  :value (:resource/id project-lead)
+                                                  
+                                                  :onChange (fn [e d]
+                                                              (js/console.log "id " id)
+                                                              (comp/transact! this [(project/set-project-lead {:lead-id (.-value d) :project-info/id id })]))}))
+
+                     (ui-form-field {}
+                                    (dom/label {} "Functional Lead")
+                                    (ui-dropdown {:placeholder "Functional Lead"
+                                                  :selection true
+                                                  :search true
+                                                  :options  options
+                                                  :value (:resource/id functional-lead)
                                         ;:value (:resource/id lead)
-                                                                         
-                                                                         :onChange #(comp/transact! this [(project/set-functional-lead {:lead-id (.-value %2) :project-info/id id })])})
-                                                           
-                                                           )
+                                                  
+                                                  :onChange #(comp/transact! this [(project/set-functional-lead {:lead-id (.-value %2) :project-info/id id })])})
+                                    
+                                    )
 
-                                            (ui-form-field {}
-                                                           (dom/label {} "Technical Lead")
-                                                           (ui-dropdown {:placeholder "Technical Lead"
-                                                                         :selection true
-                                                                         :search true
-                                                                         :options  options
-                                                                         :value (:resource/id technical-lead)
-                                                                         
+                     (ui-form-field {}
+                                    (dom/label {} "Technical Lead")
+                                    (ui-dropdown {:placeholder "Technical Lead"
+                                                  :selection true
+                                                  :search true
+                                                  :options  options
+                                                  :value (:resource/id technical-lead)
+                                                  
                                         ;:value (:resource/id lead)
-                                                                         :onChange (fn [a b](comp/transact! this [(project/set-technical-lead {:lead-id (.-value b) :project-info/id id } )])
-                                                                                     
-                                                                                     )
-                                                                         
-                                                                         })
+                                                  :onChange (fn [a b](comp/transact! this [(project/set-technical-lead {:lead-id (.-value b) :project-info/id id } )])
+                                                              
+                                                              )
+                                                  
+                                                  })
 
-                                                           
-                                                           
-                                                           )
+                                    
+                                    
+                                    )
 
-                                            
+                     
 
-                                            )
+                     )
 
 
-                             (ui-form-group {}
-                                            (ui-form-field {}
-                                                           (dom/label {} "Fluxod Name")
-                                                           (ui-input {:placeholder "Fluxod Name"
-                                                                      :onChange #()
-                                                                      :onBlur (fn [e]
-                                                                                (comp/transact! this [(project/set-project-fluxod-name {:name (evt/target-value e) :project-info/id id})]))
-                                                                      
-                                                                      :value fluxod-name
-                                                                      }))
-
-                                            
-
-                                            )))))
+      (ui-grid
+       {:centered true}
+       (ui-grid-row
+        {:columns 2 :stretched true}
+        (ui-grid-column
+         {}
+         (ui-form-field
+          {}
+          (dom/label {} "Fluxod Client Name")
+          (ui-input {:placeholder "Fluxod Client Name"})))
+        (ui-grid-column
+         {}
+         (ui-form-field
+          {}
+          (dom/label {} "Fluxod Project Name")
+          (ui-input {:placeholder "Fluxod Project Name "})
+          (ui-table
+           {}
+           (map #(ui-table-row
+                  {:textAlign :left}
+                  (ui-table-cell {}  (str  % ))
+                  (ui-table-cell {:onClick (fn [_] (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}
+                                 (ui-icon {:name "x"})
+                                 )) (or ["A" "B"]fluxod-project-names ))))
+         )
+        
+        
+        ))
+      ))))
 
 
 
@@ -1265,8 +1301,8 @@
                                                                  :params {:pathom/context {:project/id (uuid current-project-id)}}
                                                                  :post-mutation `dr/target-ready
                                                                  :post-mutation-params {:target [:component/id :project-panel]}})
-                    ;(comp/transact! app [(dr/target-ready {:target [:project-panel/id (uuid current-project-id)]})])
-                    ;(comp/transact! app [(set-current-project-id {:current-project-id current-project-id})])
+                                        ;(comp/transact! app [(dr/target-ready {:target [:project-panel/id (uuid current-project-id)]})])
+                                        ;(comp/transact! app [(set-current-project-id {:current-project-id current-project-id})])
                     )))
 
    
@@ -1281,7 +1317,7 @@
      (ui-grid-column {:width 4} 
                      (ui-menu {:fluid true :vertical true :tabular true}
                               (ui-menu-item {:name "Info" :active (= active-item :info) :onClick (fn [e]
-                                                                                                   ;(comp/update-state! this assoc :active-item :info )
+                                        ;(comp/update-state! this assoc :active-item :info )
                                                                                                    (m/set-value! this :ui/active-item :info)
                                                                                                    (dr/change-route this (dr/path-to ProjectInfo {:project-info/id id})))} )
                               (ui-menu-item {:name "Governance Review" :active (= active-item :governance-review) :onClick (fn []
@@ -1499,7 +1535,7 @@
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0} } "Scope & Schedule")))
                                    (ui-table-body {}
                                                   (mapv (fn [p] (ui-table-row {:onClick (fn [e]
-                                                                                         
+                                                                                          
                                                                                           (dr/change-route this (dr/path-to ProjectPanel ProjectInfo {:project-info/id (:project/id p) :project-panel/current-project-id (:project/id p)}))
                                                                                           (comp/transact! this [(project/set-info-as-active-menu)])
                                                                                           (m/set-value! this :ui/active-item :info)

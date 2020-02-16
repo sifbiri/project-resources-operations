@@ -50,7 +50,7 @@
   (uism/begin! SPA session/session-machine ::session/session
     {:actor/login-form      root/Login
      :actor/current-session root/Session})
-  (app/mount! SPA root/Root "app" {:initialize-state? false}))
+  (app/mount! SPA root/Root "app" {:initialize-state? true}))
 
 (comment
   (inspect/app-started! SPA)

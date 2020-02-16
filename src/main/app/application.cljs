@@ -1,6 +1,8 @@
 (ns app.application
   (:require [com.fulcrologic.fulcro.networking.http-remote :as net]
+            [com.fulcrologic.fulcro.networking.file-upload :as file-upload]
             [com.fulcrologic.fulcro.application :as app]
+            [com.fulcrologic.fulcro.rendering.multiple-roots-renderer :as mroot]
             [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.data-fetch :as df]
             ;[app.ui.teams :as teams]
@@ -15,8 +17,9 @@
 (def secured-request-middleware
   ;; The CSRF token is embedded via server_components/html.clj
   (->
-   (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
-   (net/wrap-fulcro-request)))
+   (net/wrap-fulcro-request)
+   (file-upload/wrap-file-upload)
+   (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))))
 
 
 
@@ -49,7 +52,7 @@
                (fn [{:keys [body] :as result}]
                  (or
                   (app/default-remote-error? result)
-                  (contains-error? body)))
+                  #_(contains-error? body)))
 
                
                
@@ -58,7 +61,7 @@
                                     #_(has-reader-error? body)
                                     (not= 200 status-code)))
 
-               :optimized-render! kr/render!
+               :optimized-render! kr/render!  #_mroot/render!
                :client-did-mount
                (fn [app]
                  (let [WorkLine (comp/registry-key->class :app.ui.root/WorkLine)

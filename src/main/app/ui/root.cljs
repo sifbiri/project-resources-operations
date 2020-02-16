@@ -55,6 +55,7 @@
    [app.ui.users :as users]
    [app.ui.projects :as projects]
    [app.ui.teams :as teams :refer []]
+   [app.ui.imports :as imports :refer []]
 
 
 
@@ -147,7 +148,7 @@
 
     (if (nil? r) {date 0 :assignment/name (:assignment/name (first maps))} r)))
 
-(def dates2 (map #(js/Date. %) dates))
+(def dates2 (mapv #(js/Date. %) dates))
 
 
 
@@ -226,7 +227,7 @@
 (def ui-number-format (interop/react-factory NumberFormat))
 
 
-                                        ;(def ui-flag (interop/react-factory Flag))
+                                        ;(Def ui-flag (interop/react-factory Flag))
 (def ui-flag-icon (interop/react-factory FlagIcon))
 (def ui-react-country-flag   (interop/react-factory ReactCountryFlag))
                                         ;(def ui-collapsing-table (interop/react-factory ReactCollapsingTable))
@@ -274,65 +275,63 @@
           (let [tasks (vals (get @state :task/id))]
 
 
-            (swap! state assoc :task/options (into []
-                                                   (map #(set/rename-keys % {:task/id   :value
-                                                                             :task/name :text}))
-
+            (swap! state assoc :task/options (mapv #(set/rename-keys % {:task/id   :value
+                                                                        :task/name :text})
                                                    tasks)))))
 
 
 
-;; components
-;; Assignment
-;; Project
-;; Task
-;; AssignmentLine
+  ;; components
+  ;; Assignment
+  ;; Project
+  ;; Task
+  ;; AssignmentLine
 
 
-(defsc WorkLine [this {:ui/keys   [new? saving? saved?]
-                       :work-line/keys [project assignment hour]
-                       :as        props}]
-  {:query       [:work-line/id
-                 :ui/new?
-                 :ui/saving?
-                 :ui/saved?
-                 :work-line/hour
-                 :work-line/project
-                 :work-line/assignment
-                 fs/form-config-join]
-   :form-fields #{:work-line/hour  :work-line/project :work-line/assignment
-                  }
-   :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config WorkLine data-tree))
+  (defsc WorkLine [this {:ui/keys   [new? saving? saved?]
+                         :work-line/keys [project assignment hour]
+                         :as        props}]
+    {:query       [:work-line/id
+                   :ui/new?
+                   :ui/saving?
+                   :ui/saved?
+                   :work-line/hour
+                   :work-line/project
+                   :work-line/assignment
+                   fs/form-config-join]
+     :form-fields #{:work-line/hour  :work-line/project :work-line/assignment
+                    }
+     :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config WorkLine data-tree))
 
-   :componentDidUpdate (fn [this prev-props prev-state])
+     :componentDidUpdate (fn [this prev-props prev-state])
 
-   :componentDidMount         (fn [this]
-                                (let [props (comp/props this)
-                                      project-id (:project/id (:work-line/project props))
-                                      work-line-id (:work-line/id props)]
+     :componentDidMount         (fn [this]
+                                  (let [props (comp/props this)
+                                        project-id (:project/id (:work-line/project props))
+                                        work-line-id (:work-line/id props)]
 
-                                  #_(df/load this :work-line/assignments Assignment
-                                             {:params               {:project-id project-id}
-                                              :post-mutation        `populate-tasks-options
+                                    #_(df/load this :work-line/assignments Assignment
+                                               {:params               {:project-id project-id}
+                                                :post-mutation        `populate-tasks-options
 
-                                              })
+                                                })
                                         ;(comp/transact! this [(fs/mark-complete! [:work/line work-line-id])])
-                                  ))
-   :ident       :work-line/id
+                                    ))
+     :ident       :work-line/id
 
-   }
-  (let [project-options (get props :project/options)
-        task-options (get props :task/options)]
-    (tr
-     (td
-      project
-      )
-     (td assignment)
+     }
+    (let [project-options (get props :project/options)
+          task-options (get props :task/options)]
+      (tr
+       (td
+        project
+        )
+       (td assignment)
 
-     (td hour)
+       (td hour)
 
 
-     #_(table-cell-field this :work-line/hour {}))))
+       #_(table-cell-field this :work-line/hour {}))))
 
 (def ui-work-line (comp/factory WorkLine {:keyfn (fn [props] (:work-line/id props))}))
 
@@ -351,7 +350,7 @@
 
     (table :.ui.table
            (thead (tr (th "Project" ) (th "Assignment") (th "# Hours")))
-           (tbody (map ui-work-line all-work-lines))
+           (tbody (mapv ui-work-line all-work-lines))
            (tfoot (tr (th "        ") (th "      ")  (th "Total: " total))))))
 
 (def ui-work-day (comp/factory WorkDay {:keyfn :work-day/work-lines}))
@@ -738,7 +737,7 @@
 
 
         r-step
-        (map
+        (mapv
          (fn [[k vals]]
            (reduce (fn [r x] (let [day (:assignment/day x)
                                    work (:assignment/work x)
@@ -748,9 +747,9 @@
                                )) [] vals)) (group-by :assignment/name assignments))
 
 
-        transformed (map
+        transformed (mapv
                      (fn [r]
-                       (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
+                       (mapv (fn [date] (get-from-source date r) ) (mapv #(js/Date. %)
                                                                        (generate-row-dates start end))))
                      r-step
 
@@ -782,26 +781,26 @@
 
         
 
-        (map #(td {:style {:backgroundColor (color %)}}
+        (mapv #(td {:style {:backgroundColor (color %)}}
                   (goog.string.format "%.2f" %))
              (loop [r transformed
                     t []]
                (if (ffirst r)
-                 (let [total (reduce (fn [r m] (+ r (first (vals m)))) 0 (map first r))]
-                   (recur (map rest r) (conj t total)))
+                 (let [total (reduce (fn [r m] (+ r (first (vals m)))) 0 (mapv first r))]
+                   (recur (mapv rest r) (conj t total)))
                  t))))
 
        (when selected
 
          (comp/fragment
-          (map (fn [asses]
+          (mapv (fn [asses]
                  ;; hide assignment line with 0 work load
 
                  (when (> (reduce (fn [r m] (+ r (first (vals m)))) 0 asses) 0)
                    (tr (concat [(td  {:colSpan 2 :style {:backgroundColor  "#3281b9"}} "")
                                 (ui-table-cell {:singleLine true}
                                                (:assignment/name (first asses)))]
-                               (map #(td {:style {:background-color (color (first (vals %)))}}
+                               (mapv #(td {:style {:background-color (color (first (vals %)))}}
                                          (goog.string.format "%.2f" (first (vals %)))) asses))))
                  )
                transformed)))))))
@@ -853,13 +852,13 @@
              (let [asses (:project-line/assignments pl)
                    asses-resolved]
                
-               (map
+               (mapv
                 (fn [r]
                   
-                  (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
+                  (mapv (fn [date] (get-from-source date r) ) (mapv #(js/Date. %)
                                                                   (generate-row-dates start end))))
                 
-                (map
+                (mapv
                  (fn [[k vals]]
                    (reduce (fn [r x] (let [day (:assignment/day x)
                                            work (:assignment/work x)
@@ -868,7 +867,7 @@
                                        
                                        )) [] vals))
                  (group-by :assignment/name
-                           (map (fn [ident] (get-in state ident))
+                           (mapv (fn [ident] (get-in state ident))
                                 )))
 
                 )
@@ -961,7 +960,7 @@
            (str (:resource/name resource) " ")
            (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-       (when totals (map #(td {:style {:backgroundColor (color %)}}
+       (when totals (mapv #(td {:style {:backgroundColor (color %)}}
 
                               
                               (goog.string.format "%.2f" %)) totals))
@@ -970,7 +969,7 @@
        )
 
       (when selected
-        (map ui-project-line project-lines)))
+        (mapv ui-project-line project-lines)))
       (tr (td {:colSpan 8}
 
               (ui-loader {:active true :inline :centered} ))))))
@@ -998,7 +997,7 @@
   (action [{:keys [state] :as env}]
 
           (let [project-lines (get-in @state [:resource-line/id resource-line-id :resource-line/project-lines])
-                project-lines-r (map (fn [ident] (get-in @state ident)) project-lines)
+                project-lines-r (mapv (fn [ident] (get-in @state ident)) project-lines)
                 start (get-in @state [:ui/dates :start])
                 end (get-in @state [:ui/dates :end])
                 ;; TODO abstract duplication see project line
@@ -1006,15 +1005,15 @@
                 (fn [pl start end]
 
 
-                  (let [asses (map (fn [ident] (get-in @state ident))
+                  (let [asses (mapv (fn [ident] (get-in @state ident))
                                    (:project-line/assignments pl))]
                     
-                    (map
+                    (mapv
                      (fn [r]
-                       (map (fn [date] (get-from-source date r) ) (map #(js/Date. %)
+                       (mapv (fn [date] (get-from-source date r) ) (mapv #(js/Date. %)
                                                                        (generate-row-dates start end))))
                      
-                     (map
+                     (mapv
                       (fn [[k vals]]
                         (reduce (fn [r x] (let [day (:assignment/day x)
                                                 work (:assignment/work x)
@@ -1025,9 +1024,9 @@
                   )
 
                 totals
-                (apply map +
-                       (map (fn [line]
-                              (map #(first (vals %)) line))
+                (apply mapv +
+                       (mapv (fn [line]
+                              (mapv #(first (vals %)) line))
                             (mapcat #(transform-pl % start end) project-lines-r)))]
 
             
@@ -1042,7 +1041,7 @@
                [projects-s (get-in @state [:resource-line/id resource-id  :resource-line/projects])
                 resource-s (get-in @state [:resource-line/id resource-id  :resource-line/resource])
 
-                projects-resolved (map (fn [[_ project-id]]
+                projects-resolved (mapv (fn [[_ project-id]]
                                          (get-in @state [:project/id project-id]))
                                        projects-s)
                 resource-resolved (get-in @state [:resource/id resource-id])
@@ -1259,7 +1258,7 @@
           
           (let [active-checkboxes (filter #(:resource/active? %)
                                           (vals (:checkbox/id @state)))
-                active-ids  (map :checkbox/value active-checkboxes)]
+                active-ids  (mapv :checkbox/value active-checkboxes)]
             (doseq [id active-ids]
               
               (swap! state assoc-in [:checkbox/id id :ui/checked?] true)
@@ -1278,7 +1277,7 @@
 
 (defmutation uncheck-all-resource-boxes [{:keys []}]
   (action [{:keys [state] :as env}]
-          (let [ids  (map first (:checkbox/id @state))]
+          (let [ids  (mapv first (:checkbox/id @state))]
             (doseq [id ids]
               (swap! state assoc-in [:checkbox/id id :ui/checked?] false)
               (comp/transact! SPA  [(remove-resource-line {:id id})])
@@ -1366,7 +1365,7 @@
              (dom/label {:style {:color "#3281b9"}} "Check all")
              (ui-divider {})
              
-             (map #(ui-resource-checkbox-item  % )
+             (mapv #(ui-resource-checkbox-item  % )
                   (take (if show-more? 100 10) items))
              (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
                          :onClick (fn [e]
@@ -1419,7 +1418,7 @@
 
           (let [team (get-in @state [:team/id team-id])
                 team-resources (:team/resources team)
-                team-resources-ids (set (map second team-resources))
+                team-resources-ids (set (mapv second team-resources))
                 team-lead (:team/lead team)
 
                 
@@ -1511,7 +1510,8 @@
                  (dr/route-deferred
                   [:component/id :workplan]
                   (fn []
-                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options :target
+                    (df/load! app :resource/all-resources users/Resource {:post-mutation `resource/create-resource-options
+                                                                          :target
 
                                                                           [:component/id :admin-users :admin-users/resources]})
                     (df/load! app :teams teams/Team
@@ -1690,7 +1690,7 @@
                                                                   :content (ui-form {}
                                                                                     (ui-form-group {:grouped true}
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
-                                                                                                                  (map #(ui-team-checkbox  %) (remove #(nil? (:team/name %)) team-checkboxes)))
+                                                                                                                  (mapv #(ui-team-checkbox  %) (remove #(nil? (:team/name %)) team-checkboxes)))
                                                                                                    ))})))))
        
        (ui-grid-column {:width 13}
@@ -1716,12 +1716,12 @@
                                                (ui-table-row
                                                 {:style {:backgroundColor "red"}}
 
-                                                (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
+                                                (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
 
-                                                (map #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
+                                                (mapv #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
                                                                                      :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
                                                 ))
-                                              (ui-table-body {} (map ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
+                                              (ui-table-body {} (mapv ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
 
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))
@@ -1733,7 +1733,7 @@
                                         ;(dr/change-route)
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel]})
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel imports/ImportMain]})
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -1786,6 +1786,7 @@
                                                                 (ui-dropdown-menu {}
                                                                                   (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
                                                                                   (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
+                                                                                  (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")
                                                                                   ))}
                                                   )
 
@@ -1902,7 +1903,7 @@
                 :work 0.0}])
 
 (comment
-  (reduce (fn [r [k v]] (map (fn [date] ()) dates )) (group-by #(select-keys % [:assignment/name]) r))
+  (reduce (fn [r [k v]] (mapv (fn [date] ()) dates )) (group-by #(select-keys % [:assignment/name]) r))
 
 
 
@@ -1910,7 +1911,7 @@
 
 
 
-  (map
+  (mapv
 
 
    (fn [r-reduce]
@@ -1918,10 +1919,10 @@
                (reduce (fn [r2 m]
                          (if (=  date (first (keys m)))
                            (conj r m)
-                           (conj r {date 0 :assignment/name (:assignment/name m)}))) [] r-reduce))   [] (map #(js/Date. %) dates)))
+                           (conj r {date 0 :assignment/name (:assignment/name m)}))) [] r-reduce))   [] (mapv #(js/Date. %) dates)))
 
 
-   (map
+   (mapv
     (fn [[k vals]]
       (reduce (fn [r x] (let [day (:assignment/day x)
                               work (:assignment/work x)
@@ -1935,7 +1936,7 @@
 
 
 
-  (map (fn [r [k v]] (conj r "s")) (group-by :assignment/name r))
+  (mapv (fn [r [k v]] (conj r "s")) (group-by :assignment/name r))
 
   ;; (reduce (fn [r m]
   ;;           (concat r (reduce (fn [_ date]
@@ -1956,7 +1957,7 @@
 
 (def r-reduce '({#inst "2019-12-09T00:00:00.000-00:00" 8} {#inst "2019-12-02T00:00:00.000-00:00" 4} {#inst "2019-12-06T00:00:00.000-00:00" 4} {#inst "2019-12-03T00:00:00.000-00:00" 4} {#inst "2019-12-05T00:00:00.000-00:00" 4}))
 
-(def step-r (map
+(def step-r (mapv
              (fn [[k vals]]
                (reduce (fn [r x] (let [day (:assignment/day x)
                                        work (:assignment/work x)
@@ -1970,7 +1971,7 @@
 
 
 
-(reduce (fn [works date] (if (not (contains? (map (comp first keys) (first step-r)) date))
+(reduce (fn [works date] (if (not (contains? (mapv (comp first keys) (first step-r)) date))
                            (conj r {date 0} )) ) (first step-r) dates2)
 
 

@@ -1,10 +1,7 @@
 (ns app.ui.users
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
-
-
-   
-
+   [app.model.user :as user]
    [com.fulcrologic.semantic-ui.elements.input.ui-input :refer [ui-input]]
    [com.fulcrologic.semantic-ui.elements.icon.ui-icon :refer [ui-icon]]
    [com.fulcrologic.semantic-ui.elements.loader.ui-loader :refer [ui-loader]]
@@ -121,75 +118,85 @@
 
 
 (defsc Resource
-  [this {:resource/keys [id name email-address profile active?]}]
-  {:query [:resource/id :resource/name :resource/email-address :resource/active? :resource/profile]
-   :ident :resource/id}
- ;; (let
- ;;        [resources-options (:resource/options (comp/props this))]
-
-
-
- ;;      (dom/div
- ;;       (ui-dropdown {:placeholder "Select Resource"
- ;;                     :options  options
- ;;                     :search   true
- ;;                     :onChange (fn [evt data] (println (.-value data)
- ;;                                                       )
- ;;                                 (m/set-value! this :resource/id  (.-value data))
-
-
-
- ;;                                 )
- ;;                     :value id})
- ;;       ;;
-
- ;;       #_(when (:resource/id resource)
-  ;;           (p "hello there")))
-
-
-                                        ;)
+  [this {:resource/keys [id name email-address fluxod-name profile active?]}]
+  {:query [:resource/id :resource/name  :resource/email-address :resource/fluxod-name :resource/active? :resource/profile]
+   :ident :resource/id
+   :pre-merge (fn [{:keys [current-normalized data-tree]}]
+                (js/console.log data-tree)
+                (merge data-tree
+                       {:resource/profile (or (merge/nilify-not-found (:resource/profile data-tree))
+                                              :profile/user)}))
+   }
 
   
-  #_(js/console.log "PROFILE" profile)
-  (ui-list-item {}
-                (ui-list-content {:floated :right}
-                                 (ui-form {}
-                                          (ui-form-field {} (ui-form-checkbox {:label "Enable"
-                                                                               :checked active?
-                                                                               :onChange
-                                                                               (fn [e d]
-                                                                                 (m/toggle! this :resource/active?)
-                                                                                 (comp/transact! this [(resource/set-resource-active? {:value  (.-checked d) :id id})]))}))))
+  (ui-table-row
+   {}
+   [(ui-table-cell
+     {}
+     name)
+    
+    (ui-table-cell
+     {}
+     (ui-form
+      {}
+      (ui-form-field
+       {}
+       (ui-input
+        {:size :mini
+         :value (if (string? fluxod-name) fluxod-name "")
+         :onChange (fn [e e2] (m/set-string! this :resource/fluxod-name :event e))
+         :onBlur (fn [e] (comp/transact! this [(user/save-fluxod-name {:resource/fluxod-name fluxod-name
+                                                                       :resource/id id})]))}
+        ))))
+    (ui-table-cell
+     {}
+     email-address)
+    (ui-table-cell
+     {}
+     (ui-dropdown
+      {:compact true :basic true 
+       :options [{:text "Admin" :value :profile/admin}
+                 {:text "Team Leader" :value :profile/team-leader}
+                 {:text "Project Manager" :value :profile/project-manager}
+                 {:text "User" :value :profile/user}]
 
-                (ui-list-content {:floated :right}
-                                 (ui-dropdown {:compact true :basic true 
-                                               :options [{:text "Admin" :value :profile/admin}
-                                                                                                   {:text "Team Leader" :value :profile/team-leader}
-                                                                                                   {:text "Project Manager" :value :profile/project-manager}
-                                                                                                   {:text "User" :value :profile/user}]
-                                               :value profile
-                                               :onChange (fn [event data]
-                                                           (comp/transact! this [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
-                                                           
-                                                           (js/console.log "profile" profile))}))
-                
-                (ui-list-content {:floated :right}
-                                 email-address)
-                (ui-list-content {:floated :left} name)
-                ))
+       ;; TODO handle this on the server 
+       :value  profile
+       :onChange (fn [event data]
+                   (comp/transact!
+                    this
+                    [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
+                   
+                   (js/console.log "profile" profile))}))
+    (ui-table-cell
+     {}
+     (ui-form
+      {}
+      (ui-form-field
+       {}
+       (ui-form-checkbox
+        {
+         :checked active?
+         :onChange
+         (fn [e d]
+           (m/toggle! this :resource/active?)
+           (comp/transact! this [(resource/set-resource-active?
+                                  {:value  (.-checked d) :id id})]))}))))])
+
+  )
 
 
 
-(def ui-resource (comp/factory Resource))
+(def ui-resource (comp/factory Resource {:keyfn :resource/id}))
 
 
 
 
 #_(defmutation set-resources
-  [{:keys [id]}]
-  (action [{:keys [state]}]
-          ))
-          
+    [{:keys [id]}]
+    (action [{:keys [state]}]
+            ))
+
 
 (defsc AdminUsers [this {:admin-users/keys [resources] :as props}]
   {:query         [{:admin-users/resources (comp/get-query Resource)} [::uism/asm-id ::session/session]]
@@ -197,25 +204,47 @@
    :route-segment ["admin-users"]
                                         ;:initLocalState (fn [this _] {:project nil :resource (:workplan/resource (comp/props this))})
    #_#_:componentDidMount (fn [this] (comp/transact! (set-resources) ))
+   :will-enter (fn [app route-params]
+                 (dr/route-deferred
+                  [:component/id :admin-users]
+                  (fn []
+                    (df/load! app :resource/all-resources Resource {:post-mutation `dr/target-ready
+                                                                          :post-mutation-params  {:target [:component/id :admin-users]}
+                                                                          :target
+                                                                          [:component/id :admin-users :admin-users/resources]})
+                    
+                    )))
    :initial-state (fn [params] {:admin-users/resources []})
 
    
    }
 
-  (js/console.log "USERS1" (comp/props this))
   (let [current-state (uism/get-active-state this ::session/session)
         logged-in? (= :state/logged-in current-state)]
     (if logged-in?
-      (ui-container {:style {:width "60%"}}
-                   
-                   (dom/h3 {:style {:textAlign "center"}} "Users" )
+      (ui-container {:style {:width "80%"}}
+                    
+                    (dom/h3 {:style {:textAlign "center"}} "Users" )
 
-                   (ui-list {:divided true :verticalAlign "middle"}
-                            (map ui-resource resources)
-                            
-                            ))
+                    (ui-table
+                     {:style
+                      {:fontSize   "85%"
+                       :compact    true
+                       :selectable true}
+                      :celled true
+                      :striped true
+                      :color :blue}
+                     (ui-table-header
+                      {:fullWidth true :style {:position "sticky" :top 0}}
+                      (ui-table-row
+                       {}
+                       (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["MS Name" "Fluxod Name" "Email" "Profile" "Enable"])))
+                     (ui-table-body
+                      {}
+                      (mapv ui-resource resources))))
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))))
+
 
 
 

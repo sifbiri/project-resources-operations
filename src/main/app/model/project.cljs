@@ -73,6 +73,12 @@
                              (update :action/id dissoc id)))))
   (remote [env] true))
 
+(defmutation remove-fluxod-project-name [{:db/keys [id] :keys [name id]}]
+  (action [{:keys [state ref] :as env}]
+          (let [current-names (ns/get-in-graph @state (conj ref :fluxod-project-names))]
+            (ns/update-caller! env assoc :project-info/fluxod-project-names )))
+  (remote [env] true))
+
 
 (defmutation set-info-as-active-menu [params]
   (action [{:keys [state] :as env}]
