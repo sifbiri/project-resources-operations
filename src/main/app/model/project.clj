@@ -1006,7 +1006,7 @@
 
 (pc/defresolver modified-date-resolver [{:keys [db]} {:keys [project-info/id]}]
   {::pc/input #{:project-info/id}
-   ::pc/output [:project-info/modified-date]}
+   ::pc/output [:project-info/modified-date :project-info/id]}
 
   {:project-info/modified-date
    (d/q  '[:find  ?ps .
@@ -1015,7 +1015,9 @@
            [?p :project/id ?id ]
            [?p :project/modified-date ?ps]
            
-           ] db id)})
+           ] db id)
+   :project/info id}
+  )
 
 (pc/defresolver last-published-date-resolver [{:keys [db]} {:keys [project-info/id]}]
   {::pc/input #{:project-info/id}
@@ -1287,7 +1289,7 @@
 
 (def resolvers  [alias-project-id alias-project-info-project-panel projects-resolver assignments-resolver assignment-resolver resource-resolver project-resolver
                  
-                 all-projects-resolver made-up-resolver made-up-resolver2   start-date-resolver #_finish-date-resolver name-resolver modified-date-resolver last-published-date-resolver 
+                 all-projects-resolver made-up-resolver made-up-resolver2   start-date-resolver  name-resolver modified-date-resolver last-published-date-resolver 
                  set-project-lead set-functional-lead functional-lead-resolver functional-lead-resolver set-functional-lead technical-lead-resolver set-technical-lead set-project-status project-status-resolver 
                  set-project-phase project-phase-resolver set-project-entity #_project-entity-resolver project-fluxod-name-resolver set-project-fluxod-name get-or-create-gov-review-week get-or-create-current-gov-review-week
                  submit-current-gov-review-week

@@ -1019,9 +1019,10 @@
    
    :route-segment   ["project-info" :project-info/id]
    :ident   (fn [] [:project-info/id id])
-   :initial-state (fn [p] {:ui/loading true})
-   :pre-merge (fn [current-normalized data-tree]
-                (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"]))
+   ;:initial-state (fn [p] {:ui/loading true})
+   :pre-merge (fn [{:keys [current-normalized data-tree]}]
+                (merge current-normalized
+                       (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"])))
    :will-enter (fn [app {:keys [project-info/id] :as params}]
                  
                  (dr/route-deferred
@@ -1180,8 +1181,8 @@
 
                      )
 
-
-      (ui-grid
+      ;; TOOD 
+      #_(ui-grid
        {:centered true}
        (ui-grid-row
         {:columns 2 :stretched true}
@@ -1204,7 +1205,7 @@
                   (ui-table-cell {}  (str  % ))
                   (ui-table-cell {:onClick (fn [_] (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}
                                  (ui-icon {:name "x"})
-                                 )) (or ["A" "B"]fluxod-project-names ))))
+                                 ))  fluxod-project-names )))
          )
         
         
