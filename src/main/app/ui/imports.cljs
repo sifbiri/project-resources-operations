@@ -303,9 +303,11 @@
                                                   [files (:import/files new-import)]
                                                   (js/console.log "FILES" files)
                                                   (comp/transact!
-                                                   this
+                                                   SPA
                                                    [(import/import-file
-                                                     (file-upload/attach-uploads {} files))])
+                                                     (file-upload/attach-uploads {} files))]
+                                                   {:optimistic? true
+                                                    :compressible? true})
                                                   
                                                   (m/toggle! this :ui/modal-open?)
                                                   

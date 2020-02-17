@@ -188,7 +188,7 @@
           (let [current-names (ns/get-in-graph @state (conj ref :project-info/fluxod-project-names))
                 new-names (conj current-names new-name )]
             (ns/update-caller! env assoc :ui/new-fluxod-project-name "")
-            (ns/update-caller-in! env [:project-info/fluxod-project-names] #(if (nil? % ) [new-name] (conj % new-name) ))))
+            (ns/update-caller-in! env [:project-info/fluxod-project-names] conj new-name)))
   (remote [env] true))
 
 

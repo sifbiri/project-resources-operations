@@ -1035,7 +1035,7 @@
    
    :route-segment   ["project-info" :project-info/id]
    :ident   (fn [] [:project-info/id id])
-   ;:initial-state (fn [p] {:ui/loading true})
+   :initial-state (fn [p] {:ui/loading true :project-info/fluxod-project-names []})
    #_#_:pre-merge (fn [{:keys [current-normalized data-tree]}]
                 (merge current-normalized
                        (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"])))

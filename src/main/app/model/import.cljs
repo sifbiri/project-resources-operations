@@ -45,7 +45,7 @@
 
 
 (defmutation import-file [params]
-  (action [{:keys [state ref] :as env}]
+  #_(action [{:keys [state ref] :as env}]
           (let [Import (comp/registry-key->class :app.ui.imports/Import) ]
             (ns/update-caller-in! env  [:imports/new-import] assoc
                                   :import/time (t/now))
@@ -58,7 +58,7 @@
                                                       :import/start-period nil
                                                       :import/end-period nil
                                                       :import/status :new}))))
-  (remote [env] env))
+  (remote [env] true))
 
 (defmutation produce-dates-from-file [{:keys [file/name]}]
   (action
