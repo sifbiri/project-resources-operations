@@ -32,14 +32,37 @@
          (catch Exception e
            false))))
 
+
+(pc/defresolver all-imports [{:keys [connection db]} {:keys []}]
+  {::pc/output [{:all-imports [:import/id]}]}
+  {:all-imports (d/q '[:find ?id
+                       :keys import/id
+                       :where
+                       [?e :import/id ?id]] db)})
+
+
+(pc/defresolver import  [{:keys [connection db]} {:keys [import/id]}]
+  {::pc/input #{:import/id}
+   ::pc/output [:import/id :import/type :import/start-period :import/end-period :import/files :import/time]}
+  (d/pull db [:import/id :import/type :import/start-period :import/end-period :import/time {:import/files [:file/name]}] [:import/id id] ))
+
+
+
+
+
+
+
+
+
+
 (pc/defmutation
   import-file
-  [{:keys [:connection :db] :as env} {::file-upload/keys [files]}]
+  [{:keys [:connection :db] :as env} {::file-upload/keys [files] :keys [new-import]}]
   {
-   ::pc/params [::file-upload/files]
+   ::pc/params [::file-upload/files :new-import]
    ::pc/output []
    }
-  (println "FILES" files)
+  (println "FILES" new-import)
   (do
     (with-open [stream (clojure.java.io/input-stream (:tempfile (first files)))]
       (let[ fluxod-names
@@ -55,6 +78,9 @@
                   :where
                   [?r :resource/name ?name]]
                 db)
+
+           files (:import/files new-import)
+           files2 (mapv #(assoc (select-keys % [:file/name]) :db/id "new" ) files)
            tx
            (remove nil? (reduce (fn [r fluxod-name]
                                   (let [ 
@@ -69,8 +95,9 @@
         ;(reset! ms-names-atom ms-names)
         ;(reset! fluxod-names-atom fluxod-names)
         @(d/transact connection
-                     tx)))))
-
+                     tx)
+        @(d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
+  {})
 
 
 
@@ -87,12 +114,7 @@
   (pc/single-attr-resolver :resource/name :resource/fluxod-name  n->fluxod-name))
 
 
-(def resolvers [import-file name->fluxod-name])
-
-
-
-
-
+(def resolvers [import-file name->fluxod-name all-imports import])
 
 #_(let [ fluxod-names
       (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")

@@ -244,7 +244,7 @@
    
    }
   
-  (js/console.log "teams " teams)
+  
   (let [TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)
         current-state (uism/get-active-state this ::session/session)
         logged-in? (= :state/logged-in current-state)]
@@ -303,7 +303,7 @@
 
 (defmutation merge-team-checkboxes [_]
   (action [{:keys [state app]}]
-          (js/console.log "MERGE" (vals (get @state :team/id)))
+          
           (let [teams (vals (get @state :team/id))
                 TeamCheckbox (comp/registry-key->class :app.ui.root/TeamCheckbox)]
             (doseq [team teams]

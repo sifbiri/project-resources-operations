@@ -158,19 +158,21 @@
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
    ))
 
-(defsc Import [this {:import/keys [type time start-period end-period status files]}]
-  {:query         [:import/id :import/type :import/time :import/status :import/end-period
+(defsc Import [this {:import/keys [type time start-period end-period files]}]
+  {:query         [:import/id :import/type :import/time #_:import/status :import/end-period
                    :import/start-period :import/end-period :import/files]
    :ident         :import/id
    :initial-state {:import/id 1 :import/type :fluxod-timesheet :import/start-period (t/inst (t/now)) :import/end-period (t/inst (t/now))}}
-  #_(ui-table-row
-   {}
-   (ui-table-cell {} (str type))
-   (ui-table-cell {} (some-> time str))
-   (ui-table-cell {} (some-> start-period str))
-   (ui-table-cell {} (some-> end-period str))
-   (ui-table-cell {} (str (first files)))
-   (ui-table-cell {} (str status))))
+  (let [type->str {:fluxod-timesheet "Fluxod Timesheet"}
+        format-time #(apply str (take 16 (str (t/in % (t/zone)))))]
+    (ui-table-row
+    {}
+    (ui-table-cell {} (type->str type))
+    (ui-table-cell {:singleLine true} (some-> time format-time))
+    (ui-table-cell {:singleLine true} (some-> start-period format-time))
+    (ui-table-cell {:singleLine true} (some-> end-period format-time))
+    (ui-table-cell {} (some-> files first :file/name))
+    #_(ui-table-cell {} (str status)))))
 
 (def ui-import (comp/factory Import {:keyfn :import/id}))
 
@@ -178,6 +180,17 @@
   {:query         [:ui/modal-open? {:imports/new-import (comp/get-query Import)} {:imports/imports (comp/get-query Import)}]
    :ident         (fn [] [:component/id :imports])
    :route-segment ["imports"]
+   :will-enter (fn [app {:keys [] :as params}]
+                 (dr/route-deferred
+                  [:component/id :imports]
+                  (fn []
+                    (df/load!
+                     app
+                     :all-imports
+                     Import
+                     {:target [:component/id :imports :imports/imports]
+                      :marker :import-main :post-mutation `dr/target-ready :post-mutation-params {:target [:component/id :imports]}}))))
+   
    :initial-state {:ui/modal-open? false :imports/new-import {} :imports/imports []}}
 
   (log/info "VAL OF" (:import/start-period new-import))
@@ -194,7 +207,7 @@
                   {:fullWidth true :style {:position "sticky" :top 0}}
                   (ui-table-row
                    {}
-                   (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Type" "Time" "Start Period" "End Period" "File" "Status"])))
+                   (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Type" "Time" "Start Period" "End Period" "File"])))
                  (ui-table-body
                   {}
                   (mapv ui-import imports))
@@ -215,7 +228,7 @@
                                                               :import/type :fluxod-timesheet
                                                               :import/start-period (t/now)
                                                               :import/end-period (t/now)
-                                                              :import/status :new}
+                                                              }
                                                   :replace [:component/id :imports :imports/new-import]))
                         
                         }
@@ -249,7 +262,7 @@
                           {:type     "file"
                            :style
                            {:margin "0px"}
-                           ;:accept   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                                        ;:accept   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
                            ;; Set `:multiple true` if you want to upload more than one at a time
                            :onChange
                            (fn [evt]
@@ -259,12 +272,12 @@
                                #_(js/console.log {:upload (-> files first :file/content meta)})
                                
                                (comp/transact!
-                                  this
-                                  [(import/set-import-files {:files files})
-                                   (import/produce-dates-from-file
-                                    (-> files first (select-keys [:file/name]) ))])
+                                this
+                                [(import/set-import-files {:files files})
+                                 (import/produce-dates-from-file
+                                  (-> files first (select-keys [:file/name]) ))])
                                ))
-                           ;:icon (ui-icon {:name "file outline"} )
+                                        ;:icon (ui-icon {:name "file outline"} )
                            })))
                        (ui-form-group
                         {}
@@ -300,15 +313,12 @@
                        (ui-button
                         {:basic true :onClick (fn [e]
                                                 (let
-                                                  [files (:import/files new-import)]
-                                                  (js/console.log "FILES" files)
+                                                    [files (:import/files new-import)]
+                                                  
                                                   (comp/transact!
                                                    SPA
                                                    [(import/import-file
-                                                     (file-upload/attach-uploads {} files))]
-                                                   {:optimistic? true
-                                                    :compressible? true})
-                                                  
+                                                     (file-upload/attach-uploads {:new-import (assoc new-import :import/time (t/inst (t/now)))} files))])
                                                   (m/toggle! this :ui/modal-open?)
                                                   
                                                   ))}

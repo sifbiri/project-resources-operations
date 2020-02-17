@@ -176,7 +176,7 @@
                                         ;day (t/day-of-month (t/date-time ts))
 
             ]
-        (js/console.log  "TS" ts)
+        
         (tt/week-number-of-year (tc/from-date ts))))))
 
 
@@ -225,7 +225,7 @@
 
 (defsc TestC [this props]
   {:query []}
-  (js/console.log "HI")
+  
   (dom/p {} "Welcome :)"))
 
 (def ui-test-c (comp/factory TestC ))
@@ -253,7 +253,7 @@
 
 (defmutation set-due-date [{:keys [ref date]}]
   (action [{:keys [state ref] :as env}]
-          (js/console.log "REF" date)
+          
           (ns/update-caller! env  assoc :action/due-date date)
           ))
 
@@ -265,7 +265,7 @@
    :ident [:action/id :db/id]
    :initial-state {:ui/search-result [{:title "Sardine"}]}
    #_#_:pre-merge   (fn [{:keys [data-tree]}]
-                      (js/console.log "DATA TREE" data-tree)
+                      
                       (fs/add-form-config ActionForm data-tree))
                                         ;   :form-fields #{:action/action :action/owner :action/status :action/due-date}
 
@@ -274,7 +274,7 @@
   (let [suggestions (get props :resource/suggestions)
         ]
     
-    (js/console.log "SERACH" search-result)
+    
     (ui-container {:fluid true}
                   (ui-form {}
                            (ui-form-group {}
@@ -398,13 +398,13 @@
    :ident [:action/id :db/id]
    :form-fields #{:action/action :action/owner :action/status :action/due-date}
    :pre-merge   (fn [{:keys [data-tree]}]
-                  (js/console.log "DATA TREE" data-tree)
+                  
                   (fs/add-form-config ActionRow data-tree))
                                         ;   :form-fields #{:action/action :action/owner :action/status :action/due-date}
    :initial-state {:action/owner :param/owner :action/action :param/action :db/id :param/id :action/status :param/status :action/due-date (t/now) :ui/modal-open? false :ui/new? false :ui/saving? false}}
   
   (let [options props]
-    (js/console.log "ACTION ROW OPTIONS " options)
+    
     (ui-modal {:trigger (ui-table-row {:onClick #(m/set-value! this :ui/modal-open? true)}
                                       (ui-table-cell {} action)
                                       (ui-table-cell {} owner)
@@ -516,7 +516,7 @@
 
                                         ;(js/console.log "props" props)
   (let [options (get props :resource/options2)]
-    (js/console.log "PPPPPPP" (reverse (conj (mapv (fn [t] (vals (select-keys t [:task/parent-task-name :task/name :task/start-date :task/end-date]))) tasks-level3)
+    #_(js/console.log "PPPPPPP" (reverse (conj (mapv (fn [t] (vals (select-keys t [:task/parent-task-name :task/name :task/start-date :task/end-date]))) tasks-level3)
                                              [{:type :string :id :parent}
                                               {:type :string :id :name}
                                         ;{:type :string :id :te}
@@ -556,7 +556,7 @@
 (defmutation change-route [{:keys [this target]}]
   (action [{:keys [state]}
            ]
-          (js/console.log "ss" target)
+          
           (dr/change-route this target)))
 
 
@@ -626,7 +626,7 @@
    :ident  (fn[][:gov-review-week/week week])
    
    :will-enter (fn [app {:keys [gov-review-week/week] :as params}]
-                 (js/console.log "params " params)
+                 
                  (dr/route-deferred
                   [:gov-review-week/week week]
                   (fn []
@@ -635,7 +635,7 @@
                     (comp/transact! app [(dr/target-ready {:target [:gov-review-week/week week]})]))))
                                         ;:pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config GovReviewWeek data-tree))
    :intial-state {}}
-  (js/console.log "QQQQ" (comp/props this))
+  
   (let [finance-color-handler
         (fn [e d]
           (let [new-color (keyword (.-key (.-text d)))]
@@ -790,7 +790,7 @@
                   [:component/id :gov-review]
                   (fn []
                     #_(df/load! app [:project-info/id id] ProjectInfo)
-                    (js/console.log "GOV REVIEW" params)
+                    
 
                     
                     (merge/merge-component! app GovReview {:gov-review/id (uuid id)})
@@ -811,7 +811,7 @@
                            index 0]
                       
                       (when (seq weeks)
-                        (js/console.log "loop")
+                        
                         #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
                                                                      :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
                                                                      )
@@ -824,7 +824,7 @@
                     
                     )               ))}
 
-  (js/console.log "ROUTE123" id)
+  
   
   (let [current-tab (some-> (dr/current-route this this) first keyword)]
     (ui-container {:textAlign :center :style {:fontSize "85%"}}
@@ -839,7 +839,7 @@
                                                           index 0]
                                                      
                                                      (when (seq weeks)
-                                                       (js/console.log "loop")
+                                                       
                                                        #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
                                                                                                     :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
                                                                                                     )
@@ -895,7 +895,7 @@
                                                                                                                          index 0]
                                                                                                                     
                                                                                                                     (when (seq weeks)
-                                                                                                                      (js/console.log "loop")
+                                                                                                                      
                                                                                                                       #_(merge/merge-component! SPA GovReviewWeek {:gov-review-week/week (first weeks)
                                                                                                                                                                    :gov-review-week/status :open} :replace [:component/id :gov-review :gov-review/current-weeks index]
                                                                                                                                                                    )
@@ -916,13 +916,13 @@
 
 
                   ;; router here?
-                  (js/console.log "CURRENT WEEK " current-week)
+                  
                   (ui-gov-review-week current-week)
 
                   #_(ui-dropdown{:text "Add"
                                  :options [{:text "Action" :value :add-action} {:text "Risk" :value :add-risk}]
                                  :onChange (fn [x y]
-                                             (js/console.log "X" x "Y" (.-value y))
+                                             
                                              (m/toggle! this :ui/modal-open?)
                                              (let [new-action-row (tempid/tempid)]
                                                (merge/merge-component! this ActionRow
@@ -991,7 +991,7 @@
                                                   
                                                   
                                                   ]))
-                  (js/console.log "NEW ACTION" new-action)
+                  
                   
 
                   
@@ -1062,7 +1062,7 @@
         options (get props :resource/options2)]
     
     
-    (js/console.log "NEW FLUXOD TOP" new-fluxod-project-name )
+    
     (ui-grid-column
      {}
      
@@ -1090,7 +1090,7 @@
           :value status
           
           :onChange (fn [e d]
-                      (js/console.log "id" id)
+                      
                       (comp/transact! this [(project/set-project-status {:status (keyword (.-value d))  :project-info/id id })]))}))
        (ui-form-field {}
                       (dom/label {} "Project Phase")
@@ -1125,13 +1125,13 @@
       (ui-divider {})
 
       (ui-form-group {}
-                     (js/console.log "date is " modified-date )
+                     
                      (ui-form-input  {:label "Modified Date" :type "datetime-local" :readOnly true
                                       :value
                                         (str-date modified-date )
 
                                       :onChange
-                                      (fn [e d] (js/console.log "data" (.-value (.-target e)) "datein" modified-date ))})
+                                      (fn [e d] )})
                      
                      (ui-form-input  {:label "Start Date" :type "datetime-local" :readOnly true
                                       :value (str-date start-date)
@@ -1159,7 +1159,7 @@
                                                   :value (:resource/id project-lead)
                                                   
                                                   :onChange (fn [e d]
-                                                              (js/console.log "id " id)
+                                                              
                                                               (comp/transact! this [(project/set-project-lead {:lead-id (.-value d) :project-info/id id })]))}))
 
                      (ui-form-field {}
@@ -1291,7 +1291,7 @@
 (defmutation set-current-project-id [{:keys [current-project-id]}]
   (action [{:keys [state app]}]
           (let [ ]
-            (js/console.log "TRANSACT" current-project-id)
+            
             (swap! state (fn [state]
                            (-> state
                                (assoc-in [:component/id :project-panel :project-panel/current-project-id] current-project-id))))
@@ -1327,7 +1327,7 @@
    
    
    :will-enter (fn [app {:keys [project-panel/current-project-id] :as params}]
-                 (js/console.log "params2" current-project-id)
+                 
                  (dr/route-deferred
                   [:component/id :project-panel]
                   (fn []
@@ -1341,12 +1341,12 @@
 
    
    #_#_:componentDidMount (fn [this]
-                            (js/console.log "SEE?" (comp/props this))
+                            
                             )}
 
   
   (let [current-project-id (:project/id current-project)]
-    (js/console.log "PROJECT ID" id)
+    
     [(dom/h3 {:style {:color "#3281b9"}} (:project/name current-project))
      (ui-grid-column {:width 4} 
                      (ui-menu {:fluid true :vertical true :tabular true}
@@ -1357,7 +1357,7 @@
                               (ui-menu-item {:name "Governance Review" :active (= active-item :governance-review) :onClick (fn []
                                                                                                                              (m/set-value! this :ui/active-item :governance-review)
 
-                                                                                                                             (js/console.log "CONSOLE ")
+                                                                                                                             
                                                                                                                              ;; check this out! TODO 
                                                                                                                              (dr/change-route this (dr/path-to  GovReview {:gov-review/id id  } )))} )
 
@@ -1421,7 +1421,7 @@
 (defmutation testm [{:keys []}]
   (action [{:keys [state ref app] :as env}]
           (let [Root (comp/registry-key->class :app.ui.root/Root)]
-            (js/console.log (comp/get-initial-state Root {})))))
+            #_(js/console.log (comp/get-initial-state Root {})))))
 
 
 (defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction] :as props}]
@@ -1460,7 +1460,7 @@
    
    }
 
-  (js/console.log "RESULT" admin-projects)
+  
   (let [sort-by-column (fn [clicked-column]
                          (if (not= column clicked-column)
                            (do
