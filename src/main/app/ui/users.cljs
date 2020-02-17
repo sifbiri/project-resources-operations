@@ -122,7 +122,7 @@
   {:query [:resource/id :resource/name  :resource/email-address :resource/fluxod-name :resource/active? :resource/profile]
    :ident :resource/id
    :pre-merge (fn [{:keys [current-normalized data-tree]}]
-                (js/console.log data-tree)
+                
                 (merge data-tree
                        {:resource/profile (or (merge/nilify-not-found (:resource/profile data-tree))
                                               :profile/user)}))
@@ -167,7 +167,7 @@
                     this
                     [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
                    
-                   (js/console.log "profile" profile))}))
+                   )}))
     (ui-table-cell
      {}
      (ui-form
@@ -209,9 +209,9 @@
                   [:component/id :admin-users]
                   (fn []
                     (df/load! app :resource/all-resources Resource {:post-mutation `dr/target-ready
-                                                                          :post-mutation-params  {:target [:component/id :admin-users]}
-                                                                          :target
-                                                                          [:component/id :admin-users :admin-users/resources]})
+                                                                    :post-mutation-params  {:target [:component/id :admin-users]}
+                                                                    :target
+                                                                    [:component/id :admin-users :admin-users/resources]})
                     
                     )))
    :initial-state (fn [params] {:admin-users/resources []})

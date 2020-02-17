@@ -73,11 +73,24 @@
                              (update :action/id dissoc id)))))
   (remote [env] true))
 
+
+
+
 (defmutation remove-fluxod-project-name [{:db/keys [id] :keys [name id]}]
   (action [{:keys [state ref] :as env}]
-          (let [current-names (ns/get-in-graph @state (conj ref :fluxod-project-names))]
-            (ns/update-caller! env assoc :project-info/fluxod-project-names )))
+          (let [current-names (ns/get-in-graph @state (conj ref :project-info/fluxod-project-names))]
+
+            (js/console.log "NAMEES" current-names)
+            (ns/update-caller! env assoc :project-info/fluxod-project-names (vec (remove #(= % name) current-names)) )))
   (remote [env] true))
+
+
+(defmutation save-fluxod-client-name [{:keys [name id]}]
+  (remote [env] true))
+
+
+
+
 
 
 (defmutation set-info-as-active-menu [params]
@@ -167,6 +180,15 @@
                          (-> state
                              (assoc-in [:project-info/id id :project-info/project-lead]
                                        [:resource/id  lead-id])))))
+  (remote [env] true))
+
+(defmutation add-fluxod-project-names [{:keys [new-name project-info/id]}]
+  (action [{:keys [state ref] :as env}]
+          (js/console.log " NEW FORM TX " new-name)
+          (let [current-names (ns/get-in-graph @state (conj ref :project-info/fluxod-project-names))
+                new-names (conj current-names new-name )]
+            (ns/update-caller! env assoc :ui/new-fluxod-project-name "")
+            (ns/update-caller-in! env [:project-info/fluxod-project-names] #(if (nil? % ) [new-name] (conj % new-name) ))))
   (remote [env] true))
 
 

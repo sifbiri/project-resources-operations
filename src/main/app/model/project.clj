@@ -935,6 +935,20 @@
     
     {:entity (nil? entity)}))
 
+(pc/defmutation add-fluxod-project-names [{:keys [db connection]} {:keys [new-name project-info/id]}]
+  {::pc/params [:new-name :project-info/id]
+   ::pc/output []}
+  (let [ident [:project-info/id id]
+        current-names (d/pull db
+                              [:project-info/fluxod-project-names] [:project-info/id id])
+        tx (if current-names
+             [[:db/add ident :project-info/fluxod-project-names new-name]]
+             [{:db/id "new"
+               :project-info/fluxod-project-names new-name
+               :project-info/id id}])]
+    @(d/transact connection tx)
+    {}))
+
 
 
 
@@ -979,6 +993,32 @@
    ::pc/output [:project-info/made-up]}
   {:project-info/made-up 44})
 
+(pc/defresolver fluxod-client-name [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/fluxod-client-name]}
+  (d/pull db [:project-info/fluxod-client-name] [:project-info/id id]))
+
+
+(pc/defmutation remove-fluxod-project-name [{:keys [connection db] :as env} {:keys [name id]}]
+  {::pc/params [:name :id]
+   ::pc/output []}
+  @(d/transact connection [[:db/retract [:project-info/id id] :project-info/fluxod-project-names name]])
+  {})
+
+(pc/defmutation save-fluxod-client-name [{:keys [connection db] :as env} {:keys [name id]}]
+  {::pc/params [:name :id]
+   ::pc/output []}
+  @(d/transact connection [[:db/add [:project-info/id id] :project-info/fluxod-client-name name]])
+  {})
+
+
+
+(pc/defresolver fluxod-project-names [{:keys [connection db]} {:keys [project-info/id]}]
+  {::pc/input #{:project-info/id}
+   ::pc/output [:project-info/fluxod-project-names]}
+  (d/pull db
+          [:project-info/fluxod-project-names] [:project-info/id id]))
+
 
 (pc/defresolver made-up-resolver2 [{:keys [db]} {:keys [project-info/id]}]
   {::pc/input #{:project-info/id}
@@ -1016,8 +1056,9 @@
            [?p :project/modified-date ?ps]
            
            ] db id)
-   :project/info id}
-  )
+   :project/info id})
+
+
 
 (pc/defresolver last-published-date-resolver [{:keys [db]} {:keys [project-info/id]}]
   {::pc/input #{:project-info/id}
@@ -1312,6 +1353,11 @@
                  action-list-label-count
                  ;index-explorer
                  all-admin-projects
+                 add-fluxod-project-names
+                 fluxod-project-names
+                 remove-fluxod-project-name
+                 save-fluxod-client-name
+                 fluxod-client-name
                  a b
                  ])
 

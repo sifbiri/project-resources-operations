@@ -122,9 +122,9 @@
         legal-origins   (get config :legal-origins #{"localhost"})]
     (-> not-found-handler
         (wrap-api "/api")
-        (wrap-file-response)
         (file-upload/wrap-mutation-file-uploads {})
-      wrap-transit-params
+        (wrap-file-response)
+     wrap-transit-params
       wrap-transit-response
       wrap-multipart-params
       (wrap-html-routes)

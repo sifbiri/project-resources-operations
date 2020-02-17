@@ -934,7 +934,7 @@
                                                                         :action/due-date (-> t/now t/inst)}
                                                                        :append [:action-list/id id :action-list/actions]
                                                                        :replace [:component/id :gov-review :gov-review/new-action])))})
-                  (ui-menu {#_#_:vertical true :size :tiny :compact true :borderless true   :basic true
+                  #_(ui-menu {#_#_:vertical true :size :tiny :compact true :borderless true   :basic true
                             :style {:paddingBottom "0px" :position "relative ":top "-2px" :selfAlign :right
                                     :border "0.5px solid #dedede"}
                             }
@@ -955,6 +955,20 @@
                                                                                                                 :append [:action-list/id id :action-list/actions]
                                                                                                                 :replace [:component/id :gov-review :gov-review/new-action])) } "Action")
                                                           #_(ui-dropdown-item {} "Risk"))))
+
+                  (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e d]
+                                                                                        (m/toggle! this :ui/modal-open?)
+                                                                                        (merge/merge-component! this ActionRow
+                                                                                                                {:ui/new? true
+                                                                                                                 :db/id (tempid/tempid)
+                                                                                                                 :action/action ""
+                                                                                                                 :ui/modal-open? true
+                                                                                                                 :action/owner ""
+                                                                                                                 :action/status :open
+                                                                                                                 :action/due-date (-> t/now t/inst)}
+                                                                                                                :append [:action-list/id id :action-list/actions]
+                                                                                                                :replace [:component/id :gov-review :gov-review/new-action]))
+                               } "Add Action")
 
                   
                   
@@ -998,15 +1012,17 @@
 (def ui-project-info2 (comp/factory ProjectInfo2))
 
 (defsc ProjectInfo [this {:project-info/keys [start-date modified-date finish-date id new  name    finish-date project-lead functional-lead
-                                              technical-lead status phase entity fluxod-name fluxod-project-names]
+                                              technical-lead status phase entity fluxod-name fluxod-project-names fluxod-client-name]
                            
-                          :ui/keys [loading?] :as props}]
+                          :ui/keys [loading? new-fluxod-project-name] :as props}]
   {:query [:project-info/id :project-info/modified-date :project-info/start-date  :project-info/finish-date
            :project-info/last-published-date
-           
+           :ui/new-fuxod-project-name
            :project-info/last-published-date :project-info/finish-date :project-info/name :project-info/status
-           :project-info/fluxod-project-names
+           :project-info/fluxod-client-name
            :project-info/phase
+           :project-info/fluxod-project-names
+           :ui/new-fluxod-project-name
            :project-info/entity
            :project-info/new
            :ui/loading?
@@ -1020,7 +1036,7 @@
    :route-segment   ["project-info" :project-info/id]
    :ident   (fn [] [:project-info/id id])
    ;:initial-state (fn [p] {:ui/loading true})
-   :pre-merge (fn [{:keys [current-normalized data-tree]}]
+   #_#_:pre-merge (fn [{:keys [current-normalized data-tree]}]
                 (merge current-normalized
                        (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"])))
    :will-enter (fn [app {:keys [project-info/id] :as params}]
@@ -1045,7 +1061,8 @@
         str-date #(some->> % t/date-time str (take 16) (apply str))
         options (get props :resource/options2)]
     
-    (js/console.log "STATUS" load-status)
+    
+    (js/console.log "NEW FLUXOD TOP" new-fluxod-project-name )
     (ui-grid-column
      {}
      
@@ -1182,7 +1199,7 @@
                      )
 
       ;; TOOD 
-      #_(ui-grid
+      (ui-grid
        {:centered true}
        (ui-grid-row
         {:columns 2 :stretched true}
@@ -1191,21 +1208,37 @@
          (ui-form-field
           {}
           (dom/label {} "Fluxod Client Name")
-          (ui-input {:placeholder "Fluxod Client Name"})))
+          (ui-input {:placeholder "Fluxod Client Name"
+                     :value fluxod-client-name
+                     :onChange #(m/set-string! this :project-info/fluxod-client-name :event %)
+                     :onBlur #(comp/transact! this [(project/save-fluxod-client-name {:name fluxod-client-name :id id})])})))
         (ui-grid-column
          {}
          (ui-form-field
           {}
           (dom/label {} "Fluxod Project Name")
-          (ui-input {:placeholder "Fluxod Project Name "})
+          (ui-input {:placeholder "Fluxod Project Name "
+                     :value new-fluxod-project-name
+                     :onChange (fn [e]
+                                 (m/set-string! this
+                                                :ui/new-fluxod-project-name
+                                                :event
+                                                e))
+                     :onKeyDown (fn [e]
+                                  (when (evt/enter? e)
+                                    (comp/transact! this [(project/add-fluxod-project-names
+                                                          {:new-name new-fluxod-project-name
+                                                           :project-info/id id})])))})
           (ui-table
            {}
            (map #(ui-table-row
                   {:textAlign :left}
                   (ui-table-cell {}  (str  % ))
-                  (ui-table-cell {:onClick (fn [_] (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}
-                                 (ui-icon {:name "x"})
-                                 ))  fluxod-project-names )))
+                  (ui-table-cell {:textAlign :right
+                                  }
+                                 (ui-icon {:name "x"
+                                           :onClick (fn [_]
+                                                      (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}) ))  fluxod-project-names )))
          )
         
         
@@ -1249,7 +1282,7 @@
 (dr/defrouter ProjectPanelRouter [this props]
   {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm ]}
   (case current-state
-    :pending (dom/div "Loading...")
+    :pending (ui-container {} (ui-loader {:style {:marginTop "20px"} :active true}))
     :failed (dom/div "Loading seems to have failed. Try another route.")
     (dom/div "Unknown route")))
 
