@@ -45,7 +45,20 @@
 
 
 (defmutation import-file [params]
-    (remote [env] env))
+  (action [{:keys [state ref] :as env}]
+          (let [Import (comp/registry-key->class :app.ui.imports/Import) ]
+            (ns/update-caller-in! env  [:imports/new-import] assoc
+                                  :import/time (t/now))
+           (ns/swap!-> state
+                       (targeting/integrate-ident*
+                        (get-in @state (conj ref :imports/new-import))
+                        :append (conj ref :imports/imports))
+                       #_(merge/merge-component Import {:import/id (random-uuid)
+                                                      :import/type :fluxod-timesheet
+                                                      :import/start-period nil
+                                                      :import/end-period nil
+                                                      :import/status :new}))))
+  (remote [env] env))
 
 (defmutation produce-dates-from-file [{:keys [file/name]}]
   (action

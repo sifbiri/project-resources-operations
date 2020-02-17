@@ -19,7 +19,9 @@
   (->
    (net/wrap-csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
    (net/wrap-fulcro-request)
-   (file-upload/wrap-file-upload)))
+   (file-upload/wrap-file-upload)
+   
+   ))
 
 
 

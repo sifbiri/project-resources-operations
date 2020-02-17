@@ -36,10 +36,11 @@
 (pc/defmutation
   import-file
   [{:keys [:connection :db] :as env} {::file-upload/keys [files]}]
-  {::pc/sym`import-file
-   ::pc/params [:upload]
-   ::pc/output [:upload]
+  {
+   ::pc/params [::file-upload/files]
+   ::pc/output []
    }
+  (println "FILES" files)
   (do
     (with-open [stream (clojure.java.io/input-stream (:tempfile (first files)))]
       (let[ fluxod-names

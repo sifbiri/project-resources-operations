@@ -158,16 +158,27 @@
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
    ))
 
-(defsc Import [this {:import/keys []}]
-  {:query         [:import/id :import/type :import/start-period :import/end-period :import/files]
+(defsc Import [this {:import/keys [type time start-period end-period status files]}]
+  {:query         [:import/id :import/type :import/time :import/status :import/end-period
+                   :import/start-period :import/end-period :import/files]
    :ident         :import/id
-   :initial-state {:import/id 1 :import/type :fluxod-timesheet :import/start-period (t/inst (t/now)) :import/end-period (t/inst (t/now))}})
+   :initial-state {:import/id 1 :import/type :fluxod-timesheet :import/start-period (t/inst (t/now)) :import/end-period (t/inst (t/now))}}
+  #_(ui-table-row
+   {}
+   (ui-table-cell {} (str type))
+   (ui-table-cell {} (some-> time str))
+   (ui-table-cell {} (some-> start-period str))
+   (ui-table-cell {} (some-> end-period str))
+   (ui-table-cell {} (str (first files)))
+   (ui-table-cell {} (str status))))
 
-(defsc ImportMain [this {:ui/keys [modal-open?] :imports/keys [new-import] :as props}]
+(def ui-import (comp/factory Import {:keyfn :import/id}))
+
+(defsc ImportMain [this {:ui/keys [modal-open?] :imports/keys [new-import imports] :as props}]
   {:query         [:ui/modal-open? {:imports/new-import (comp/get-query Import)} {:imports/imports (comp/get-query Import)}]
    :ident         (fn [] [:component/id :imports])
    :route-segment ["imports"]
-   :initial-state {:ui/modal-open? false :imports/new-import {}}}
+   :initial-state {:ui/modal-open? false :imports/new-import {} :imports/imports []}}
 
   (log/info "VAL OF" (:import/start-period new-import))
   (ui-container {}
@@ -183,10 +194,10 @@
                   {:fullWidth true :style {:position "sticky" :top 0}}
                   (ui-table-row
                    {}
-                   (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Type" "Date" "Start Period" "End Period" "File" "Status"])))
+                   (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Type" "Time" "Start Period" "End Period" "File" "Status"])))
                  (ui-table-body
                   {}
-                  #_(map ui-team (remove nil? teams)))
+                  (mapv ui-import imports))
                  (ui-table-footer
                   {}
                   (ui-table-row
@@ -199,7 +210,15 @@
                        {:basic true
                         :onClick
                         (fn [e]
-                          (m/toggle! this :ui/modal-open?))}
+                          (m/toggle! this :ui/modal-open?)
+                          (merge/merge-component! SPA Import {:import/id (random-uuid)
+                                                              :import/type :fluxod-timesheet
+                                                              :import/start-period (t/now)
+                                                              :import/end-period (t/now)
+                                                              :import/status :new}
+                                                  :replace [:component/id :imports :imports/new-import]))
+                        
+                        }
                        (ui-icon {:name "plus"}))
                       :open    modal-open?
                       #_#_:onClose #(m/set-value! this :ui/modal-open? false)}
@@ -280,7 +299,9 @@
 
                        (ui-button
                         {:basic true :onClick (fn [e]
-                                                (let [files (:import/files new-import)]
+                                                (let
+                                                  [files (:import/files new-import)]
+                                                  (js/console.log "FILES" files)
                                                   (comp/transact!
                                                    this
                                                    [(import/import-file
