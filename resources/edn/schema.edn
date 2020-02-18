@@ -1,5 +1,176 @@
 
-[;; import
+[;;fluxod timesheet
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/resource-name
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/resource-entity
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/activity-type
+
+  :db/valueType :db.type/keyword
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/client
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/po
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/entity-order
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/date
+
+  :db/valueType :db.type/instant
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/days
+
+  :db/valueType :db.type/float
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/domain
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/comments
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/status
+
+  :db/valueType :db.type/keyword
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/billable?
+
+  :db/valueType :db.type/boolean
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/bill-ref
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/bill-date
+
+  :db/valueType :db.type/instant
+  
+    :db/cardinality :db.cardinality/one
+
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :fluxod-ts/client
+
+  :db/valueType :db.type/string
+  
+  
+  :db/cardinality :db.cardinality/one
+
+  }
+
+ ;[:db/add :db/id :db/ident :fluxod-ts/id]
+ 
+
+
+ ;; import
 
  {:db/id #db/id[:db.part/db]
 

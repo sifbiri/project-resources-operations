@@ -48,6 +48,53 @@
 
 
 
+(def status-str->key {"Approuvé" :approved})
+(def activity-type-str->key {"Congés (payés, sans solde)" :leave
+                             "Mission" :mission
+                             "Administratif / réunions internes" :meetings
+                             "Formation" :training
+                             "Développement / Projet interne" :internal-project
+                             "Support client" :client-support
+                             "Avant-vente" :pre-sale})
+(defn n->fluxod-name [{:keys [connection db]} name]
+  (d/q '[:find ?fn .
+         :in $ ?name
+         :where
+         [?r :resource/name ?name]
+         [?r :resource/fluxod-name ?fn]]))
+  
+(def name->fluxod-name
+  (pc/single-attr-resolver :resource/name :resource/fluxod-name  n->fluxod-name))
+
+
+
+
+(defn prepare-fluxod-ts-tx
+  [stream]
+  (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
+      (s/select-sheet "Export des temps")
+      (s/select-columns 
+       {:A :fluxod-ts/resource-name :B :fluxod-ts/resource-entity
+        :C :fluxod-ts/activity-type :D :fluxod-ts/client :E :fluxod-ts/po :F :fluxod-ts/entity-order
+        :G :fluxod-ts/date
+        :H :fluxod-ts/days
+        :J :fluxod-ts/domain
+        :K :fluxod-ts/comments
+        :L :fluxod-ts/status
+        :M :fluxod-ts/billable?
+        :N :fluxod-ts/bill-ref
+        :O :fluxod-ts/bill-date})
+      (mapv (fn [{:keys [fluxod-ts/activity-type] :as m}]  (assoc m :fluxod-ts/activity-type (activity-type-str->key activity-type))))
+      (mapv (fn [{:keys [fluxod-ts/status] :as m}]  (assoc m :fluxod-ts/status  (status-str->key status))))
+      (mapv (fn [{:keys [fluxod-ts/billable?] :as m}]  (assoc m :fluxod-ts/billable? (if (= billable? "Non") false true))))
+      (mapv (fn [m] (api/remove-nils m)))
+      
+      rest
+
+      vec
+      
+      (d/transact (d/connect db-url))))
+
 
 
 
@@ -81,7 +128,7 @@
 
            files (:import/files new-import)
            files2 (mapv #(assoc (select-keys % [:file/name]) :db/id "new" ) files)
-           tx
+           tx-fluxod-names
            (remove nil? (reduce (fn [r fluxod-name]
                                   (let [ 
                                         res (some #(when (str-fliped? fluxod-name (:resource/name %)) (assoc % :resource/fluxod-name fluxod-name )) ms-names)]
@@ -90,46 +137,42 @@
                                     #_(conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name))
                                     ))
                                 []
-                                fluxod-names))]
+                                fluxod-names))
+           tx-fluxod-ts (prepare-fluxod-ts-tx stream)]
         
-        ;(reset! ms-names-atom ms-names)
-        ;(reset! fluxod-names-atom fluxod-names)
-        @(d/transact connection
-                     tx)
-        @(d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
+        (d/transact connection
+                     (concat tx-fluxod-names tx-fluxod-ts))
+        ;; import history 
+        (d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
   {})
 
 
 
 
 
-(defn n->fluxod-name [{:keys [connection db]} name]
-  (d/q '[:find ?fn .
-         :in $ ?name
-         :where
-         [?r :resource/name ?name]
-         [?r :resource/fluxod-name ?fn]]))
-  
-(def name->fluxod-name
-  (pc/single-attr-resolver :resource/name :resource/fluxod-name  n->fluxod-name))
+
 
 
 (def resolvers [import-file name->fluxod-name all-imports import])
 
-#_(let [ fluxod-names
-      (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
-           (s/select-sheet "Export des temps")
-           (s/select-columns {:A :name})
-           (map :name)
-           distinct
-           vec)
-      ms-names
-      (d/q '[:find ?name ?r 
-             :keys resource/name db/id 
-             :where
-             [?r :resource/name ?name]]
-           (d/db (d/connect db-url)))
-      tx
+
+
+
+(comment
+  (let [ fluxod-names
+        (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
+             (s/select-sheet "Export des temps")
+             (s/select-columns {:A :name})
+             (map :name)
+             distinct
+             vec)
+        ms-names
+        (d/q '[:find ?name ?r 
+               :keys resource/name db/id 
+               :where
+               [?r :resource/name ?name]]
+             (d/db (d/connect db-url)))
+        tx
         (vec (vec (reduce (fn [r fluxod-name]
                             (let [ms-names-f  (filter (fn [{:resource/keys [name]}]
                                                         (str-fliped? name fluxod-name)) ms-names)]
@@ -137,10 +180,10 @@
                               (when (seq ms-names-f) (conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name)))))
                           []
                           fluxod-names)))
-      ]
-  @(d/transact (d/connect db-url ) tx))
-
-(comment
+        tx2 (prepare-fluxod-ts-tx )
+        ]
+    @(d/transact (d/connect db-url ) tx))
+  
   (def fluxod-names
            (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
                 (s/select-sheet "Export des temps")

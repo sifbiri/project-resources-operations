@@ -580,3 +580,10 @@
 (d/pull (d/db (d/connect db-url)) [:project-info/fluxod-project-names] [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"])
 
 (d/transact (d/connect db-url) [[:db/add [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"] :project-info/:project-info/fluxod-project-names "NEW1"]])
+
+
+(def status-str->key {"Approuvé" :approved})
+
+
+
+
