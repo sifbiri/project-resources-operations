@@ -184,11 +184,15 @@
 
 (defmutation add-fluxod-project-names [{:keys [new-name project-info/id]}]
   (action [{:keys [state ref] :as env}]
-          (js/console.log " NEW FORM TX " new-name)
+          (js/console.log " NEW FORM TX " ref)
           (let [current-names (ns/get-in-graph @state (conj ref :project-info/fluxod-project-names))
-                new-names (conj current-names new-name )]
+                new-names (conj current-names new-name )
+                current-names2 (if (nil? current-names) [] current-names)
+                ]
+            (js/console.log "NEW NAMES" current-names)
             (ns/update-caller! env assoc :ui/new-fluxod-project-name "")
-            (ns/update-caller-in! env [:project-info/fluxod-project-names] conj new-name)))
+
+            (swap! state (fn [s] (assoc-in s (conj ref  :project-info/fluxod-project-names) (conj current-names new-name))))))
   (remote [env] true))
 
 

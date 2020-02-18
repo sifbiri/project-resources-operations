@@ -1229,16 +1229,17 @@
                                     (comp/transact! this [(project/add-fluxod-project-names
                                                           {:new-name new-fluxod-project-name
                                                            :project-info/id id})])))})
-          (ui-table
-           {}
-           (map #(ui-table-row
-                  {:textAlign :left}
-                  (ui-table-cell {}  (str  % ))
-                  (ui-table-cell {:textAlign :right
-                                  }
-                                 (ui-icon {:name "x"
-                                           :onClick (fn [_]
-                                                      (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}) ))  fluxod-project-names )))
+          (when (seq fluxod-project-names)
+            (ui-table
+            {}
+            (map #(ui-table-row
+                   {:textAlign :left}
+                   (ui-table-cell {}  (str  % ))
+                   (ui-table-cell {:textAlign :right
+                                   }
+                                  (ui-icon {:name "x"
+                                            :onClick (fn [_]
+                                                       (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}) ))  fluxod-project-names ))))
          )
         
         
