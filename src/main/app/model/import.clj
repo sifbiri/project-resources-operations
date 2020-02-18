@@ -64,43 +64,37 @@
          [?r :resource/fluxod-name ?fn]]))
   
 (def name->fluxod-name
-  (pc/single-attr-resolver :resource/name :resource/fluxod-name  n->fluxod-name))
+  (pc/single-attr-resolver2 :resource/name :resource/fluxod-name  n->fluxod-name))
 
 
 
 
 (defn prepare-fluxod-ts-tx
-  [stream]
-  (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
-      (s/select-sheet "Export des temps")
-      (s/select-columns 
-       {:A :fluxod-ts/resource-name :B :fluxod-ts/resource-entity
-        :C :fluxod-ts/activity-type :D :fluxod-ts/client :E :fluxod-ts/po :F :fluxod-ts/entity-order
-        :G :fluxod-ts/date
-        :H :fluxod-ts/days
-        :J :fluxod-ts/domain
-        :K :fluxod-ts/comments
-        :L :fluxod-ts/status
-        :M :fluxod-ts/billable?
-        :N :fluxod-ts/bill-ref
-        :O :fluxod-ts/bill-date})
-      (mapv (fn [{:keys [fluxod-ts/activity-type] :as m}]  (assoc m :fluxod-ts/activity-type (activity-type-str->key activity-type))))
-      (mapv (fn [{:keys [fluxod-ts/status] :as m}]  (assoc m :fluxod-ts/status  (status-str->key status))))
-      (mapv (fn [{:keys [fluxod-ts/billable?] :as m}]  (assoc m :fluxod-ts/billable? (if (= billable? "Non") false true))))
-      (mapv (fn [m] (api/remove-nils m)))
-      
-      rest
+  [file]
+  (with-open [stream (clojure.java.io/input-stream file)]
+    (->> (s/load-workbook stream)
+        (s/select-sheet "Export des temps")
+        (s/select-columns 
+         {:A :fluxod-ts/resource-name :B :fluxod-ts/resource-entity
+          :C :fluxod-ts/activity-type :D :fluxod-ts/client :E :fluxod-ts/po :F :fluxod-ts/entity-order
+          :G :fluxod-ts/date
+          :H :fluxod-ts/days
+          :J :fluxod-ts/domain
+          :K :fluxod-ts/comments
+          :L :fluxod-ts/status
+          :M :fluxod-ts/billable?
+          :N :fluxod-ts/bill-ref
+          :O :fluxod-ts/bill-date})
+        (mapv (fn [{:keys [fluxod-ts/activity-type] :as m}]  (assoc m :fluxod-ts/activity-type (activity-type-str->key activity-type))))
+        (mapv (fn [{:keys [fluxod-ts/status] :as m}]  (assoc m :fluxod-ts/status  (status-str->key status))))
+        (mapv (fn [{:keys [fluxod-ts/billable?] :as m}]  (assoc m :fluxod-ts/billable? (if (= billable? "Non") false true))))
+        (mapv (fn [m] (api/remove-nils m)))
+        
+        rest
 
-      vec
-      
-      (d/transact (d/connect db-url))))
-
-
-
-
-
-
-
+        vec
+        
+        )))
 
 (pc/defmutation
   import-file
@@ -109,16 +103,19 @@
    ::pc/params [::file-upload/files :new-import]
    ::pc/output []
    }
-  (println "FILES" new-import)
+  
   (do
+
     (with-open [stream (clojure.java.io/input-stream (:tempfile (first files)))]
-      (let[ fluxod-names
+      (let [ fluxod-names
            (->> (s/load-workbook stream)
                 (s/select-sheet "Export des temps")
                 (s/select-columns {:A :name})
                 (map :name)
                 distinct
                 vec)
+            
+            tx-fluxod-ts (prepare-fluxod-ts-tx (:tempfile (first files)))
            ms-names
            (d/q '[:find ?name ?r 
                   :keys resource/name db/id 
@@ -129,19 +126,19 @@
            files (:import/files new-import)
            files2 (mapv #(assoc (select-keys % [:file/name]) :db/id "new" ) files)
            tx-fluxod-names
-           (remove nil? (reduce (fn [r fluxod-name]
-                                  (let [ 
-                                        res (some #(when (str-fliped? fluxod-name (:resource/name %)) (assoc % :resource/fluxod-name fluxod-name )) ms-names)]
-                                    
-                                    (conj r res)
-                                    #_(conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name))
-                                    ))
-                                []
-                                fluxod-names))
-           tx-fluxod-ts (prepare-fluxod-ts-tx stream)]
-        
+            (vec (remove nil? (reduce (fn [r fluxod-name]
+                                    (let [ 
+                                          res (some #(when (str-fliped? fluxod-name (:resource/name %)) (assoc % :resource/fluxod-name fluxod-name )) ms-names)]
+                                      
+                                      (conj r res)
+                                      #_(conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name))
+                                      ))
+                                  []
+                                  fluxod-names)))
+           ]
+        #_(println "TX"  tx-fluxod-ts )
         (d/transact connection
-                     (concat tx-fluxod-names tx-fluxod-ts))
+                     (concat tx-fluxod-ts tx-fluxod-names))
         ;; import history 
         (d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
   {})
@@ -176,7 +173,7 @@
         (vec (vec (reduce (fn [r fluxod-name]
                             (let [ms-names-f  (filter (fn [{:resource/keys [name]}]
                                                         (str-fliped? name fluxod-name)) ms-names)]
-                              (println ms-names-f)
+                              
                               (when (seq ms-names-f) (conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name)))))
                           []
                           fluxod-names)))

@@ -166,13 +166,13 @@
   (let [type->str {:fluxod-timesheet "Fluxod Timesheet"}
         format-time #(apply str (take 16 (str (t/in % (t/zone)))))]
     (ui-table-row
-    {}
-    (ui-table-cell {} (type->str type))
-    (ui-table-cell {:singleLine true} (some-> time format-time))
-    (ui-table-cell {:singleLine true} (some-> start-period format-time))
-    (ui-table-cell {:singleLine true} (some-> end-period format-time))
-    (ui-table-cell {} (some-> files first :file/name))
-    #_(ui-table-cell {} (str status)))))
+     {}
+     (ui-table-cell {} (type->str type))
+     (ui-table-cell {:singleLine true} (some-> time format-time))
+     (ui-table-cell {:singleLine true} (some-> start-period format-time))
+     (ui-table-cell {:singleLine true} (some-> end-period format-time))
+     (ui-table-cell {} (some-> files first :file/name))
+     #_(ui-table-cell {} (str status)))))
 
 (def ui-import (comp/factory Import {:keyfn :import/id}))
 
@@ -242,16 +242,18 @@
                        (ui-form-group
                         {}
                         (ui-form-field
-                         {:inline true}
-                         (dom/label {} "Type")
-                         (ui-dropdown
-                          {:placeholder "Type"
-                           :selection   true
-                           :search      true
-                           :options
-                           [{:text "Fluxod TimeSheet" :value :fluxod-timesheet}]
-                           :value       (:import/type new-import)
-                           :onChange    (fn [e d])})))
+                         {:inline true
+                          :content [(dom/label {} "Type")
+                                    (ui-dropdown
+                                     {:placeholder "Type"
+                                      :selection   true
+                                      :search      true
+                                      :options
+                                      [{:text "Fluxod TimeSheet" :value :fluxod-timesheet}]
+                                      :value       (:import/type new-import)
+                                      :onChange    (fn [e d])})]}
+                         
+                         ))
                        (ui-form-group
                         {}
                         (ui-form-field

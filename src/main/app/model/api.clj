@@ -507,7 +507,7 @@
   (d/transact
    (d/connect db-url)
 
-   (pmap
+   (mapv
     (fn [id]
 
       [:db/retractEntity id])
@@ -587,3 +587,14 @@
 
 
 
+(mapv
+ (fn [id]
+
+   [:db/retractEntity id])
+
+ (d/q '[:find [?e ...]
+
+        :where
+        [?e :import/id ?n]
+
+        ] (d/db (d/connect db-url))))
