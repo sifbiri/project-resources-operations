@@ -210,7 +210,7 @@
                    (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Type" "Time" "Start Period" "End Period" "File"])))
                  (ui-table-body
                   {}
-                  (mapv ui-import imports))
+                  (mapv ui-import (reverse imports)))
                  (ui-table-footer
                   {}
                   (ui-table-row
