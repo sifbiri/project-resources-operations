@@ -262,48 +262,70 @@
      {}
      (if (df/loading? status)
        (ui-loader {:active true})
-       (dom/div
-        {:style
-         {
-          :overflowX "visible"
-          :max-width "1200px"
-          :max-height "1400px"
+       [(dom/div {:style {:display "flex" :flexDirection "row" :fontSize "80%"}}
+         
+                 (dom/div {:style {:border "1px solid black"
+                                   :width "18px"
+                                   :height "18px"
+                                   :background "lightGray"
+                                   :marginLeft "20px"
+                                   :marginRight "33px"
+                                   }}
+                          (dom/label {:style {:marginLeft "25px"}} "Fluxod"))
+                 (dom/div {:style {:border "1px solid black"
+                                   :width "18px"
+                                   :height "18px"
+                                   :marginLeft "25px"}}
+                          (dom/label {:style {:marginLeft "25px"}} "MSProject"))
+                 (dom/div {:style {:border "1px solid black"
+                                   :width "18px"
+                                   :height "18px"
+                                   :background "lightBlue"
+                                   :marginLeft "75px"}}
+                          (dom/label {:style {:marginLeft "25px"}} "Both")))
+        (dom/div
+         {:style
+          {
+           :marginTop "20px"
+           :overflowX "visible"
+           :max-width "1200px"
+           :max-height "1400px"
+           }
           }
-         }
-        (ui-table
-         {:color :blue
-          :celled true
-          :textAlign :center
-          :singleLine true
+         (ui-table
+          {:color :blue
+           :celled true
+           :textAlign :center
+           :singleLine true
                                         ;:striped true
-          :style {:fontSize "85%"}}
-         (ui-table-header
-          {:style
-           {:top 0
-            :position "sticky"}}
-          (ui-table-row
-           {}
-           (ui-table-header-cell {:style
-                                  {:position "sticky"
-                                   :left  0
-                                   :background "white"
-                                   :color "black"
-                                   :zIndex 1
-                                   }}  "Resource")
-           (mapv #(ui-table-header-cell
-                   {:singleLine true
-                    :style {:color "black"
-                            :background "white"
-                            :position "sticky"
-                            :top 0}}
-                   (str (str/capitalize (str (t/month %))) " "
-                        (apply str (drop 2 (str (t/year %))))))
-                 (workplan/dates-from-to min-date max-date))
+           :style {:fontSize "85%"}}
+          (ui-table-header
+           {:style
+            {:top 0
+             :position "sticky"}}
+           (ui-table-row
+            {}
+            (ui-table-header-cell {:style
+                                   {:position "sticky"
+                                    :left  0
+                                    :background "white"
+                                    :color "black"
+                                    :zIndex 1
+                                    }}  "Resource")
+            (mapv #(ui-table-header-cell
+                    {:singleLine true
+                     :style {:color "black"
+                             :background "white"
+                             :position "sticky"
+                             :top 0}}
+                    (str (str/capitalize (str (t/month %))) " "
+                         (apply str (drop 2 (str (t/year %))))))
+                  (workplan/dates-from-to min-date max-date))
+            )
            )
-          )
-         (ui-table-body
-          {}
-          (mapv ui-resource-timesheet resources-ts))))))))
+          (ui-table-body
+           {}
+           (mapv ui-resource-timesheet resources-ts))))]))))
 
 (comment
   (ui-form
