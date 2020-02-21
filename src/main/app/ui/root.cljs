@@ -782,7 +782,7 @@
         
 
         (mapv #(td {:style {:backgroundColor (color %)}}
-                  (goog.string.format "%.2f" %))
+                   (goog.string.format "%.2f" %))
              (loop [r transformed
                     t []]
                (if (ffirst r)
@@ -1686,12 +1686,7 @@
                                                 :index 2
                                                 :onClick handleClick
                                                 :style {:color "#3281b9"}})
-                                           (ui-accordion-content {:active (= active-index 2)
-                                                                  :content (ui-form {}
-                                                                                    (ui-form-group {:grouped true}
-                                                                                                   (ui-form-field {}                                                                                                                                                                                                                         
-                                                                                                                  (mapv #(ui-team-checkbox  %) (remove #(nil? (:team/name %)) team-checkboxes)))
-                                                                                                   ))})))))
+                                           ))))
        
        (ui-grid-column {:width 13}
                        (when (seq resource-lines)

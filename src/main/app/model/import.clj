@@ -136,75 +136,27 @@
                                   []
                                   fluxod-names)))
            ]
-        #_(println "TX"  tx-fluxod-ts )
+        
+        (d/transact
+         connection
+         (mapv
+          (fn [id]
+            [:db/retractEntity id])
+          (d/q '[:find [?e ...]
+                 :where
+                 [?e :fluxod-ts/date ?n]
+                 ] db)))
         (d/transact connection
                      (concat tx-fluxod-ts tx-fluxod-names))
         ;; import history 
         (d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
   {})
 
-
-
-
-
-
-
-
 (def resolvers [import-file name->fluxod-name all-imports import])
 
 
 
 
-(comment
-  (let [ fluxod-names
-        (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
-             (s/select-sheet "Export des temps")
-             (s/select-columns {:A :name})
-             (map :name)
-             distinct
-             vec)
-        ms-names
-        (d/q '[:find ?name ?r 
-               :keys resource/name db/id 
-               :where
-               [?r :resource/name ?name]]
-             (d/db (d/connect db-url)))
-        tx
-        (vec (vec (reduce (fn [r fluxod-name]
-                            (let [ms-names-f  (filter (fn [{:resource/keys [name]}]
-                                                        (str-fliped? name fluxod-name)) ms-names)]
-                              
-                              (when (seq ms-names-f) (conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name)))))
-                          []
-                          fluxod-names)))
-        tx2 (prepare-fluxod-ts-tx )
-        ]
-    @(d/transact (d/connect db-url ) tx))
-  
-  (def fluxod-names
-           (->> (s/load-workbook "resources/cra_du_2020-01-01_au_2020-01-31.xls")
-                (s/select-sheet "Export des temps")
-                (s/select-columns {:A :name})
-                (map :name)
-                distinct
-                vec))
-         (def ms-names
-           (d/q '[:find ?name ?r 
-                  :keys resource/name db/id 
-                  :where
-                  [?r :resource/name ?name]]
-                (d/db (d/connect db-url))))
-
-         tx
-         (remove nil? (reduce (fn [r fluxod-name]
-                                (let [ 
-                                      res (some #(when (str-fliped? fluxod-name (:resource/name %)) (assoc % :resource/fluxod-name fluxod-name )) ms-names)]
-                                  
-                                  (conj r res)
-                                  #_(conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name))
-                                  ))
-                              []
-                              fluxod-names)))
 
 
 

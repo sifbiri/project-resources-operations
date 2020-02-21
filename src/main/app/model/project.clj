@@ -1146,6 +1146,7 @@
 (pc/defresolver all-projects-resolver [env _]
   {::pc/output [{:all-projects [:project/id :project/name :project/start-date :project/modified-date]}]}
   (let [id (get-in env [:ast :params :resource/id])]
+    (println "AST" (get-in env :ast :params))
     {:all-projects (d/q  '[:find ?pi
                            :keys project/id
                            :where

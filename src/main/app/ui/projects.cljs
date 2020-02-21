@@ -4,6 +4,7 @@
 
    
    [app.ui.users :as users]
+   [app.ui.workplans :as workplans]
    [com.fluxym.model.account :as account]
    
    
@@ -497,6 +498,39 @@
                                                                                                  (ui-icon {:name "plus"} ))))))))
     
     ))
+
+
+(defsc WorkPlan [this {:workplan/keys [id] :as props}]
+  {:query [:workplan/id 
+           [df/marker-table '_]
+           ]
+   
+   :route-segment   ["workplan" :workplan/id]
+   :ident  :workplan/id
+   
+   
+   :will-enter (fn [app {:keys [action-list/id] :as params}]
+                 (dr/route-deferred
+                  [:workplan/id (uuid id)]
+                  (fn []
+                    #_(df/load! app [:action-list/id (uuid id)] ActionList {:marker :action-list})
+                    (merge/merge-component! app WorkPlan {:workplan/id (uuid id)})
+                    (comp/transact! app [(dr/target-ready {:target  [:workplan/idd (uuid id)]})]))))}
+
+                                        ;(js/console.log "props" props)
+  (let [status (get props [df/marker-table :action-list])
+                                        ;options(get  props :resource/options2)
+        remove-action (fn [dbid] (comp/transact! this [(project/remove-action {:db/id dbid :action-list id})]))
+        save-action (fn [dbid diff] (comp/transact! this [(project/try-save-action {:db/id dbid :diff diff :action-list id})]))
+        load-action-label (fn [] (df/load! this :project-panel ActionListLabel {:target [:component/id :project-panel :>/action-list-label] :params {:pathom/context {:project/id id}}
+                                                                                :referesh [:action-list-label/count :action-list-label/overdue?]}))
+        ]
+    
+    (ui-container {}
+                  (dom/div {} "X"))
+    ))
+
+
 
 
 (defsc TimeLine [this {:keys [timeline/tasks-level2 timeline/tasks-level3] :as props}]
@@ -1281,7 +1315,7 @@
 
 
 (dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm ]}
+  {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm workplans/WorkPlan2]}
   (case current-state
     :pending (ui-container {} (ui-loader {:style {:marginTop "20px"} :active true}))
     :failed (dom/div "Loading seems to have failed. Try another route.")
@@ -1373,7 +1407,11 @@
                                             )
                               (ui-menu-item {:name "TimeLine" :active (= active-item :timeline) :onClick (fn []
                                                                                                            (m/set-value! this :ui/active-item :timeline)
-                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  id} ))                                                                                                           )} )))
+                                                                                                           (dr/change-route this (dr/path-to  TimeLine {:timeline/id  id} )) )} )
+                              (ui-menu-item {:name "Work Plan" :active (= active-item :workplan) :onClick (fn []
+                                                                                                           (m/set-value! this :ui/active-item :workplan)
+
+                                                                                                           (dr/change-route this (log/spy :info (dr/path-to  workplans/WorkPlan2 {:workplan/id id} )))   )} )))
 
      (ui-grid-column {:width 12} 
                      (ui-project-panel-router router))]

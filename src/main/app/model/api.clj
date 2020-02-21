@@ -256,29 +256,29 @@
 
       
       (pmap (fn [x] (let [task-name (:task/name x)
-                         task-id (:task/id x)
-                         task-is-active (:task/is-active x )
-                         task-start-date (:task/start-date x)
+                          task-id (:task/id x)
+                          task-is-active (:task/is-active x )
+                          task-start-date (:task/start-date x)
 
-                         task-end-date (:task/end-date x)
-                         task-is-root (= (:parent/task-id x) (:task/id x))
-                         parent-task-id (uuid (:parent/task-id x))
+                          task-end-date (:task/end-date x)
+                          task-is-root (= (:parent/task-id x) (:task/id x))
+                          parent-task-id (uuid (:parent/task-id x))
 
-                         parent-task-name (:parent/task-name x)
+                          parent-task-name (:parent/task-name x)
 
-                         task-project [:project/id (uuid (:project/id x))]
+                          task-project [:project/id (uuid (:project/id x))]
 
 
-                         
-                         resource (get-resource (:resource/id x))
-                         
-                         
-                         ]
-                     
-                     
-                     (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
-                                    :assignment/task {:task/name task-name :task/id (uuid task-id) }
-                                    :assignment/resource resource)))) response)
+                          
+                          resource (get-resource (:resource/id x))
+                          
+                          
+                          ]
+                      
+                      
+                      (remove-nils (assoc (dissoc x :task/name :task/id :task/is-active :project/id  :resource/id :task/start-date :task/end-date)
+                                     :assignment/task {:task/name task-name :task/id (uuid task-id) }
+                                     :assignment/resource resource)))) response)
       
       response)))
 
@@ -349,7 +349,7 @@
             
             ) response
 
-   (cske/transform-keys
+    (cske/transform-keys
      (fn [x]
        (keyword (clojure.string/replace-first (name x) #"-" "/")) )
      response)
@@ -375,44 +375,44 @@
     (pmap (fn [x] (update x :task/id #(uuid %))) response)
 
     (pmap (fn [x]
-           (let [task-name (:task/name x)
-                 task-id (:task/id x)
-                 task-is-active (:task/is-active x )
-                 task-start-date (:task/start-date x)
-                 task-outline-number (:task/outline-number x)
-                 task-outline-level (:task/outline-level x)
-                 task-end-date (:task/finish-date x)
-                 task-is-root (= (str (:parent/task-id x)) (str (:task/id x)))
+            (let [task-name (:task/name x)
+                  task-id (:task/id x)
+                  task-is-active (:task/is-active x )
+                  task-start-date (:task/start-date x)
+                  task-outline-number (:task/outline-number x)
+                  task-outline-level (:task/outline-level x)
+                  task-end-date (:task/finish-date x)
+                  task-is-root (= (str (:parent/task-id x)) (str (:task/id x)))
                                         ;parent-task (if (= (str (:parent/task-id x)) (str (:task/id x))) nil [:task/id (uuid (:parent/task-id x))])
 
-                 parent-task-name (:parent/task-name x)
-                 parent-task-id (uuid (:parent/task-id x))
-                 
-                 task-project [:project/id (uuid (:project/id x))]
-                 ]
+                  parent-task-name (:parent/task-name x)
+                  parent-task-id (uuid (:parent/task-id x))
+                  
+                  task-project [:project/id (uuid (:project/id x))]
+                  ]
 
 
                                         ;(println "ID 2 " )
-             (remove-nils
-              (hash-map
-               
-               :task/name task-name
-               :task/id  task-id
-               
-               :task/is-active task-is-active
-               :task/outline-level task-outline-level
-               :task/outline-number task-outline-number
-               
+              (remove-nils
+               (hash-map
+                
+                :task/name task-name
+                :task/id  task-id
+                
+                :task/is-active task-is-active
+                :task/outline-level task-outline-level
+                :task/outline-number task-outline-number
+                
                                         ;:db/id (or id "new")
-               :task/parent-task-id parent-task-id
-               :task/parent-task-name parent-task-name
-               
+                :task/parent-task-id parent-task-id
+                :task/parent-task-name parent-task-name
+                
                                         ;:task/parent-task-name parent-task-name
                                         ;:task/project task-project
-               :task/is-root? task-is-root
-               :task/start-date task-start-date
-               :task/end-date task-end-date))))
-         response)
+                :task/is-root? task-is-root
+                :task/start-date task-start-date
+                :task/end-date task-end-date))))
+          response)
 
                                         ;(pmap #(select-keys % task-props) response)
     response))
@@ -430,7 +430,7 @@
                      (json/read-str :key-fn keyword)
                      :value)]
     (->> response
-         ;(pmap #(select-keys % [:Name :Id]) )
+                                        ;(pmap #(select-keys % [:Name :Id]) )
          (pmap #(s/rename-keys % {:Name :project/name :Id :project/id}) )
          (cske/transform-keys csk/->kebab-case-keyword )
          (cske/transform-keys
@@ -467,9 +467,9 @@
           (fn [x] (remove-nils (assoc x
                                  :project/assignments (pmap (fn [x] (dissoc x :project/name))  (all-assignments (str (:project/id x))))
                                  :project/tasks (tasks-for-project (str (:project/id x))))))
-            
-            )
-         ;(pmap (fn [x] (:assoc)))
+          
+          )
+                                        ;(pmap (fn [x] (:assoc)))
          )))
 
 
@@ -598,3 +598,50 @@
         [?e :import/id ?n]
 
         ] (d/db (d/connect db-url))))
+
+
+(d/q '[:find ?name .
+       :in $ ?id
+       :where
+       [?r :resource/id ?id]
+       [?r :resource/name ?name]] (d/db (d/connect db-url)) #uuid "44f8c22d-50da-e911-b095-00155de07410")
+
+
+
+(d/q '[:find ?work-fluxod ?date ?fluxod-po
+                                   :keys timesheet/work-fluxod date fluxod-po
+                                   :in $ ?rid ?pid ?start ?end
+                                   
+                                   :where
+                                   [?r :resource/id ?rid]
+                                   [?r :resource/name ?rn]
+                                   
+                                   [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                                   [?fluxod :fluxod-ts/days ?work-fluxod]
+                                   [?fluxod :fluxod-ts/date ?date]
+                                   
+                                   [?fluxod :fluxod-ts/client ?client]
+                                   [?fluxod :fluxod-ts/po ?fluxod-po]
+                                   
+                                   [?pinfo :project-info/fluxod-client-name ?client]
+                                   [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                   [?pinfo :project-info/id ?pid]
+                                   
+                                   [?e :project/id ?pid]
+                                   [?e :project/name ?name]
+                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+                                   [(tick.alpha.api/> ?date ?start)]
+                                   [(tick.alpha.api/< ?date ?end)]
+                                   
+                                   [?r :resource/fluxod-name ?fluxod-name]
+                                   ] (d/db (d/connect db-url))
+                                     #uuid "6c045544-f9d3-e911-b092-00155de43b0b"
+                                     #uuid "f4a0ac9d-57f6-e911-b19c-9cb6d0e1bd60"
+                                     #inst "2019-11-20T00:00:00.000-00:00"
+                                     #inst "2020-05-20T00:00:00.000-00:00"
+                                     )
+
+
+
+
+

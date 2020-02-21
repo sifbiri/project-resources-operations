@@ -2210,7 +2210,7 @@ jkroso-type@1:
   resolved "https://registry.yarnpkg.com/jkroso-type/-/jkroso-type-1.1.1.tgz#bc4ced6d6c45fe0745282bafc86a9f8c4fc9ce61"
   integrity sha1-vEztbWxF/gdFKCuvyGqfjE/JzmE=
 
-js-joda-timezone@^2.0.1, js-joda-timezone@^2.1.1:
+js-joda-timezone@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/js-joda-timezone/-/js-joda-timezone-2.1.1.tgz#73b55e558f59a1490ce3e52d1a686689d6bdb416"
   integrity sha512-l7PltQExLbI2gnzkvmzh+TFZcuAFiphmI93MUd6t/Zx3enVhjwXX3StD2QmibLdNXygqcxeBh4pkqcrlnGMTrQ==
@@ -3278,6 +3278,14 @@ react-sticky-table@^4.1.0:
   dependencies:
     styled-components "^4.3.2"
 
+react-table-hoc-fixed-columns@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/react-table-hoc-fixed-columns/-/react-table-hoc-fixed-columns-2.3.0.tgz#34b9501018824b26a4239533b59edc84b1fa1c3b"
+  integrity sha512-Mbc9Wj1vzYq7i6uFXl5+drQyMYYnfvKUVhUXnBt6RRQBjBAq0HYCwAdcdyQVNXaJATi7gaOZUbssCbLznJ5yUw==
+  dependencies:
+    classnames "^2.2.6"
+    uniqid "^5.0.3"
+
 react-table@^7.0.0-rc.15:
   version "7.0.0-rc.15"
   resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.0.0-rc.15.tgz#bb855e4e2abbb4aaf0ed2334404a41f3ada8e13a"
@@ -4136,6 +4144,11 @@ union-value@^1.0.0:
     get-value "^2.0.6"
     is-extendable "^0.1.1"
     set-value "^2.0.1"
+
+uniqid@^5.0.3:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/uniqid/-/uniqid-5.2.0.tgz#0d0589a7e9ce07116848126764fbff0b68e74329"
+  integrity sha512-LH8zsvwJ/GL6YtNfSOmMCrI9piraAUjBfw2MCvleNE6a4pVKJwXjG2+HWhkVeFcSg+nmaPKbMrMOoxwQluZ1Mg==
 
 unpipe@1.0.0, unpipe@~1.0.0:
   version "1.0.0"

@@ -20,6 +20,7 @@
     [com.fluxym.components.auto-resolvers :refer [automatic-resolvers]]
     [app.model.item :as item]
     [app.model.team :as team]
+    [app.model.workplan :as workplan]
     [datomic.api :as d]
     [com.fulcrologic.rad.database-adapters.datomic :as datomic]
     [app.model.database :refer [datomic-connections]]
@@ -36,7 +37,7 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [automatic-resolvers form/save-form form/delete-entity project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers import/resolvers user/resolvers])
+(def all-resolvers [automatic-resolvers form/save-form form/delete-entity workplan/resolvers project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers import/resolvers user/resolvers])
 
 (defn preprocess-parser-plugin
   "helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -90,7 +91,8 @@
                                     
                                     ::p/placeholder-prefixes #{">"}
                                     ::p/thread-pool (pc/create-thread-pool (async/chan 200))}
-                       ::p/plugins [(pc/connect-plugin {::pc/register all-resolvers})
+                       ::p/plugins [query-params-to-env-plugin
+                                    (pc/connect-plugin {::pc/register all-resolvers})
                                     ;(pcd/datomic-connect-plugin (assoc on-prem-config ::pcd/conn db-connection))
                                     (p/env-wrap-plugin (fn [env]
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
@@ -103,9 +105,10 @@
                                                                :db (d/db db-connection) ; real datomic would use (d/db db-connection)
                                                                :connection db-connection
                                                                :config config))))
+                                    
                                     (preprocess-parser-plugin log-requests)
-                                    query-params-to-env-plugin
                                     p/error-handler-plugin
+                                    
                                     p/request-cache-plugin
                                     (p/post-process-parser-plugin p/elide-not-found)
                                     p/trace-plugin]})
@@ -116,6 +119,7 @@
       (async/<!! (real-parser env (if trace?
                                     (conj tx :com.wsscode.pathom/trace)
                                     tx))))))
+
 
 (defstate parser
   :start (build-parser db/conn))
