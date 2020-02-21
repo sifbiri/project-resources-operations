@@ -16,16 +16,29 @@
             [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]))
 
+(defn same-month? [date1 date2]
+  (= (-> date1 t/date-time t/month ) (-> date2 t/date-time t/month)))
+
 (defn
   dates-from-to
   [workplan-start workplan-end]
   (loop [current (t/date-time (t/in workplan-start "GMT"))
-         end (t/+ (t/date-time (t/in workplan-end "GMT"))
-                  (t/new-period 1 :months))
+         end (t/date-time (t/in workplan-end "GMT"))
          res []]
-    (if (t/> current end)
-      res
+    (if (same-month? current end)
+      (conj res end)
       (recur (t/+ current (t/new-period 1 :months))
              end
              (conj res current)))))
 
+
+(defn
+  pad-month-cells [start end]
+  (loop [start (t/date start)
+         end (t/date end)
+         count 0]
+    (if (same-month? start end)
+      (+ count 1)
+      (recur (t/+ start (t/new-period 1 :months))
+             end
+             (+ 1 count)))))

@@ -172,15 +172,7 @@
            :timesheet/work-ms]})
 
 
-(defn pad-month-cells [start end]
-  (loop [start (t/date start)
-         end (t/date end)
-         count 0]
-    (if (t/> start end)
-      count
-      (recur (t/+ start (t/new-period 1 :months))
-             end
-             (+ 1 count)))))
+
 
 (defsc ResourceTimeSheet [this {:resource-ts/keys [name timesheets ] :keys [workplan/max-date workplan/min-date]}]
   {:query [:resource-ts/id :resource-ts/name :workplan/max-date
@@ -188,10 +180,10 @@
            {:resource-ts/timesheets (comp/get-query TimeSheet)} ]
    :ident :resource-ts/id}
   (let [from (some-> timesheets last :timesheet/end-ms)
-        count (count timesheets)
-        supposed (pad-month-cells min-date max-date)
-        added (- supposed count)]
-    
+        total (count timesheets)
+        supposed (count (workplan/dates-from-to min-date max-date))
+        added (- supposed total)]
+    (js/console.log "SUPOSED" (count (workplan/dates-from-to min-date max-date)))
     (when
        (seq timesheets)
      (ui-table-row
@@ -213,7 +205,9 @@
 
             (ui-popup {:basic true
                        :trigger (ui-table-cell {:style {:background "lightBlue"}}
-                                               (str (:timesheet/work-fluxod timesheet) " | " (goog.string.format "%.2f" (:timesheet/work-ms timesheet)))
+                                               (str (goog.string.format "%.1f" (:timesheet/work-fluxod timesheet))
+                                                    " | "
+                                                    (goog.string.format "%.1f" (:timesheet/work-ms timesheet)))
                                                )}
                       (ui-popup-content
                        {:style {:fontSize "80%"}}
@@ -225,16 +219,18 @@
             
             
             (:timesheet/work-fluxod timesheet)
-            (ui-table-cell {:style {:background "lightGray"}} (:timesheet/work-fluxod timesheet))
+            (ui-table-cell {:style {:background "lightGray"}}
+                           (goog.string.format "%.1f"
+                                               (:timesheet/work-fluxod timesheet)))
             :else
-            (ui-table-cell {} (goog.string.format "%.2f" (:timesheet/work-ms timesheet)))
+            (ui-table-cell {} (goog.string.format "%.1f" (:timesheet/work-ms timesheet)))
             ))
         #_(fn [timesheet]
             (ui-table-cell {} (str (:timesheet/work-fluxod timesheet) " X " (:timesheet/work-ms timesheet))))
         timesheets)
        (mapv
        #(ui-table-cell {} "")
-       (range 0 (+ 1 added)))
+       (range 0    added))
        ]))))
 
 (defsc ResourceTimeSheet2 [this {:keys []}]
@@ -242,9 +238,10 @@
 
 
 (def ui-resource-timesheet (comp/factory ResourceTimeSheet {:keyfn :resource-ts/id}))
-(defsc WorkPlan2 [this {:workplan/keys [ max-date min-date resources-ts] :resource-ts/keys [start-date end-date]}]
+(defsc WorkPlan2 [this {:workplan/keys [ max-date min-date resources-ts] :resource-ts/keys [start-date end-date] :as props}]
   {:query [:workplan/id {:workplan/resources-ts (comp/get-query ResourceTimeSheet)} :resource-ts/start-date :resource-ts/end-date
-           :workplan/max-date :workplan/min-date]
+           :workplan/max-date :workplan/min-date
+           [df/marker-table '_]]
    :ident :workplan/id
    :will-enter
    (fn [app {:keys [workplan/id]}]
@@ -252,7 +249,7 @@
       [:workplan/id (uuid id)]
       (fn []
         (df/load! app [:workplan/id (uuid id)] WorkPlan2
-                  {:params {}})
+                  {:params {} :marker :workplan})
         
         (comp/transact! app [(dr/target-ready {:target  [:workplan/id (uuid id)]})]))))
    
@@ -260,71 +257,75 @@
    }
 
   
-  (ui-container
-   {}
-   #_(ui-form
-    {}
-    (ui-form-group
-     {}
-     (ui-input
-      {:type "month"
-       :label "Start"
-       :size :mini
-       :value (some->> start-date t/date str (take 7) (apply str))
-       :onChange (fn [e]
-                   (m/set-value! this :resource-ts/start-date (js/Date. (evt/target-value e)))
-                   (df/refresh! this {:params {:pathom/context {:resource-ts/start-date start-date
-                                                                :resource-ts/end-date end-date}}}))})
-     (ui-input
-      {:type "month"
-       :label "End"
-       :size :mini
-       :value (some->> end-date t/instant str (take 7) (apply str))
-       :onChange (fn [e]
-                   (let [end-date-new (js/Date. (evt/target-value e))]
-                     (m/set-value! this :resource-ts/end-date end-date-new)
-                     (df/refresh! this {:params {:pathom/context {:resource-ts/start-date start-date
-                                                                  :resource-ts/end-date end-date-new}}})))})))
-
-   (dom/div
-    {:style
-     {
-      :overflowX "visible"
-      :max-width "1200px"
-      :max-height "1400px"
-      }
-     }
-    (ui-table
-     {:color :blue
-      :celled true
-      :textAlign :center
-      :singleLine true
-                                        ;:striped true
-      :style {:fontSize "85%"}}
-     (ui-table-header
-      {:style
-       {:top 0
-        :position "sticky"}}
-      (ui-table-row
-       {}
-       (ui-table-header-cell {:style
-                              {:position "sticky"
-                               :left  0
-                               :background "white"
-                               :color "black"
-                               :zIndex 1
-                               }}  "Resource")
-       (mapv #(ui-table-header-cell
-               {:singleLine true
-                :style {:color "black"
-                        :background "white"
-                        :position "sticky"
-                        :top 0}}
-               (str (str/capitalize (str (t/month %))) " "
-                    (apply str (drop 2 (str (t/year %))))))
-             (workplan/dates-from-to min-date max-date))
-       )
-      )
-     (ui-table-body
+  (let [status (get-in props [df/marker-table :workplan] )]
+    (if
+       (df/loading? status)
+      (ui-loader {})
+      (ui-container
       {}
-      (mapv ui-resource-timesheet resources-ts))))))
+      #_(ui-form
+         {}
+         (ui-form-group
+          {}
+          (ui-input
+           {:type "month"
+            :label "Start"
+            :size :mini
+            :value (some->> start-date t/date str (take 7) (apply str))
+            :onChange (fn [e]
+                        (m/set-value! this :resource-ts/start-date (js/Date. (evt/target-value e)))
+                        (df/refresh! this {:params {:pathom/context {:resource-ts/start-date start-date
+                                                                     :resource-ts/end-date end-date}}}))})
+          (ui-input
+           {:type "month"
+            :label "End"
+            :size :mini
+            :value (some->> end-date t/instant str (take 7) (apply str))
+            :onChange (fn [e]
+                        (let [end-date-new (js/Date. (evt/target-value e))]
+                          (m/set-value! this :resource-ts/end-date end-date-new)
+                          (df/refresh! this {:params {:pathom/context {:resource-ts/start-date start-date
+                                                                       :resource-ts/end-date end-date-new}}})))})))
+
+      (dom/div
+       {:style
+        {
+         :overflowX "visible"
+         :max-width "1200px"
+         :max-height "1400px"
+         }
+        }
+       (ui-table
+        {:color :blue
+         :celled true
+         :textAlign :center
+         :singleLine true
+                                        ;:striped true
+         :style {:fontSize "85%"}}
+        (ui-table-header
+         {:style
+          {:top 0
+           :position "sticky"}}
+         (ui-table-row
+          {}
+          (ui-table-header-cell {:style
+                                 {:position "sticky"
+                                  :left  0
+                                  :background "white"
+                                  :color "black"
+                                  :zIndex 1
+                                  }}  "Resource")
+          (mapv #(ui-table-header-cell
+                  {:singleLine true
+                   :style {:color "black"
+                           :background "white"
+                           :position "sticky"
+                           :top 0}}
+                  (str (str/capitalize (str (t/month %))) " "
+                       (apply str (drop 2 (str (t/year %))))))
+                (workplan/dates-from-to min-date max-date))
+          )
+         )
+        (ui-table-body
+         {}
+         (mapv ui-resource-timesheet resources-ts))))))))
