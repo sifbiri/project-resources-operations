@@ -279,7 +279,8 @@
                                 this
                                 [(import/set-import-files {:files files})
                                  (import/produce-dates-from-file
-                                  (-> files first (select-keys [:file/name]) ))])
+                                  (-> files first (select-keys [:file/name]) ))]
+                                {:optimistic? true})
                                ))
                                         ;:icon (ui-icon {:name "file outline"} )
                            })))

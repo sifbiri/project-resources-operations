@@ -773,13 +773,22 @@
                     (m/toggle! this :ui/selected)
                     )}
 
-        (ui-table-cell  {:style {:backgroundColor  "#3281b9"}} "") (ui-table-cell 
-
-                                                                    {:colSpan 2 :title (apply str (take 21 (str (:project/last-published-date project))))}
-                                                           (str (:project/name project) " ")
-                                                           (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline" :z-index -1}})))
-
-        
+        ;; touched
+        (ui-table-cell  {:style {:position "sticky"
+                                 :left 0
+                                 :background "#3281b9"
+                                 ;:background "red"
+                                 :color "black"}
+                         } "")
+        ;; touched
+        (ui-table-cell 
+         {:colSpan 2 :title (apply str (take 21 (str (:project/last-published-date project))))
+          :style {:position "sticky"
+                  :left "69px"
+                  :background "white"
+                  :color "black"}}
+         (str (:project/name project) " ")
+         (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline" :z-index -1}})))
 
         (mapv #(td {:style {:backgroundColor (color %)}}
                    (goog.string.format "%.2f" %))
@@ -795,10 +804,14 @@
          (comp/fragment
           (mapv (fn [asses]
                  ;; hide assignment line with 0 work load
-
+                  ;; touched
                  (when (> (reduce (fn [r m] (+ r (first (vals m)))) 0 asses) 0)
-                   (tr (concat [(td  {:colSpan 2 :style {:backgroundColor  "#3281b9"}} "")
-                                (ui-table-cell {:singleLine true}
+                   (tr (concat [(ui-table-cell {:colSpan 2 :style {:backgroundColor  "#3281b9" :position "sticky" :left 0 }} "")
+                                ;; touched 
+                                (ui-table-cell {:singleLine true :style {:position "sticky"
+                                                                         :left "128px"
+                                                                         :background "white"
+                                                                         :color "black"}}
                                                (:assignment/name (first asses)))]
                                (mapv #(td {:style {:background-color (color (first (vals %)))}}
                                          (goog.string.format "%.2f" (first (vals %)))) asses))))
@@ -955,7 +968,12 @@
                    (m/toggle! this :ui/selected)
                    )}
 
-       (td {:style {} :colspan 3}
+       ;; touched
+       (td {:style {:position "sticky"
+                    :left 0
+                    :zIndex 3
+                  :background "white"
+                  :color "black"} :colspan 3}
            
            (str (:resource/name resource) " ")
            (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
@@ -1685,38 +1703,71 @@
                                                 :content "Teams"
                                                 :index 2
                                                 :onClick handleClick
-                                                :style {:color "#3281b9"}})
+                                                :style {:color "#3281b9"}}
+                                               )
+                                           (ui-accordion-content {:active (= active-index 2)
+                                                                  :content (ui-form {}
+                                                                                    (ui-form-group {:grouped true}
+                                                                                                   (ui-form-field {}                                                                                                                                                                                                                         
+                                                                                                                  (mapv #(ui-team-checkbox  %) (remove #(nil? (:team/name %)) team-checkboxes)))
+                                                                                                   ))})
                                            ))))
        
        (ui-grid-column {:width 13}
                        (when (seq resource-lines)
-                         (div {:style {:position "relative"}}
+                         (div  {:style {:marginLeft "1px"
+                                        :overflowX "scroll"
+                                        :overflowY "scroll"
+                                        :paddingBottom "5px"
+                                        :width "930px"
+                                        :height "1200px"}}
+                               
+                               #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
+                               (ui-table {:style {:fontSize "85%"
+                                                  :position "relative"
+                                                  :compact true
+                                                  :stripped true
+                                                  :selectable true
+                                                  
+                                                  } :celled true :striped true :color :blue    }
+                                         (ui-table-header
+                                          {:fullWidth true :style {:position "sticky" :top 0}}
+                                          (ui-table-row
+                                           {:style {:backgroundColor "red"}}
 
-                              (div  {:style {:marginLeft "1px"
-                                             :overflowX "scroll"
-                                             :overflowY "visible"
-                                             :paddingBottom "5px"
-                                             :width "920px"
-                                             :height "800px"}}
-                                    
-                                    #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
-                                    (ui-table {:style {:fontSize "85%"
-                                                       :position "relative"
-                                                       :compact true
-                                                       :selectable true
-                                                       
-                                                       } :celled true :striped true :color :blue    }
-                                              (ui-table-header
-                                               {:fullWidth true :style {:position "sticky" :top 0}}
-                                               (ui-table-row
-                                                {:style {:backgroundColor "red"}}
+                                           (ui-table-header-cell {:style {:position "sticky"
+                                                                          :left 0
+                                                                          :zIndex 100
+                                                                          :top 0
+                                        ;:background "white"
+                                                                          :width "200px"
+                                                                          :color "black"}
+                                                                  } "Resource")
+                                           (ui-table-header-cell {:style {:position "sticky"
+                                                                          :left "69px"
+                                                                          :top 0
+                                                                          :zIndex 100
+                                                                          
+                                        ;:background "white"
+                                                                          :color "black"}
+                                                                  } "Project")
 
-                                                (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Resource" "Project" "Assignement "])
+                                           (ui-table-header-cell {:style {:position "sticky"
+                                                                          :left "128px"
+                                                                          :zIndex 100
+                                                                          
+                                                                          :top 0
+                                        ;:background "white"
+                                                                          :color "black"}
+                                                                  } "Assignment")
 
-                                                (mapv #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
-                                                                                     :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
-                                                ))
-                                              (ui-table-body {} (mapv ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))))]
+                                           #_(mapv #(ui-table-header-cell {:style {:position "sticky" 
+                                                                                   :left 0 }} %) ["Project" "Assignement "])
+
+                                           (mapv #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
+                                                                                 :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                           ))
+                                         (ui-table-body {} (mapv ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines)))))))]
 
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))

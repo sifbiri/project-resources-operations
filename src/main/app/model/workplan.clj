@@ -93,8 +93,9 @@
                                     :in $ ?rid ?pid ?min-date ?max-date
                                     :where
                                     [?r :resource/id ?rid]
-                                    [?r :resource/name ?rn]
                                     
+                                    [?act :fluxod-ts/activity-type ?t]
+                                    [(= :mission ?t)]
                                     [?fluxod :fluxod-ts/resource-name ?fluxod-name]
                                     [?fluxod :fluxod-ts/days ?work-fluxod]
                                     [?fluxod :fluxod-ts/date ?date]
@@ -128,7 +129,7 @@
                   :in $ ?rid ?pid ?fluxod-last-date ?max-date
                   :where
                   [?r :resource/id ?rid]
-                  [?r :resource/name ?rn]
+                  ;[?r :resource/name ?rn]
                   
                   
                   [?pinfo :project-info/fluxod-client-name ?client]

@@ -212,10 +212,10 @@
                        (ui-popup-content
                         {:style {:fontSize "80%"}}
 
-                        (div {} "Fluxod End: " (apply str (take 10 (str (:timesheet/end-fluxod timesheet))))
+                        (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod timesheet))))
                              
                              )
-                        (div {} "MS Start: " (apply str (take 10 (str (:timesheet/start-ms timesheet)))))))
+                        (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms timesheet)))))))
              
              
              (:timesheet/work-fluxod timesheet)
@@ -271,12 +271,12 @@
                                    :marginLeft "20px"
                                    :marginRight "33px"
                                    }}
-                          (dom/label {:style {:marginLeft "25px"}} "Fluxod"))
+                          (dom/label {:style {:marginLeft "25px"}} "Actuals"))
                  (dom/div {:style {:border "1px solid black"
                                    :width "18px"
                                    :height "18px"
                                    :marginLeft "25px"}}
-                          (dom/label {:style {:marginLeft "25px"}} "MSProject"))
+                          (dom/label {:style {:marginLeft "25px"}} "Forecast"))
                  (dom/div {:style {:border "1px solid black"
                                    :width "18px"
                                    :height "18px"

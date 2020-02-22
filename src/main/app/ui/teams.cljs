@@ -133,7 +133,7 @@
    :initial-state (fn [params] {})}
   
   (let [filtered-resources (filterv #(not= (:resource/profile %) :profile/user) options2)]
-    
+    (js/console.log "OPtions" options)
     (ui-modal {:trigger (ui-table-row {:onClick #(m/toggle! this :modal/open?)}
                                       (ui-table-cell {} name)
                                       (ui-table-cell {} (clojure.string/capitalize (apply str (rest (str type)))))
@@ -196,11 +196,11 @@
                                                                       (ui-form-field {}
                                                                                      (dom/label {} "Add Member")
                                                                                      (ui-dropdown {:placeholder "Team Member" 
-                                                                                                   :options options                                                                                                   
+                                                                                                   :options options2                                                                                                   
                                                                                                    :selection true
                                                                                                    :onChange #(comp/transact! this [ (team/add-team-member {:team-member-id (.-value %2) :team-id id})])
                                                                                                    :search true
-                                                                                                   :item true})
+                                                                                                   })
                                                                                      
                                                                                      ))
                                                        )

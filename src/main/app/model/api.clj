@@ -649,3 +649,60 @@
 ;; TODO use this to delete projects .....
 (d/transact (d/connect db-url) (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
                                                                                     :where [?e :import/time _]] (d/db (d/connect db-url))))))
+
+
+;; colin bret #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+
+(d/q '[:find ?fluxod-name  ;?work-fluxod ?date ?fluxod-po
+       ;:keys timesheet/work-fluxod date fluxod-po
+       :in $ ?rid ?pid ?min-date ?max-date
+       :where
+       [?r :resource/id ?rid]
+       ;[?r :resource/fluxod-name ?fluxod-name]
+       [?act :fluxod-ts/activity-type ?t]
+       [(= :mission ?t)]
+       [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+       [?fluxod :fluxod-ts/days ?work-fluxod]
+       [?fluxod :fluxod-ts/date ?date]
+       
+       [?fluxod :fluxod-ts/client ?client]
+       [?fluxod :fluxod-ts/po ?fluxod-po]
+       
+       [?pinfo :project-info/fluxod-client-name ?client]
+       [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+       [?pinfo :project-info/id ?pid]
+       
+       [?e :project/id ?pid]
+       [?e :project/name ?name]
+                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+                                        ;[(tick.alpha.api/>= ?date ?min-date)]
+                                        ;[(tick.alpha.api/<= ?date ?max-date)]
+       
+       
+       ] (d/db (d/connect db-url))
+         #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+         #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+         (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
+         (t/inst (t/at (t/new-date 2020 3 12) "12:00")))
+
+(clojure.pprint/pprint
+ (d/q '[:find [?fluxod-name2 ...] ;?work-fluxod ?date ?fluxod-po
+                                        ;:keys timesheet/work-fluxod date fluxod-po
+        :in $ ?rid ?pid ?min-date ?max-date
+        :where
+                                        ;[?r :resource/id ?rid]
+                                        ;[?r :resource/fluxod-name ?fluxod-name]
+        
+        [?fluxod :fluxod-ts/resource-name ?fluxod-name2]
+        
+                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+                                        ;[(tick.alpha.api/>= ?date ?min-date)]
+                                        ;[(tick.alpha.api/<= ?date ?max-date)]
+        
+        
+        ] (d/db (d/connect db-url))
+          #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+          #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+          (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
+          (t/inst (t/at (t/new-date 2020 3 12) "12:00"))))
+

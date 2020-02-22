@@ -140,6 +140,7 @@
 
         (d/transact connection (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
                                                                                             :where [?e :fluxod-ts/date _]] db))))
+        
         (d/transact connection
                      (concat tx-fluxod-ts tx-fluxod-names))
         ;; import history 
