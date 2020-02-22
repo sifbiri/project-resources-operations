@@ -645,3 +645,7 @@
 
 
 
+
+;; TODO use this to delete projects .....
+(d/transact (d/connect db-url) (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+                                                                                    :where [?e :import/time _]] (d/db (d/connect db-url))))))

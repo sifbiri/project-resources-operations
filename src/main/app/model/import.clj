@@ -36,7 +36,7 @@
 (pc/defresolver all-imports [{:keys [connection db]} {:keys []}]
   {::pc/output [{:all-imports [:import/id]}]}
   {:all-imports (d/q '[:find ?id
-                       :keys import/id
+                       :keys import/id 
                        :where
                        [?e :import/id ?id]] db)})
 
@@ -101,7 +101,7 @@
   [{:keys [:connection :db] :as env} {::file-upload/keys [files] :keys [new-import]}]
   {
    ::pc/params [::file-upload/files :new-import]
-   ::pc/output []
+   ::pc/output [:a]
    }
   
   (do
@@ -137,20 +137,14 @@
                                   fluxod-names)))
            ]
         
-        (d/transact
-         connection
-         (mapv
-          (fn [id]
-            [:db/retractEntity id])
-          (d/q '[:find [?e ...]
-                 :where
-                 [?e :fluxod-ts/date ?n]
-                 ] db)))
+
+        (d/transact connection (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+                                                                                            :where [?e :fluxod-ts/date _]] db))))
         (d/transact connection
                      (concat tx-fluxod-ts tx-fluxod-names))
         ;; import history 
         (d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
-  {})
+  {:a 1})
 
 (def resolvers [import-file name->fluxod-name all-imports import])
 

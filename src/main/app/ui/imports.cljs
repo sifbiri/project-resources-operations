@@ -194,6 +194,7 @@
    :initial-state {:ui/modal-open? false :imports/new-import {} :imports/imports []}}
 
   (log/info "VAL OF" (:import/start-period new-import))
+  (js/console.log "IMPORTS" imports)
   (ui-container {}
                 (ui-table
                  {:style
@@ -210,7 +211,7 @@
                    (mapv #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["Type" "Time" "Start Period" "End Period" "File"])))
                  (ui-table-body
                   {}
-                  (mapv ui-import (reverse imports)))
+                  (mapv ui-import (sort-by :import/time (sort-by :import/time t/< imports))))
                  (ui-table-footer
                   {}
                   (ui-table-row
@@ -226,6 +227,7 @@
                           (m/toggle! this :ui/modal-open?)
                           (merge/merge-component! SPA Import {:import/id (random-uuid)
                                                               :import/type :fluxod-timesheet
+                                                              :import/time (js/Date.)
                                                               :import/start-period (t/now)
                                                               :import/end-period (t/now)
                                                               }
@@ -318,7 +320,7 @@
                                                     [files (:import/files new-import)]
                                                   
                                                   (comp/transact!
-                                                   SPA
+                                                   this
                                                    [(import/import-file
                                                      (file-upload/attach-uploads {:new-import (assoc new-import :import/time (t/inst (t/now)))} files))])
                                                   (m/toggle! this :ui/modal-open?)
