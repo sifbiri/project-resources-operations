@@ -382,7 +382,7 @@
                                     }}  "Resource")
 
             
-
+            (js/console.log "MIN" (workplan/dates-from-to min-date max-date {:dates :months}))
             (mapv #(ui-popup {:basic true
                               :trigger (ui-table-header-cell
                                         {:singleLine true

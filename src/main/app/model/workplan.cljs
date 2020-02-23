@@ -18,7 +18,8 @@
             [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]))
 
 (defn same-month? [date1 date2]
-  (= (-> date1 t/date-time t/month ) (-> date2 t/date-time t/month)))
+  (and (= (-> date1 t/date-time t/month ) (-> date2 t/date-time t/month))
+       (= (-> date1 t/date-time t/year ) (-> date2 t/date-time t/year ))))
 
 
 
@@ -34,7 +35,12 @@
     )
   )
 (defn same-week? [date1 date2]
-  (= (week-number date1) (week-number date2)))
+  (and (= (week-number date1)
+          (week-number date2))
+       (= (t/month date1)
+          (t/month date2))
+       (= (t/year date1)
+          (t/year date2))))
 
 (defn
   dates-from-to 
