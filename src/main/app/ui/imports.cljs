@@ -220,7 +220,7 @@
                     {:colSpan 6}
                     (ui-modal
                      {:trigger
-                      (ui-button
+                      (ui-icon
                        {:basic true
                         :onClick
                         (fn [e]
@@ -233,8 +233,8 @@
                                                               }
                                                   :replace [:component/id :imports :imports/new-import]))
                         
-                        }
-                       (ui-icon {:name "plus"}))
+                        :name "plus" }
+                       )
                       :open    modal-open?
                       #_#_:onClose #(m/set-value! this :ui/modal-open? false)}
                      (ui-modal-content

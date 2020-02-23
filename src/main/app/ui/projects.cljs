@@ -413,13 +413,13 @@
                                       ;; TODO 
 
                                       (ui-table-cell {:error (t/< due-date (t/inst (t/now)))} (apply str (take 10 (str (t/instant due-date)))))
-                                      (ui-table-cell {} (ui-button {:icon (ui-icon {:name "times"})
-                                                                    :basic true
-                                                                    :onClick (fn []
-                                                                               (if (js/confirm  "Are you sure?")
-                                                                                 (do (remove-action id)
-                                                                                     (load-action-label))
-                                                                                 (m/set-value! this :ui/modal-open? false)))} )))
+                                      (ui-table-cell {} (ui-icon {:name "times"
+                                                          :basic true
+                                                          :onClick (fn []
+                                                                     (if (js/confirm  "Are you sure?")
+                                                                       (do (remove-action id)
+                                                                           (load-action-label))
+                                                                       (m/set-value! this :ui/modal-open? false)))})))
                :open modal-open?
                                         ;:closeIcon true
                :onClose #(m/set-value! this :ui/modal-open? false)
@@ -486,7 +486,7 @@
                               (ui-table-footer {} (ui-table-row {:textAlign :right}
                                                                 
                                                                 (ui-table-header-cell {:colSpan 5}
-                                                                                      (ui-button {:basic true
+                                                                                      (ui-icon {:basic true
                                                                                                   :onClick  #(merge/merge-component! this ActionRow
                                                                                                                                      {:ui/new? true
                                                                                                                                       :db/id (tempid/tempid)
@@ -494,8 +494,9 @@
                                                                                                                                       :action/owner ""
                                                                                                                                       :action/status :open
                                                                                                                                       :action/due-date (-> t/now t/inst)}
-                                                                                                                                     :append [:action-list/id id :action-list/actions])}
-                                                                                                 (ui-icon {:name "plus"} ))))))))
+                                                                                                                                     :append [:action-list/id id :action-list/actions])
+                                                                                                :name "plus"}
+                                                                                               )))))))
     
     ))
 
@@ -773,8 +774,8 @@
              (ui-divider {:horizontal true})
              (if (= status :submitted)
                (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "Submitted the " (apply str (take 21 (str submitted-at)))
-                          (when (or (not (keyword? (:resource/email-address submitted-by)))
-                                    (nil? (:resource/email-address submitted-by)))
+                          (when (and (not (keyword? (:resource/email-address submitted-by)))
+                                    (not (nil? (:resource/email-address submitted-by))))
                             (str " by " (:resource/email-address submitted-by))))
                (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "-"))
              )))
@@ -894,7 +895,7 @@
                                         ;(map ui-gov-review-week current-weeks)
                            
                            ;; we need to map this from current-weeks prop 
-                           (ui-step-group {:style {:flex 1} :fluid true :size :mini}
+                           (ui-step-group {:style {} :fluid true  :size :mini}
                                           
                                           (mapv (fn [gov-review-week]
 
@@ -1593,7 +1594,7 @@
                            ))
          (ui-grid-column {:width 13}
                          #_(dom/h3 {:style {:textAlign "center"}} "Projects" )
-                         (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true :striped true :celled true :sortable true :fixed true}
+                         (ui-table {:color :blue :style {:fontSize "85%"} :singleLine true  :celled true :sortable true :fixed true}
                                    (ui-table-header {}
                                                     (ui-table-row {:textAlign :center}
                                                                   (ui-table-header-cell {:style {:position "sticky" :top 0 } :sorted (when (= column :project/name) direction)

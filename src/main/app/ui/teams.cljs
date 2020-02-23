@@ -139,7 +139,7 @@
                                       (ui-table-cell {} (clojure.string/capitalize (apply str (rest (str type)))))
                                       (ui-table-cell {} (:resource/name lead))
                                       (ui-table-cell {} (count resources))
-                                      (ui-table-cell {} (ui-button {:icon (ui-icon {:name "times"}) :basic true :onClick (fn [e] (comp/transact! this  [(team/delete-team {:team-id id}) :teams/teams :workplan/team-checkboxes]))}))
+                                      (ui-table-cell {} (ui-icon {:name "times" :basic true :onClick (fn [e] (comp/transact! this  [(team/delete-team {:team-id id}) :teams/teams :workplan/team-checkboxes]))}))
                                       
                                       )
                :size :small
@@ -213,7 +213,7 @@
                                                         (ui-table-header {}
                                                                          (ui-table-row {} (map #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) [ "Name" "Delete"])))
                                                         (ui-table-body {}
-                                                                       (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-button {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})])) :icon (ui-icon {:name "times"}) :basic true })) ) resources)
+                                                                       (map #(ui-table-row {} (ui-table-cell {} (:resource/name %)) (ui-table-cell {} (ui-icon  {:onClick (fn [e](comp/transact! this  [(team/delete-team-member {:team-id id :team-member-id (:resource/id %)})])) :name "times" :basic true })) ) resources)
                                                                        )
                                                         )
 
@@ -275,7 +275,7 @@
                              (ui-table-body {}
                                             (map ui-team (remove nil? teams)))
                              (ui-table-footer {} (ui-table-row {:textAlign :right}
-                                                               (ui-table-header-cell {:colSpan 5} (ui-button {:basic true :onClick
+                                                               (ui-table-header-cell {:colSpan 5} (ui-icon {:basic true :onClick
                                                                                                               (fn [e]
                                                                                                                 (merge/merge-component! this Team
                                                                                                                                        {:db/id (tempid/tempid) :team/name "" :team/resources []}
@@ -286,8 +286,9 @@
                                                                                                                 #_(merge/merge-component! this  TeamCheckbox
                                                                                                                                           {:db/id (tempid/tempid) :team/name "" :team/lead nil :team/resources [] }
                                                                                                                                           
-                                                                                                                                          ))}
-                                                                                                             (ui-icon {:name "plus"} )))
+                                                                                                                                          ))
+                                                                                                               :name "plus"}
+                                                                                                              ))
                                         ;(ui-table-header-cell {})
                                         ;(ui-table-header-cell {})
                                                                ))))

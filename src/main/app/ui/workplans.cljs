@@ -49,6 +49,7 @@
    [com.fulcrologic.fulcro.algorithms.normalize :as normalize]
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
+   [com.fulcrologic.semantic-ui.addons.radio.ui-radio :refer [ui-radio]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
    [com.fulcrologic.semantic-ui.modules.popup.ui-popup :refer [ui-popup]]
    [com.fulcrologic.semantic-ui.modules.popup.ui-popup-content :refer [ui-popup-content]]
@@ -174,16 +175,18 @@
 
 
 
-(defsc ResourceTimeSheet [this {:resource-ts/keys [name timesheets ] :keys [workplan/max-date workplan/min-date]}]
+(defsc ResourceTimeSheet [this {:resource-ts/keys [name timesheets ] :keys [workplan/max-date workplan/min-date] :as props}]
   {:query [:resource-ts/id :resource-ts/name :workplan/max-date
            :workplan/min-date
+           [:ui/workplan-count '_]
            {:resource-ts/timesheets (comp/get-query TimeSheet)} ]
-   :ident :resource-ts/id}
+   :ident :resource-ts/id
+   }
   (let [from (some-> timesheets last :timesheet/end-ms)
-        total (count timesheets)
-        supposed (count (workplan/dates-from-to min-date max-date))
-        added (- supposed total)]
-    (js/console.log "SUPOSED" (count (workplan/dates-from-to min-date max-date)))
+        row-so-far (count timesheets)
+        row-count (get props :ui/workplan-count)
+        to-pad (- row-count row-so-far)]
+    
     (when
         (seq timesheets)
       (ui-table-row
@@ -228,9 +231,10 @@
          #_(fn [timesheet]
              (ui-table-cell {} (str (:timesheet/work-fluxod timesheet) " X " (:timesheet/work-ms timesheet))))
          timesheets)
+
         (mapv
-         #(ui-table-cell {} "")
-         (range 0    added))
+           #(ui-table-cell {} "")
+           (range 0    to-pad))
         ]))))
 
 (defsc ResourceTimeSheet2 [this {:keys []}]
@@ -238,26 +242,55 @@
 
 
 (def ui-resource-timesheet (comp/factory ResourceTimeSheet {:keyfn :resource-ts/id}))
-(defsc WorkPlan2 [this {:workplan/keys [ max-date min-date resources-ts] :resource-ts/keys [start-date end-date] :as props}]
-  {:query [:workplan/id {:workplan/resources-ts (comp/get-query ResourceTimeSheet)} :resource-ts/start-date :resource-ts/end-date
+(defn format-date
+  [date & {:keys [by-week] :or {by-week false}}]
+  (if by-week
+    (let [week-number (workplan/week-number date)
+          year (apply str (drop 2 (str (t/year date))))]
+      (str "Week " week-number " " ))
+    
+    (str (str/capitalize (str (t/month date))) " "
+         (apply str (drop 2 (str (t/year date)))))))
+
+
+
+(defsc WorkPlan2 [this {:workplan/keys [ max-date min-date resources-ts] :resource-ts/keys [start-date end-date] :as props :ui/keys [by-month? by-week?]}]
+  {:query [:workplan/id {:workplan/resources-ts (comp/get-query ResourceTimeSheet)}
+           :ui/by-month?
+           :ui/by-week?
+           :resource-ts/start-date :resource-ts/end-date
            :workplan/max-date :workplan/min-date
            [df/marker-table '_]]
    :ident :workplan/id
+   :initial-state {:ui/by-month? true :ui/by-week? false}
+   :pre-merge (fn [{:keys [current-normalized data-tree] :as params}]
+                
+                (merge {:ui/by-month? false
+                        :ui/by-week? true}
+                       current-normalized
+                       data-tree))
    :will-enter
    (fn [app {:keys [workplan/id]}]
      (dr/route-deferred
       [:workplan/id (uuid id)]
       (fn []
         (df/load! app [:workplan/id (uuid id)] WorkPlan2
-                  {:params {} :marker :workplan})
-        
+                  {:params {:by :week} :marker :workplan
+                   :post-mutation `workplan/set-workplan-count-init
+                   :post-mutation-params {:ident [:workplan/id (uuid id)]}
+                   })
+
+        ;(comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
         (comp/transact! app [(dr/target-ready {:target  [:workplan/id (uuid id)]})]))))
    
    :route-segment ["workplan2" :workplan/id]
    }
 
   
-  (let [status (get-in props [df/marker-table :workplan] )]
+  (let [status (get-in props [df/marker-table :workplan] )
+        
+        #_#_supposed (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :weeks :months)}))
+        #_#_added (- supposed total)]
     (ui-container
      {}
      (if (df/loading? status)
@@ -282,23 +315,57 @@
                                    :height "18px"
                                    :background "lightBlue"
                                    :marginLeft "75px"}}
-                          (dom/label {:style {:marginLeft "25px"}} "Both")))
+                          (dom/label {:style {:marginLeft "25px"}} "Both"))
+
+
+                 (ui-form
+                  {:style {:marginLeft "400px"}}
+                  (ui-form-group
+                   {}
+                   (ui-form-field
+                    {:inline true}
+                    (dom/label {} "By Month")
+                    (ui-radio  { :checked by-month?
+                                :onClick
+                                (fn [_]
+                                  (m/toggle! this :ui/by-month?)
+                                  (m/toggle! this :ui/by-week?)
+                                  (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
+                                  (df/refresh! this {:params {:by (if by-month? :week :month)}}))}))
+                   (ui-form-field
+                    {:inline true}
+                    (dom/label {} "By Week")
+                    (ui-radio  { :checked by-week?
+                                :onClick
+                                (fn [_]
+                                  (m/toggle! this :ui/by-month?)
+                                  (m/toggle! this :ui/by-week?)
+                                  (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
+                                  (df/refresh! this {:params {:by  (if by-week? :month :week)}}))}))
+                   ))
+                 
+                 
+                 )
+        
         (dom/div
          {:style
-          {
-           :marginTop "20px"
-           :overflowX "visible"
-           :max-width "1200px"
-           :max-height "1400px"
-           }
-          }
+          {:overflow "scroll"
+           :max-width "880px"}}
          (ui-table
           {:color :blue
            :celled true
+          ; :compact true
+           ;:fixed true
            :textAlign :center
            :singleLine true
                                         ;:striped true
-           :style {:fontSize "85%"}}
+           :style {:fontSize "85%"
+                                        ;:width "850px"
+                                        ;:max-height "900px"
+                   ;:overflow "scroll"
+                                        ;:display "block"
+                                        ;:height "600px"
+                   #_#_:overflowX "scroll"}}
           (ui-table-header
            {:style
             {:top 0
@@ -308,19 +375,28 @@
             (ui-table-header-cell {:style
                                    {:position "sticky"
                                     :left  0
+                                    :top 0
                                     :background "white"
                                     :color "black"
                                     :zIndex 1
                                     }}  "Resource")
-            (mapv #(ui-table-header-cell
-                    {:singleLine true
-                     :style {:color "black"
-                             :background "white"
-                             :position "sticky"
-                             :top 0}}
-                    (str (str/capitalize (str (t/month %))) " "
-                         (apply str (drop 2 (str (t/year %))))))
-                  (workplan/dates-from-to min-date max-date))
+
+            
+
+            (mapv #(ui-popup {:basic true
+                              :trigger (ui-table-header-cell
+                                        {:singleLine true
+                                         :style {:color "black"
+                                                 :background "white"
+                                                 ;:width "200px"
+                                                 :position "sticky"
+                                                 :top 0}}
+                                        (format-date % :by-week by-week?))}
+                             (ui-popup-content
+                              {:style {:fontSize "80%"}}
+                              (str (str/capitalize (str (t/month %))) " " (t/year %))
+                              ))
+                  (workplan/dates-from-to min-date max-date {:dates (if by-week? :weeks :months)}))
             )
            )
           (ui-table-body
@@ -339,8 +415,7 @@
       :value (some->> start-date t/date str (take 7) (apply str))
       :onChange (fn [e]
                   (m/set-value! this :resource-ts/start-date (js/Date. (evt/target-value e)))
-                  (df/refresh! this {:params {:pathom/context {:resource-ts/start-date start-date
-                                                               :resource-ts/end-date end-date}}}))})
+                  )})
     (ui-input
      {:type "month"
       :label "End"
@@ -350,4 +425,5 @@
                   (let [end-date-new (js/Date. (evt/target-value e))]
                     (m/set-value! this :resource-ts/end-date end-date-new)
                     (df/refresh! this {:params {:pathom/context {:resource-ts/start-date start-date
-                                                                 :resource-ts/end-date end-date-new}}})))}))))
+                                                                 :resource-ts/end-date end-date-new}
+                                                :by-week? by-week?}})))}))))

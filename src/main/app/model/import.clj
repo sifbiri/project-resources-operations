@@ -105,7 +105,7 @@
    }
   
   (do
-
+    (println "NEW IMPORT" new-import)
     (with-open [stream (clojure.java.io/input-stream (:tempfile (first files)))]
       (let [ fluxod-names
            (->> (s/load-workbook stream)
@@ -139,7 +139,14 @@
         
 
         (d/transact connection (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
-                                                                                            :where [?e :fluxod-ts/date _]] db))))
+                                                                                    :in $ ?start ?end
+                                                                                    :where
+                                                                                    [?e :fluxod-ts/date ?date]
+                                                                                    [(tick.alpha.api/>= ?date ?start)]
+                                                                                    [(tick.alpha.api/<= ?date ?end)]
+                                                                                    ] db
+                                                                                      (:import/start-period new-import)
+                                                                                      (:import/end-period new-import)))))
         
         (d/transact connection
                      (concat tx-fluxod-ts tx-fluxod-names))

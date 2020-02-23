@@ -37,6 +37,7 @@
    [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
    [com.fulcrologic.fulcro.dom.events :as evt]
    [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
+   [com.fulcrologic.semantic-ui.elements.container.ui-container :refer [ui-container]]
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
    [app.model.item :as item]
@@ -784,7 +785,7 @@
         (ui-table-cell 
          {:colSpan 2 :title (apply str (take 21 (str (:project/last-published-date project))))
           :style {:position "sticky"
-                  :left "69px"
+                  :left "67px"
                   :background "white"
                   :color "black"}}
          (str (:project/name project) " ")
@@ -809,7 +810,7 @@
                    (tr (concat [(ui-table-cell {:colSpan 2 :style {:backgroundColor  "#3281b9" :position "sticky" :left 0 }} "")
                                 ;; touched 
                                 (ui-table-cell {:singleLine true :style {:position "sticky"
-                                                                         :left "128px"
+                                                                         :left "124px"
                                                                          :background "white"
                                                                          :color "black"}}
                                                (:assignment/name (first asses)))]
@@ -990,7 +991,7 @@
         (mapv ui-project-line project-lines)))
       (tr (td {:colSpan 8}
 
-              (ui-loader {:active true :inline :centered} ))))))
+              (ui-loader {:active true :style {:zIndex 5 }:inline :centered} ))))))
 (def ui-resource-line (comp/factory ResourceLine {:keyfn :resource-line/id} ))
 
 
@@ -1247,13 +1248,17 @@
           (swap! state merge/merge-component ProjectsTable {:projects-table/projects projects :project-table/resource resource})))
 
 (defmutation set-workplan-date
-  [{:keys [start end]}]
+  [{:keys [start end init] :or {init false}}]
   (action [{:keys [state]}]
-
-          (when start
-            (swap! state assoc-in [:ui/dates :start] start))
-          (when end
-            (swap! state assoc-in [:ui/dates :end] end))
+          (if init
+            (do
+              (swap! state assoc-in [:ui/dates] {:start start :end end})              )
+            (do
+              (when (and start (t/< (t/date (js/Date. start)) (t/date (js/Date. (get-in @state [:ui/dates :end])))))
+               )
+             (when (and end (t/> (t/date (js/Date. end))
+                                 (t/date (js/Date. (get-in @state [:ui/dates :start])))))
+               (swap! state assoc-in [:ui/dates :end] end))))
           ))
 
 
@@ -1586,6 +1591,7 @@
                                                                     ;; (tf/unparse (tf/formatters :date) (tt/now))
                                                                     :end
                                                                     (str (t/+ (t/date) (t/new-period 3 :weeks)))
+                                                                    :init true
 
                                                                     ;; (tf/unparse (tf/formatters :date)
                                                                     ;;                  (tt/plus (tt/now) (tt/weeks 3)))
@@ -1715,59 +1721,64 @@
        
        (ui-grid-column {:width 13}
                        (when (seq resource-lines)
-                         (div  {:style {:marginLeft "1px"
-                                        :overflowX "scroll"
-                                        :overflowY "scroll"
-                                        :paddingBottom "5px"
-                                        :width "930px"
-                                        :height "1200px"}}
-                               
-                               #_{:style {:overflowX "auto"  :overflowY "auto" :max-height "1000px" :max-width "1000px" :position "sticky" :top 0}}
-                               (ui-table {:style {:fontSize "85%"
-                                                  :position "relative"
-                                                  :compact true
-                                                  :stripped true
-                                                  :selectable true
-                                                  
-                                                  } :celled true :striped true :color :blue    }
-                                         (ui-table-header
-                                          {:fullWidth true :style {:position "sticky" :top 0}}
-                                          (ui-table-row
-                                           {:style {:backgroundColor "red"}}
+                                        ;:width "700px"
+                         
+                       (ui-table {:style {:fontSize "85%"
+                                        ;:position "relative"
+                                          
+                                        :display "block"
+                                          :overflowX "scroll"
+                                        ;:position "sticky"
+                                        ;:top 0
+                                          
+                                        ;:overflowY "scroll"
+                                          :paddingBottom "5px"
+                                          :width "930px"
+                                          :max-height "600px"
+                                          }
+                                  :compact true
+                                  :celled true
+                                  :color :blue
+                                  :fixed true
+                                  }
+                                 (ui-table-header
+                                  {:fullWidth true :style {:position "sticky" :top 0}}
+                                  (ui-table-row
+                                   {:style {}}
 
-                                           (ui-table-header-cell {:style {:position "sticky"
-                                                                          :left 0
-                                                                          :zIndex 100
-                                                                          :top 0
+                                   (ui-table-header-cell {:style {:position "sticky"
+                                                                  :left 0
+                                                                  :zIndex 100
+                                                                  :top 0
                                         ;:background "white"
-                                                                          :width "200px"
-                                                                          :color "black"}
-                                                                  } "Resource")
-                                           (ui-table-header-cell {:style {:position "sticky"
-                                                                          :left "69px"
-                                                                          :top 0
-                                                                          :zIndex 100
-                                                                          
+                                                                  :width "200px"
+                                                                  :color "black"}
+                                                          } "Resource")
+                                   (ui-table-header-cell {:style {:position "sticky"
+                                                                  :left "67px"
+                                                                  :top 0
+                                                                  :zIndex 100
+                                                                  
                                         ;:background "white"
-                                                                          :color "black"}
-                                                                  } "Project")
+                                                                  :color "black"}
+                                                          } "Project")
 
-                                           (ui-table-header-cell {:style {:position "sticky"
-                                                                          :left "128px"
-                                                                          :zIndex 100
-                                                                          
-                                                                          :top 0
+                                   (ui-table-header-cell {:style {:position "sticky"
+                                                                  :left "124px"
+                                                                  :zIndex 100
+                                                                  
+                                                                  :top 0
                                         ;:background "white"
-                                                                          :color "black"}
-                                                                  } "Assignment")
+                                                                  :color "black"}
+                                                          } "Assignment")
 
-                                           #_(mapv #(ui-table-header-cell {:style {:position "sticky" 
-                                                                                   :left 0 }} %) ["Project" "Assignement "])
+                                   #_(mapv #(ui-table-header-cell {:style {:position "sticky" 
+                                                                           :left 0 }} %) ["Project" "Assignement "])
 
-                                           (mapv #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
-                                                                                 :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
-                                           ))
-                                         (ui-table-body {} (mapv ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines)))))))]
+                                   (mapv #(ui-table-header-cell {:style {:font-weight "normal":text-align "center" :vertical-align "center" 
+                                                                         :position "sticky" :top 0}} %) (generate-row-dates-readable (:start dates) (:end dates)))
+                                   ))
+                                 (ui-table-body {} (mapv ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))))))]
 
       (ui-segment {:style {:textAlign "center"}}
                   (div :.ui.container  "Please login with Fluxym account")))

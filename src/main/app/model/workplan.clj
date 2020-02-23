@@ -11,16 +11,13 @@
    [dk.ative.docjure.spreadsheet :as s]
    [tick.alpha.api :as t]
    [clojure.string :as str]
-   
+   [clj-time.core :as tm]
    [datomic.api :as d]
    [app.model.database :refer [db-url]]
-   [taoensso.timbre :as log]))
+   [taoensso.timbre :as log])
+  (:import
+   (java.util Calendar)))
 
-
-
-
-(def group-by-month 
-  #(apply str (take 7 (str (t/date (:date %))))))
 
 
 
@@ -28,12 +25,25 @@
 
 
 
-(defn same-month? [fluxod-ts ms-ts]
+(defn week-number
+ [inst]
+ (apply str (take 2 (drop 5 (str (t/date inst))))))
+
+(defn week-of-year
+  [date]
+	(let [cal (Calendar/getInstance)]
+		(.setTime cal date)
+		(.get cal Calendar/WEEK_OF_YEAR)))
+
+
+(defn same-cell? [fluxod-ts ms-ts & {:keys [by-week?] :or {by-week? false}}]
   (let [fluxod-last (-> fluxod-ts :timesheet/end-fluxod)
-        ms-last (-> ms-ts :timesheet/start-ms )]
-    (println "FLUXOD-ts" fluxod-last)
-    (println "ms-ts" ms-last)
-    (and fluxod-last ms-last (= (-> fluxod-last t/date t/month ) (-> ms-last t/date t/month)))))
+        ms-first (-> ms-ts :timesheet/start-ms )]
+    (when (and fluxod-last ms-first)
+      (if by-week?
+        (= (week-of-year fluxod-last)
+           (week-of-year ms-first))
+        (= (-> fluxod-last t/date t/month ) (-> ms-first t/date t/month))))))
 
 (defn merge-timesheets
   [fluxod-ts ms-ts]
@@ -72,6 +82,56 @@
    })
 
 
+
+(def group-by-month 
+  #(apply str (take 7 (str (t/date (:date %))))))
+
+(def group-by-week
+  #(week-of-year (:date %)))
+
+
+(defn group-fluxod-timesheets
+  [fluxod-timesheets & {:keys [by-week?] :or {by-week? false}}]
+  (sort-by
+   :timesheet/start-fluxod
+   (reduce-kv (fn [acc month timesheets]
+                (conj acc (reduce (fn [{:keys [timesheet/work-fluxod] :as m}
+                                       timesheet]
+                                    (assoc
+                                        m
+                                      :timesheet/work-fluxod
+                                      (+ work-fluxod (:timesheet/work-fluxod timesheet)))
+                                    ) {:timesheet/work-fluxod 0
+                                       :timesheet/start-fluxod
+                                       (-> timesheets first :date)
+                                       :timesheet/end-fluxod
+                                       (-> timesheets last :date)
+                                       } timesheets )))
+
+              [] (group-by (if by-week? group-by-week group-by-month ) fluxod-timesheets))))
+
+
+(defn group-ms-timesheets
+  [ms-timesheets & {:keys [by-week?] :or {by-week? false}}]
+  (sort-by
+   :timesheet/start-ms
+   (reduce-kv (fn [acc month timesheets]
+               (conj acc (reduce (fn [{:keys [timesheet/work-ms] :as m}
+                                      timesheet]
+                                   (assoc
+                                       m
+                                     :timesheet/work-ms ;; convert from hours to days  
+                                     (+ work-ms (/ (:timesheet/work-ms timesheet) 8.0))))
+                                 {:timesheet/work-ms 0
+                                  :timesheet/start-ms
+                                  (-> timesheets first :date)
+                                  :timesheet/end-ms
+                                  (-> timesheets last :date)
+                                  } timesheets )))
+
+              [] (group-by (if by-week? group-by-week group-by-month) ms-timesheets))))
+
+
 (pc/defresolver resource-ts [{:keys [connection db] :as env} {:keys [resource-ts/id workplan/max-date workplan/min-date] workplan :workplan/id}]
   {::pc/input #{:resource-ts/id :workplan/id :workplan/max-date :workplan/min-date}
    ::pc/output [:resource-ts/id  :resource-ts/name :resource-ts/start-date
@@ -85,8 +145,9 @@
                                           :timesheet/work-fluxod
                                           :timesheet/work-ms]}]}
 
-  (do
-    (let [fluxod-timesheets (sort-by
+  (do (println (-> env :query-params :by))
+      (let [by-week? (= (-> env :query-params :by) :week)
+          fluxod-timesheets (sort-by
                              :date
                              (d/q '[:find ?work-fluxod ?date ?fluxod-po
                                     :keys timesheet/work-fluxod date fluxod-po
@@ -151,56 +212,28 @@
                 max-date))
 
 
-          fluxod-timesheets-by-month
-          (sort-by
-           :timesheet/start-fluxod
-           (reduce-kv (fn [acc month timesheets]
-                        (conj acc (reduce (fn [{:keys [timesheet/work-fluxod] :as m}
-                                               timesheet]
-                                            (assoc
-                                                m
-                                              :timesheet/work-fluxod
-                                              (+ work-fluxod (:timesheet/work-fluxod timesheet)))
-                                            ) {:timesheet/work-fluxod 0
-                                               :timesheet/start-fluxod
-                                               (-> timesheets first :date)
-                                               :timesheet/end-fluxod
-                                               (-> timesheets last :date)
-                                               } timesheets )))
+          grouped-fluxod-timesheets
+          (group-fluxod-timesheets fluxod-timesheets :by-week? by-week?)
 
-                      [] (group-by group-by-month fluxod-timesheets)))
-
-          ms-timesheets-by-month
-          (sort-by
-           :timesheet/start-ms
-           (reduce-kv (fn [acc month timesheets]
-                        (conj acc (reduce (fn [{:keys [timesheet/work-ms] :as m}
-                                               timesheet]
-                                            (assoc
-                                                m
-                                              :timesheet/work-ms ;; convert from hours to days  
-                                              (+ work-ms (/ (:timesheet/work-ms timesheet) 8.0))))
-                                          {:timesheet/work-ms 0
-                                           :timesheet/start-ms
-                                           (-> timesheets first :date)
-                                           :timesheet/end-ms
-                                           (-> timesheets last :date)
-                                           } timesheets )))
-
-                      [] (group-by group-by-month ms-timesheets)))
+          grouped-ms-timesheets
+          (group-ms-timesheets ms-timesheets :by-week? by-week?)
+          
+          
           
           resource-ts (cond
-                        (not (seq fluxod-timesheets-by-month) )
-                        ms-timesheets-by-month
-                        (same-month?
-                         (last fluxod-timesheets-by-month)
-                         (first ms-timesheets-by-month))
+                        (not (seq grouped-ms-timesheets) )
+                        grouped-ms-timesheets
 
-                        (merge-timesheets fluxod-timesheets-by-month ms-timesheets-by-month)
-                        :else (concat fluxod-timesheets-by-month ms-timesheets-by-month))
+                        (same-cell?
+                         (last grouped-fluxod-timesheets)
+                         (first grouped-ms-timesheets)
+                         :by-week? by-week?)
+
+                        (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
+                        :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
           ]
-      (println "MS_TIMESHEETS" ms-timesheets-by-month)
-      (println "Fluxod_TIMESHEETS" fluxod-timesheets-by-month)
+      
+      
       
       {:resource-ts/id id
        :resource-ts/timesheets resource-ts
