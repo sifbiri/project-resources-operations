@@ -56,12 +56,16 @@
                              "Développement / Projet interne" :internal-project
                              "Support client" :client-support
                              "Avant-vente" :pre-sale})
+
 (defn n->fluxod-name [{:keys [connection db]} name]
+  (println "NAME n->" name)
   (d/q '[:find ?fn .
          :in $ ?name
          :where
          [?r :resource/name ?name]
-         [?r :resource/fluxod-name ?fn]]))
+         [?r :resource/fluxod-name ?fn]]
+       db
+       name))
   
 (def name->fluxod-name
   (pc/single-attr-resolver2 :resource/name :resource/fluxod-name  n->fluxod-name))

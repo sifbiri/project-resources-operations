@@ -22,9 +22,6 @@
   (str top-xml  "<o:Username>" username "</o:Username>\n        <o:Password>" password "</o:Password>\n" rest-xml))
 
 ;; post 
-#_(client/post "https://login.microsoftonline.com/extSTS.srf"
-               {:body (make-load "sbiri@flxym.com" "highAndAbove5$") :body-encoding "UTF-8"
-                })
 
 (defn valid-response?
   [r]
@@ -33,13 +30,21 @@
 
 
 
-(defresolver current-session-resolver [env input]
+(defresolver current-session-resolver [{:keys [db connection] :as env} input]
   {::pc/output [{::current-session [:session/valid? :account/name]}]}
   (let [{:keys [account/name session/valid?]} (get-in env [:ring/request :session])]
     (if valid?
       (do
-        (log/info name "already logged in!")
-        {::current-session {:session/valid? true :account/name name}})
+        (let [resource-id (d/q
+                           '[:find ?rid .
+                             :in $ ?email
+                             :where
+                             [?e :resource/email-address ?email]
+                             [?e :resource/id ?rid]] db name)]
+          
+          
+          (log/info name "already logged in!")
+          {::current-session {:session/valid? true :account/name name :account/resource resource-id}}))
       {::current-session {:session/valid? false}})))
 
 (defn response-updating-session
@@ -67,14 +72,14 @@
       (let [resource-id (d/q
                          '[:find ?rid .
                            :in $ ?email
-                          :where
-                          [?e :resource/email-address ?email]
+                           :where
+                           [?e :resource/email-address ?email]
                            [?e :resource/id ?rid]] db username)]
         
         (response-updating-session env
-                                  {:session/valid? true
-                                   :account/name   username
-                                   :account/resource resource-id}))
+                                   {:session/valid? true
+                                    :account/name   username
+                                    :account/resource resource-id}))
       (do
         (log/error "Invalid credentials supplied for" username)
         (throw (ex-info "Invalid credentials" {:username username}))))))

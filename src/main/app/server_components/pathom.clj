@@ -2,40 +2,41 @@
   (:require
    [mount.core :refer [defstate]]
    [edn-query-language.core :as eql]
-    [taoensso.timbre :as log]
-    [com.wsscode.pathom.connect :as pc]
-    [com.wsscode.pathom.core :as p]
-    [com.wsscode.common.async-clj :refer [let-chan]]
-    [clojure.core.async :as async]
-    [app.model.account :as acct]
-    [app.model.user :as user]
-    [app.model.work-line :as wol]
-    ;; [app.model.project :as project]
-    [com.wsscode.pathom.connect.datomic :as pcd]
-    [com.wsscode.pathom.connect.datomic.on-prem :refer [on-prem-config]]
-    [app.model.project :as project]
-    [app.model.import :as import]
-    [app.model.session :as session]
-    [app.model.resource :as resource]
-    [com.fluxym.components.auto-resolvers :refer [automatic-resolvers]]
-    [app.model.item :as item]
-    [app.model.team :as team]
-    [app.model.workplan :as workplan]
-    [datomic.api :as d]
-    [com.fulcrologic.rad.database-adapters.datomic :as datomic]
-    [app.model.database :refer [datomic-connections]]
-    [com.fulcrologic.rad.form :as form]
-    
-    [app.server-components.config :refer [config]]
-    [app.model.database :as db]))
+   [taoensso.timbre :as log]
+   [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
+   [com.wsscode.pathom.connect :as pc]
+   [com.wsscode.pathom.core :as p]
+   [com.wsscode.common.async-clj :refer [let-chan]]
+   [clojure.core.async :as async]
+   [app.model.account :as acct]
+   [app.model.user :as user]
+   [app.model.work-line :as wol]
+   ;; [app.model.project :as project]
+   [com.wsscode.pathom.connect.datomic :as pcd]
+   [com.wsscode.pathom.connect.datomic.on-prem :refer [on-prem-config]]
+   [app.model.project :as project]
+   [app.model.import :as import]
+   [app.model.session :as session]
+   [app.model.resource :as resource]
+   [com.fluxym.components.auto-resolvers :refer [automatic-resolvers]]
+   [app.model.item :as item]
+   [app.model.team :as team]
+   [app.model.workplan :as workplan]
+   [datomic.api :as d]
+   [com.fulcrologic.rad.database-adapters.datomic :as datomic]
+   [app.model.database :refer [datomic-connections]]
+   [com.fulcrologic.rad.form :as form]
+   
+   [app.server-components.config :refer [config]]
+   [app.model.database :as db]))
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
    ::pc/output [:com.wsscode.pathom.viz.index-explorer/index]}
   {:com.wsscode.pathom.viz.index-explorer/index
    (-> (get env ::pc/indexes)
-     (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
-     (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
+       (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
+       (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
 (def all-resolvers [automatic-resolvers form/save-form form/delete-entity workplan/resolvers project/resolvers acct/resolvers session/resolvers resource/resolvers  index-explorer wol/resolvers  item/resolvers team/resolvers import/resolvers user/resolvers])
 
@@ -55,7 +56,8 @@
            {}))))})
 
 (defn log-requests [{:keys [env tx] :as req}]
-  (log/debug "Pathom transaction:" (pr-str tx))
+  (log/debug "Pathom transaction:" (pr-str (eql/ast->query (ns/dissoc-in (-> tx eql/query->ast )
+                                                                         [:children 0 :params :password]))))
   req)
 
 ;; CODE from RAD 
@@ -78,40 +80,40 @@
 
 (defn build-parser [db-connection]
   (let [real-parser (p/parallel-parser
-                      {::p/mutate  pc/mutate-async
-                       ::p/env     {::p/reader               [p/map-reader pc/parallel-reader
-                                                              pc/open-ident-reader p/env-placeholder-reader]
-                                    ::p/process-error
-                                    (fn [_ err]
+                     {::p/mutate  pc/mutate-async
+                      ::p/env     {::p/reader               [p/map-reader pc/parallel-reader
+                                                             pc/open-ident-reader p/env-placeholder-reader]
+                                   ::p/process-error
+                                   (fn [_ err]
                                         ; print stack trace
-                                      (.printStackTrace err)
+                                     (.printStackTrace err)
 
                                         ; return error str
-                                      (p/error-str err))
-                                    
-                                    ::p/placeholder-prefixes #{">"}
-                                    ::p/thread-pool (pc/create-thread-pool (async/chan 200))}
-                       ::p/plugins [query-params-to-env-plugin
-                                    (pc/connect-plugin {::pc/register all-resolvers})
-                                    ;(pcd/datomic-connect-plugin (assoc on-prem-config ::pcd/conn db-connection))
-                                    (p/env-wrap-plugin (fn [env]
-                                                         ;; Here is where you can dynamically add things to the resolver/mutation
-                                                         ;; environment, like the server config, database connections, etc.
-                                                         
-                                                         (-> env
+                                     (p/error-str err))
+                                   
+                                   ::p/placeholder-prefixes #{">"}
+                                   ::p/thread-pool (pc/create-thread-pool (async/chan 200))}
+                      ::p/plugins [query-params-to-env-plugin
+                                   (pc/connect-plugin {::pc/register all-resolvers})
+                                        ;(pcd/datomic-connect-plugin (assoc on-prem-config ::pcd/conn db-connection))
+                                   (p/env-wrap-plugin (fn [env]
+                                                        ;; Here is where you can dynamically add things to the resolver/mutation
+                                                        ;; environment, like the server config, database connections, etc.
+                                                        
+                                                        (-> env
 
-                                                             (datomic/add-datomic-env {:dev (:ops datomic-connections)})
-                                                             (assoc 
-                                                               :db (d/db db-connection) ; real datomic would use (d/db db-connection)
-                                                               :connection db-connection
-                                                               :config config))))
-                                    
-                                    (preprocess-parser-plugin log-requests)
-                                    p/error-handler-plugin
-                                    
-                                    p/request-cache-plugin
-                                    (p/post-process-parser-plugin p/elide-not-found)
-                                    p/trace-plugin]})
+                                                            (datomic/add-datomic-env {:dev (:ops datomic-connections)})
+                                                            (assoc 
+                                                                :db (d/db db-connection) ; real datomic would use (d/db db-connection)
+                                                                :connection db-connection
+                                                                :config config))))
+                                   
+                                   (preprocess-parser-plugin log-requests)
+                                   p/error-handler-plugin
+                                   
+                                   p/request-cache-plugin
+                                   (p/post-process-parser-plugin p/elide-not-found)
+                                   p/trace-plugin]})
         ;; NOTE: Add -Dtrace to the server JVM to enable Fulcro Inspect query performance traces to the network tab.
         ;; Understand that this makes the network responses much larger and should not be used in production.
         trace?      (not (nil? (System/getProperty "trace")))]

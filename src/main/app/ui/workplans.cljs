@@ -260,9 +260,10 @@
            :ui/by-week?
            :resource-ts/start-date :resource-ts/end-date
            :workplan/max-date :workplan/min-date
+           [df/marker-table :workplan]
            ]
    :ident :workplan/id
-   :initial-state {:ui/by-month? true :ui/by-week? false}
+   :initial-state {:ui/by-month? true :ui/by-week? false }
    :pre-merge (fn [{:keys [current-normalized data-tree] :as params}]
                 
                 (merge {:ui/by-month? false
@@ -286,123 +287,119 @@
    
    :route-segment ["workplan2" :workplan/id]
    }
-  (js/console.log "resources-ts" resources-ts)
   
-  (let [status (get-in props [df/marker-table :workplan] )
-        
-        #_#_supposed (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :weeks :months)}))
-        #_#_added (- supposed total)]
-    (ui-container
-     {}
-     (if (df/loading? status)
-       (ui-loader {:active true})
-       [(dom/div {:style {:display "flex" :flexDirection "row" :fontSize "80%"}}
-         
-                 (dom/div {:style {:border "1px solid black"
-                                   :width "18px"
-                                   :height "18px"
-                                   :background "lightGray"
-                                   :marginLeft "20px"
-                                   :marginRight "33px"
-                                   }}
-                          (dom/label {:style {:marginLeft "25px"}} "Actuals"))
-                 (dom/div {:style {:border "1px solid black"
-                                   :width "18px"
-                                   :height "18px"
-                                   :marginLeft "25px"}}
-                          (dom/label {:style {:marginLeft "25px"}} "Forecast"))
-                 (dom/div {:style {:border "1px solid black"
-                                   :width "18px"
-                                   :height "18px"
-                                   :background "lightBlue"
-                                   :marginLeft "75px"}}
-                          (dom/label {:style {:marginLeft "25px"}} "Both"))
+  
+  (ui-container
+   {}
+   (if (df/loading? (get props [df/marker-table :workplan]))
+     (ui-loader {:active true})
+     [(dom/div {:style {:display "flex" :flexDirection "row" :fontSize "80%"}}
+               
+               (dom/div {:style {:border "1px solid black"
+                                 :width "18px"
+                                 :height "18px"
+                                 :background "lightGray"
+                                 :marginLeft "20px"
+                                 :marginRight "33px"
+                                 }}
+                        (dom/label {:style {:marginLeft "25px"}} "Actuals"))
+               (dom/div {:style {:border "1px solid black"
+                                 :width "18px"
+                                 :height "18px"
+                                 :marginLeft "25px"}}
+                        (dom/label {:style {:marginLeft "25px"}} "Forecast"))
+               (dom/div {:style {:border "1px solid black"
+                                 :width "18px"
+                                 :height "18px"
+                                 :background "lightBlue"
+                                 :marginLeft "75px"}}
+                        (dom/label {:style {:marginLeft "25px"}} "Both"))
 
 
-                 (ui-form
-                  {:style {:marginLeft "400px"}}
-                  (ui-form-group
-                   {}
-                   (ui-form-field
-                    {:inline true}
-                    (dom/label {} "By Month")
-                    (ui-radio  { :checked by-month?
-                                :onClick
-                                (fn [_]
-                                  (m/toggle! this :ui/by-month?)
-                                  (m/toggle! this :ui/by-week?)
-                                  (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
-                                  (df/refresh! this {:params {:by (if by-month? :week :month)}}))}))
-                   (ui-form-field
-                    {:inline true}
-                    (dom/label {} "By Week")
-                    (ui-radio  { :checked by-week?
-                                :onClick
-                                (fn [_]
-                                  (m/toggle! this :ui/by-month?)
-                                  (m/toggle! this :ui/by-week?)
-                                  (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
-                                  (df/refresh! this {:params {:by  (if by-week? :month :week)}}))}))
-                   ))
-                 
-                 
-                 )
-        
-        (dom/div
-         {:style
-          {:overflow "scroll"
-           :max-width "880px"}}
-         (ui-table
-          {:color :blue
-           :celled true
-          ; :compact true
-           ;:fixed true
-           :textAlign :center
-           :singleLine true
+               (ui-form
+                {:style {:marginLeft "400px"}}
+                (ui-form-group
+                 {}
+                 (ui-form-field
+                  {:inline true}
+                  (dom/label {} "By Month")
+                  (ui-radio  { :checked by-month?
+                              :onClick
+                              (fn [_]
+                                (m/toggle! this :ui/by-month?)
+                                (m/toggle! this :ui/by-week?)
+                                (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
+                                (df/refresh! this {:params {:by (if by-month? :week :month)}}))}))
+                 (ui-form-field
+                  {:inline true}
+                  (dom/label {} "By Week")
+                  (ui-radio  { :checked by-week?
+                              :onClick
+                              (fn [_]
+                                (m/toggle! this :ui/by-month?)
+                                (m/toggle! this :ui/by-week?)
+                                (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
+                                (df/refresh! this {:params {:by  (if by-week? :month :week)}}))}))
+                 ))
+               
+               
+               )
+      
+      (dom/div
+       {:style
+        {:overflow "scroll"
+         :max-width "880px"}}
+       (ui-table
+        {:color :blue
+         :celled true
+                                        ; :compact true
+                                        ;:fixed true
+         :textAlign :center
+         :singleLine true
                                         ;:striped true
-           :style {:fontSize "85%"
+         :style {:fontSize "85%"
                                         ;:width "850px"
                                         ;:max-height "900px"
-                   ;:overflow "scroll"
+                                        ;:overflow "scroll"
                                         ;:display "block"
                                         ;:height "600px"
-                   #_#_:overflowX "scroll"}}
-          (ui-table-header
-           {:style
-            {:top 0
-             :position "sticky"}}
-           (ui-table-row
-            {}
-            (ui-table-header-cell {:style
-                                   {:position "sticky"
-                                    :left  0
-                                    :top 0
-                                    :background "white"
-                                    :color "black"
-                                    :zIndex 1
-                                    }}  "Resource")
+                 #_#_:overflowX "scroll"}}
+        (ui-table-header
+         {:style
+          {:top 0
+           :position "sticky"}}
+         (ui-table-row
+          {}
+          (ui-table-header-cell {:style
+                                 {:position "sticky"
+                                  :left  0
+                                  :top 0
+                                  :background "white"
+                                  :color "black"
+                                  :zIndex 1
+                                  }}  "Resource")
 
-            
-            (js/console.log "MIN" (workplan/dates-from-to min-date max-date {:dates :months}))
-            (mapv #(ui-popup {:basic true
-                              :trigger (ui-table-header-cell
-                                        {:singleLine true
-                                         :style {:color "black"
-                                                 :background "white"
-                                                 ;:width "200px"
-                                                 :position "sticky"
-                                                 :top 0}}
-                                        (format-date % :by-week by-week?))}
-                             (ui-popup-content
-                              {:style {:fontSize "80%"}}
-                              (str (str/capitalize (str (t/month %))) " " (t/year %))
-                              ))
-                  (workplan/dates-from-to min-date max-date {:dates (if by-week? :weeks :months)}))
-            )
-           )
-          (ui-table-body
-           {}
-           (mapv ui-resource-timesheet resources-ts))))]))))
+          
+          (js/console.log "MIN" (workplan/dates-from-to min-date max-date {:dates :months}))
+          (mapv #(ui-popup {:basic true
+                            :trigger (ui-table-header-cell
+                                      {:singleLine true
+                                       :style {:color "black"
+                                               :background "white"
+                                        ;:width "200px"
+                                               :position "sticky"
+                                               :top 0}}
+                                      (format-date % :by-week by-week?))}
+                           (ui-popup-content
+                            {:style {:fontSize "80%"}}
+                            (str (str/capitalize (str (t/month %))) " " (t/year %))
+                            ))
+                (workplan/dates-from-to min-date max-date {:dates (if by-week? :weeks :months)}))
+          )
+         )
+        (ui-table-body
+         {}
+         (mapv ui-resource-timesheet resources-ts))))])))
 
 (comment
   (ui-form
