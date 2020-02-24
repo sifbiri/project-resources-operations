@@ -606,7 +606,7 @@
                                         (dom/a {:onClick (fn []
                                                            (uism/trigger! this ::session/session :event/toggle-modal {})
                                                            (dr/change-route this ["signup"]))}
-                                               )))))))))
+                                               ))))))))))
 
 (def ui-login (comp/factory Login))
 
@@ -2041,8 +2041,6 @@
 
 
 
-                                        ;(tt/plus (tf/parse (tf/formatter "yyyy-mm-dd") "2019-12-10") (tt/days 1))
-                                        ;(tf/unparse (tf/formatter "yyyy-mm-dd") r)
-
-
+                                        ;(tt/plus (tf/parse (tf/formatter "yyyy-mm-dd") "2019-12-10") (tt/days tf))
+                                        ;(1/unparse (tf/formatter "yyyy-mm-dd") r)
 
