@@ -568,9 +568,11 @@
 
     (when-not initial?
       (if logged-in?
-        (dom/button :.item
-                    {:onClick #(uism/trigger! this ::session/session :event/logout)}
-                    (dom/span current-user) ent/nbsp "Log out")
+        (ui-button
+         {:basic true
+          :onClick #(uism/trigger! this ::session/session :event/logout)}
+         (dom/span {:style { :white-space "pre-line"}} (str current-user "\n" ))
+         (dom/span {:style {:color "black"}} "Log out"))
 
         (dom/div {:style {}
                   :onClick #(uism/trigger! this ::session/session :event/toggle-modal)}
