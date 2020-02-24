@@ -547,6 +547,18 @@
                                         ;(def db-uri "datomic:dev://localhost:4334/one2")
                                         ;(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
 
+
+
+
+
+
+
+
+
+
+;; ===================
+;; TESTING AND STUFF 
+
 (comment
   (d/transact connection [{:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"
                            :action-list/actions [{:action/action "Action 1"
@@ -571,138 +583,142 @@
 
   (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
 
-  )
+  
 
-"datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
+  "datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
 
                                         ;(d/transact (d/db (d/connect db-url)) [{:action-list/id #uuid  :action-list/actions [new-values]}] )
 
-(d/pull (d/db (d/connect db-url)) [:project-info/fluxod-project-names] [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"])
-
-(d/transact (d/connect db-url) [[:db/add [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"] :project-info/:project-info/fluxod-project-names "NEW1"]])
-
-
-(def status-str->key {"Approuvé" :approved})
 
 
 
 
-(mapv
- (fn [id]
-
-   [:db/retractEntity id])
-
- (d/q '[:find [?e ...]
-
-        :where
-        [?e :import/id ?n]
-
-        ] (d/db (d/connect db-url))))
-
-
-(d/q '[:find ?name .
-       :in $ ?id
-       :where
-       [?r :resource/id ?id]
-       [?r :resource/name ?name]] (d/db (d/connect db-url)) #uuid "44f8c22d-50da-e911-b095-00155de07410")
 
 
 
-(d/q '[:find ?work-fluxod ?date ?fluxod-po
-                                   :keys timesheet/work-fluxod date fluxod-po
-                                   :in $ ?rid ?pid ?start ?end
-                                   
-                                   :where
-                                   [?r :resource/id ?rid]
-                                   [?r :resource/name ?rn]
-                                   
-                                   [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-                                   [?fluxod :fluxod-ts/days ?work-fluxod]
-                                   [?fluxod :fluxod-ts/date ?date]
-                                   
-                                   [?fluxod :fluxod-ts/client ?client]
-                                   [?fluxod :fluxod-ts/po ?fluxod-po]
-                                   
-                                   [?pinfo :project-info/fluxod-client-name ?client]
-                                   [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                                   [?pinfo :project-info/id ?pid]
-                                   
-                                   [?e :project/id ?pid]
-                                   [?e :project/name ?name]
+
+
+
+  (d/transact (d/connect db-url) [[:db/add [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"] :project-info/:project-info/fluxod-project-names "NEW1"]])
+  (d/pull (d/db (d/connect db-url)) [:project-info/fluxod-project-names] [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"])
+
+  (mapv
+   (fn [id]
+
+     [:db/retractEntity id])
+
+   (d/q '[:find [?e ...]
+
+          :where
+          [?e :import/id ?n]
+
+          ] (d/db (d/connect db-url))))
+
+
+  (d/q '[:find ?name .
+         :in $ ?id
+         :where
+         [?r :resource/id ?id]
+         [?r :resource/name ?name]] (d/db (d/connect db-url)) #uuid "44f8c22d-50da-e911-b095-00155de07410")
+
+
+
+  (d/q '[:find ?work-fluxod ?date ?fluxod-po
+         :keys timesheet/work-fluxod date fluxod-po
+         :in $ ?rid ?pid ?start ?end
+         
+         :where
+         [?r :resource/id ?rid]
+         [?r :resource/name ?rn]
+         
+         [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+         [?fluxod :fluxod-ts/days ?work-fluxod]
+         [?fluxod :fluxod-ts/date ?date]
+         
+         [?fluxod :fluxod-ts/client ?client]
+         [?fluxod :fluxod-ts/po ?fluxod-po]
+         
+         [?pinfo :project-info/fluxod-client-name ?client]
+         [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+         [?pinfo :project-info/id ?pid]
+         
+         [?e :project/id ?pid]
+         [?e :project/name ?name]
                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
-                                   [(tick.alpha.api/> ?date ?start)]
-                                   [(tick.alpha.api/< ?date ?end)]
-                                   
-                                   [?r :resource/fluxod-name ?fluxod-name]
-                                   ] (d/db (d/connect db-url))
-                                     #uuid "6c045544-f9d3-e911-b092-00155de43b0b"
-                                     #uuid "f4a0ac9d-57f6-e911-b19c-9cb6d0e1bd60"
-                                     #inst "2019-11-20T00:00:00.000-00:00"
-                                     #inst "2020-05-20T00:00:00.000-00:00"
-                                     )
+         [(tick.alpha.api/> ?date ?start)]
+         [(tick.alpha.api/< ?date ?end)]
+         
+         [?r :resource/fluxod-name ?fluxod-name]
+         ] (d/db (d/connect db-url))
+           #uuid "6c045544-f9d3-e911-b092-00155de43b0b"
+           #uuid "f4a0ac9d-57f6-e911-b19c-9cb6d0e1bd60"
+           #inst "2019-11-20T00:00:00.000-00:00"
+           #inst "2020-05-20T00:00:00.000-00:00"
+           )
 
 
 
 
 
 
-;; TODO use this to delete projects .....
-(d/transact (d/connect db-url) (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
-                                                                                    :where [?e :import/time _]] (d/db (d/connect db-url))))))
+  ;; TODO use this to delete projects .....
 
 
-;; colin bret #uuid "67045544-f9d3-e911-b092-00155de43b0b"
 
-(d/q '[:find ?fluxod-name  ;?work-fluxod ?date ?fluxod-po
-       ;:keys timesheet/work-fluxod date fluxod-po
-       :in $ ?rid ?pid ?min-date ?max-date
-       :where
-       [?r :resource/id ?rid]
-       ;[?r :resource/fluxod-name ?fluxod-name]
-       [?act :fluxod-ts/activity-type ?t]
-       [(= :mission ?t)]
-       [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-       [?fluxod :fluxod-ts/days ?work-fluxod]
-       [?fluxod :fluxod-ts/date ?date]
-       
-       [?fluxod :fluxod-ts/client ?client]
-       [?fluxod :fluxod-ts/po ?fluxod-po]
-       
-       [?pinfo :project-info/fluxod-client-name ?client]
-       [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-       [?pinfo :project-info/id ?pid]
-       
-       [?e :project/id ?pid]
-       [?e :project/name ?name]
+  ;; colin bret #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+
+  (d/q '[:find ?fluxod-name  ;?work-fluxod ?date ?fluxod-po
+                                        ;:keys timesheet/work-fluxod date fluxod-po
+         :in $ ?rid ?pid ?min-date ?max-date
+         :where
+         [?r :resource/id ?rid]
+                                        ;[?r :resource/fluxod-name ?fluxod-name]
+         [?act :fluxod-ts/activity-type ?t]
+         [(= :mission ?t)]
+         [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+         [?fluxod :fluxod-ts/days ?work-fluxod]
+         [?fluxod :fluxod-ts/date ?date]
+         
+         [?fluxod :fluxod-ts/client ?client]
+         [?fluxod :fluxod-ts/po ?fluxod-po]
+         
+         [?pinfo :project-info/fluxod-client-name ?client]
+         [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+         [?pinfo :project-info/id ?pid]
+         
+         [?e :project/id ?pid]
+         [?e :project/name ?name]
                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
                                         ;[(tick.alpha.api/>= ?date ?min-date)]
                                         ;[(tick.alpha.api/<= ?date ?max-date)]
-       
-       
-       ] (d/db (d/connect db-url))
-         #uuid "67045544-f9d3-e911-b092-00155de43b0b"
-         #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
-         (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
-         (t/inst (t/at (t/new-date 2020 3 12) "12:00")))
+         
+         
+         ] (d/db (d/connect db-url))
+           #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+           #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+           (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
+           (t/inst (t/at (t/new-date 2020 3 12) "12:00")))
+  (d/transact (d/connect db-url) (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+                                                                                      :where [?e :import/time _]] (d/db (d/connect db-url))))))
 
-(clojure.pprint/pprint
- (d/q '[:find [?fluxod-name2 ...] ;?work-fluxod ?date ?fluxod-po
+  (clojure.pprint/pprint
+   (d/q '[:find [?fluxod-name2 ...] ;?work-fluxod ?date ?fluxod-po
                                         ;:keys timesheet/work-fluxod date fluxod-po
-        :in $ ?rid ?pid ?min-date ?max-date
-        :where
+          :in $ ?rid ?pid ?min-date ?max-date
+          :where
                                         ;[?r :resource/id ?rid]
                                         ;[?r :resource/fluxod-name ?fluxod-name]
-        
-        [?fluxod :fluxod-ts/resource-name ?fluxod-name2]
-        
+          
+          [?fluxod :fluxod-ts/resource-name ?fluxod-name2]
+          
                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
                                         ;[(tick.alpha.api/>= ?date ?min-date)]
                                         ;[(tick.alpha.api/<= ?date ?max-date)]
-        
-        
-        ] (d/db (d/connect db-url))
-          #uuid "67045544-f9d3-e911-b092-00155de43b0b"
-          #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
-          (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
-          (t/inst (t/at (t/new-date 2020 3 12) "12:00"))))
+          
+          
+          ] (d/db (d/connect db-url))
+            #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+            #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+            (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
+            (t/inst (t/at (t/new-date 2020 3 12) "12:00")))))
 
