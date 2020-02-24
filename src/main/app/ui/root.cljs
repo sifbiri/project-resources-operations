@@ -1254,8 +1254,10 @@
             (do
               (swap! state assoc-in [:ui/dates] {:start start :end end})              )
             (do
-              (when (and start (t/< (t/date (js/Date. start)) (t/date (js/Date. (get-in @state [:ui/dates :end])))))
-               )
+              (when (and start (t/< (t/date (js/Date. start))
+                                    (t/date (js/Date. (get-in @state [:ui/dates :end])))))
+                (swap! state assoc-in [:ui/dates :start] start))
+              
              (when (and end (t/> (t/date (js/Date. end))
                                  (t/date (js/Date. (get-in @state [:ui/dates :start])))))
                (swap! state assoc-in [:ui/dates :end] end))))
@@ -1658,8 +1660,8 @@
                                                                                                                     "Start")
                                                                                                          (dom/input {:type "date" :size "mini"  
                                                                                                                      :onChange (fn [event data]
-
-                                                                                                                                 (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}) :workplan/resource-lines])
+                                                                                                                                 (comp/transact! this [(set-workplan-date {:start (.-value (.-target event))}):workplan/resource-lines])
+                                                                                                                                 
                                                                                                                                  (doseq [resource resource-lines]
                                                                                                                                    (comp/transact! this [(set-totals {:resource-line-id (:resource-line/id resource)})]))
 
