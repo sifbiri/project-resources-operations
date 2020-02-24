@@ -1,5 +1,7 @@
 (ns app.model.import
   (:require [com.fulcrologic.fulcro.mutations :as mutations :refer [defmutation]]
+            [com.fulcrologic.fulcro.networking.file-url :as file-url]
+
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
             [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
@@ -42,6 +44,14 @@
   (action [{:keys [state ref] :as env}]
           
           (ns/update-caller-in! env [:imports/new-import] assoc :end/start-period end-period)))
+
+(defmutation get-import-file [{:keys [filename]}]
+  (result-action [{:keys [state result ref]}]
+                 ;; body will be a js ArrayBuffer. file-url ns has helpers to convert to data url
+                 (swap! state assoc-in (conj ref :import/fileUrl)
+                        (file-url/raw-response->file-url result "application/xls")))
+  (remote [env]
+          (m/with-response-type env :array-buffer)))
 
 
 (defmutation import-file [params]

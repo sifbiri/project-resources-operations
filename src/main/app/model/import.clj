@@ -11,7 +11,7 @@
    [dk.ative.docjure.spreadsheet :as s]
    [tick.alpha.api :as t]
    [clojure.string :as str]
-   
+   [clojure.java.io :as io]
    [datomic.api :as d]
    [app.model.database :refer [db-url]]
    [taoensso.timbre :as log]))
@@ -100,6 +100,8 @@
         
         )))
 
+
+
 (pc/defmutation
   import-file
   [{:keys [:connection :db] :as env} {::file-upload/keys [files] :keys [new-import]}]
@@ -110,55 +112,69 @@
   
   (do
     (println "NEW IMPORT" new-import)
-    (with-open [stream (clojure.java.io/input-stream (:tempfile (first files)))]
-      (let [ fluxod-names
-           (->> (s/load-workbook stream)
-                (s/select-sheet "Export des temps")
-                (s/select-columns {:A :name})
-                (map :name)
-                distinct
-                vec)
-            
-            tx-fluxod-ts (prepare-fluxod-ts-tx (:tempfile (first files)))
-           ms-names
-           (d/q '[:find ?name ?r 
-                  :keys resource/name db/id 
-                  :where
-                  [?r :resource/name ?name]]
-                db)
+    (with-open [stream (clojure.java.io/input-stream (:tempfile (first files)))
+                ]
+      (println "FILE" files)
+      (do
+        (io/copy stream (io/file (str "resources/imports/" (:filename (first files)))))
+        (let [ fluxod-names
+             (->> (s/load-workbook stream)
+                  (s/select-sheet "Export des temps")
+                  (s/select-columns {:A :name})
+                  (map :name)
+                  distinct
+                  vec)
+             
+             tx-fluxod-ts (prepare-fluxod-ts-tx (:tempfile (first files)))
+             ms-names
+             (d/q '[:find ?name ?r 
+                    :keys resource/name db/id 
+                    :where
+                    [?r :resource/name ?name]]
+                  db)
 
-           files (:import/files new-import)
-           files2 (mapv #(assoc (select-keys % [:file/name]) :db/id "new" ) files)
-           tx-fluxod-names
-            (vec (remove nil? (reduce (fn [r fluxod-name]
-                                    (let [ 
-                                          res (some #(when (str-fliped? fluxod-name (:resource/name %)) (assoc % :resource/fluxod-name fluxod-name )) ms-names)]
-                                      
-                                      (conj r res)
-                                      #_(conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name))
-                                      ))
-                                  []
-                                  fluxod-names)))
-           ]
-        
+             files (:import/files new-import)
+             files2 (mapv #(assoc (select-keys % [:file/name]) :db/id "new" ) files)
+             tx-fluxod-names
+             (vec (remove nil? (reduce (fn [r fluxod-name]
+                                         (let [ 
+                                               res (some #(when (str-fliped? fluxod-name (:resource/name %)) (assoc % :resource/fluxod-name fluxod-name )) ms-names)]
+                                           
+                                           (conj r res)
+                                           #_(conj r (assoc (first ms-names-f)  :resource/fluxod-name fluxod-name))
+                                           ))
+                                       []
+                                       fluxod-names)))
+             ]
+         
 
-        (d/transact connection (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
-                                                                                    :in $ ?start ?end
-                                                                                    :where
-                                                                                    [?e :fluxod-ts/date ?date]
-                                                                                    [(tick.alpha.api/>= ?date ?start)]
-                                                                                    [(tick.alpha.api/<= ?date ?end)]
-                                                                                    ] db
-                                                                                      (:import/start-period new-import)
-                                                                                      (:import/end-period new-import)))))
-        
-        (d/transact connection
+         (d/transact connection (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+                                                                                     :in $ ?start ?end
+                                                                                     :where
+                                                                                     [?e :fluxod-ts/date ?date]
+                                                                                     [(tick.alpha.api/>= ?date ?start)]
+                                                                                     [(tick.alpha.api/<= ?date ?end)]
+                                                                                     ] db
+                                                                                       (:import/start-period new-import)
+                                                                                       (:import/end-period new-import)))))
+         
+         (d/transact connection
                      (concat tx-fluxod-ts tx-fluxod-names))
-        ;; import history 
-        (d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))]))))
+         ;; import history 
+         (d/transact connection [(-> new-import (assoc :import/files files2  :db/id "NEW_ID"))])))))
   {:a 1})
 
-(def resolvers [import-file name->fluxod-name all-imports import])
+(pc/defmutation
+  get-import-file
+  [{:keys [env connection] :as env} {:keys [filename]}]
+  {::pc/input [:filename]
+   ::pc/output [:file/mime-type :file/name :file/source]}
+  (let [f (clojure.java.io/file (str "resources/imports/" filename))]
+    {:file/mime-type "application/pdf"
+     :file/name      "report.pdf"
+     :file/source    f}))
+
+(def resolvers [import-file name->fluxod-name all-imports import get-import-file])
 
 
 
