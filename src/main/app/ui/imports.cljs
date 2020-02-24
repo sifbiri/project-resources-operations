@@ -158,8 +158,9 @@
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
    ))
 
-(defsc Import [this {:import/keys [type time start-period end-period files]}]
+(defsc Import [this {:import/keys [type time start-period end-period files fileUrl]}]
   {:query         [:import/id :import/type :import/time #_:import/status :import/end-period
+                   :import/fileUrl
                    :import/start-period :import/end-period :import/files]
    :ident         :import/id
    :initial-state {:import/id 1 :import/type :fluxod-timesheet :import/start-period (t/inst (t/now)) :import/end-period (t/inst (t/now))}}
@@ -171,7 +172,9 @@
      (ui-table-cell {:singleLine true} (some-> time format-time))
      (ui-table-cell {:singleLine true} (some-> start-period format-time))
      (ui-table-cell {:singleLine true} (some-> end-period format-time))
-     (ui-table-cell {} (some-> files first :file/name))
+     (ui-table-cell {:onClick #(comp/transact! this [(import/get-import-file {:filename (some-> files first :file/name)})] )}
+
+                    (dom/a {:href fileUrl } (some-> files first :file/name)))
      #_(ui-table-cell {} (str status)))))
 
 (def ui-import (comp/factory Import {:keyfn :import/id}))
