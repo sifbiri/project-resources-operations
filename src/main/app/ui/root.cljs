@@ -1590,7 +1590,7 @@
 
                                                                     ;; (tf/unparse (tf/formatters :date) (tt/now))
                                                                     :end
-                                                                    (str (t/+ (t/date) (t/new-period 3 :weeks)))
+                                                                    (str (t/+ (t/date) (t/new-period 4 :weeks)))
                                                                     :init true
 
                                                                     ;; (tf/unparse (tf/formatters :date)
