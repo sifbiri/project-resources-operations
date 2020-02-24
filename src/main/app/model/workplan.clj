@@ -130,8 +130,6 @@
                                   } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month) ms-timesheets))))
-
-
 (pc/defresolver resource-ts [{:keys [connection db] :as env} {:keys [resource-ts/id workplan/max-date workplan/min-date] workplan :workplan/id}]
   {::pc/input #{:resource-ts/id :workplan/id :workplan/max-date :workplan/min-date}
    ::pc/output [:resource-ts/id  :resource-ts/name :resource-ts/start-date

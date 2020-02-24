@@ -187,7 +187,7 @@
         row-count (get props :ui/workplan-count)
         to-pad (- row-count row-so-far)]
     
-    (when
+  (when
         (seq timesheets)
       (ui-table-row
        {}
@@ -260,7 +260,7 @@
            :ui/by-week?
            :resource-ts/start-date :resource-ts/end-date
            :workplan/max-date :workplan/min-date
-           [df/marker-table '_]]
+           ]
    :ident :workplan/id
    :initial-state {:ui/by-month? true :ui/by-week? false}
    :pre-merge (fn [{:keys [current-normalized data-tree] :as params}]
@@ -277,7 +277,8 @@
         (df/load! app [:workplan/id (uuid id)] WorkPlan2
                   {:params {:by :week} :marker :workplan
                    :post-mutation `workplan/set-workplan-count-init
-                   :post-mutation-params {:ident [:workplan/id (uuid id)]}
+                   :post-mutation-params {:ident [:workplan/id (uuid id)]
+                                          }
                    })
 
         ;(comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
@@ -285,7 +286,7 @@
    
    :route-segment ["workplan2" :workplan/id]
    }
-
+  (js/console.log "resources-ts" resources-ts)
   
   (let [status (get-in props [df/marker-table :workplan] )
         

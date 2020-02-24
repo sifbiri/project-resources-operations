@@ -41,12 +41,17 @@
           (t/month date2))
        (= (t/year date1)
           (t/year date2))))
-
+(defn my [x ]
+  (+ 1 x))
 (defn
   dates-from-to 
   [workplan-start workplan-end {:keys [dates] :or {dates :months }}]
   (if (= dates :weeks)
-    (loop [current (t/date-time (t/in workplan-start "GMT"))
+    (take-while #(t/<= % (t/date-time workplan-end))
+                (iterate #(t/+ (t/date-time %) (t/new-period 1 :weeks))
+                         (t/date-time workplan-start)))
+    
+    #_(loop [current (t/date-time (t/in workplan-start "GMT"))
            end (t/date-time (t/in workplan-end "GMT"))
            res []]
       (if (same-week? current end)
@@ -63,7 +68,6 @@
         (recur (t/+ current (t/new-period 1 :months))
                end
                (conj res current))))))
-
 
 (defn
   weeks-from-to
