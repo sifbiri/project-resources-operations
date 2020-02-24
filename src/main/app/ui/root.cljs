@@ -568,10 +568,10 @@
 
     (when-not initial?
       (if logged-in?
-        (ui-button
-         {:basic true
-          :onClick #(uism/trigger! this ::session/session :event/logout)}
-         (dom/span {:style { :white-space "pre-line"}} (str current-user "\n" ))
+        (ui-button 
+         {:basic true :onClick #(uism/trigger! this ::session/session :event/logout)}
+         (dom/span current-user) (dom/br {})
+         
          (dom/span {:style {:color "black"}} "Log out"))
 
         (dom/div {:style {}
@@ -607,7 +607,7 @@
                                         (dom/a {:onClick (fn []
                                                            (uism/trigger! this ::session/session :event/toggle-modal {})
                                                            (dr/change-route this ["signup"]))}
-                                               ))))))))))
+                                               )))))))))
 
 (def ui-login (comp/factory Login))
 
