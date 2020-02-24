@@ -34,6 +34,8 @@
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
    [tick.alpha.api :as t]
    [com.fulcrologic.fulcro.dom.html-entities :as ent]
+   ["semantic-ui-react/dist/commonjs/collections/Menu/Menu" :default Menu]
+   ["semantic-ui-react/dist/commonjs/collections/Menu/MenuItem" :default MenuItem]
    [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
    [com.fulcrologic.fulcro.dom.events :as evt]
    [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
@@ -568,8 +570,10 @@
 
     (when-not initial?
       (if logged-in?
+        #_(ui-menu-item {:name "Logout\n name"})
         (ui-button 
-         {:basic true :onClick #(uism/trigger! this ::session/session :event/logout)}
+         {:basic true :onClick #(uism/trigger! this ::session/session :event/logout)
+          }
          (dom/span current-user) (dom/br {})
          (dom/span {:style {:color "black"}} "Log out"))
 
@@ -592,10 +596,12 @@
                                          :onChange #(comp/set-state! this {:password (evt/target-value %)})})
                                  (div :.ui.error.message error)
                                  (div :.ui.field
-                                      (dom/button :.ui.button
-                                                  {:onClick (fn [] (uism/trigger! this ::session/session :event/login {:username email
-                                                                                                                       :password password}))
-                                                   :classes [(when loading? "loading")]} "Login"))
+                                      (ui-button 
+                                       {:basic true
+                                        :loading loading?
+                                        :onClick (fn [] (uism/trigger! this ::session/session :event/login {:username email
+                                                                                                                       :password password}))}
+                                          "Login"))
 
 
 
