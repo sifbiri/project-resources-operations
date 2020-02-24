@@ -571,7 +571,6 @@
         (ui-button 
          {:basic true :onClick #(uism/trigger! this ::session/session :event/logout)}
          (dom/span current-user) (dom/br {})
-         
          (dom/span {:style {:color "black"}} "Log out"))
 
         (dom/div {:style {}
