@@ -49,6 +49,9 @@
    [com.fulcrologic.semantic-ui.elements.image.ui-image :refer [ui-image]]
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
+   [com.fulcrologic.semantic-ui.modules.popup.ui-popup :refer [ui-popup]]
+   [com.fulcrologic.semantic-ui.modules.popup.ui-popup-content :refer [ui-popup-content]]
+   [com.fulcrologic.semantic-ui.modules.popup.ui-popup-header :refer [ui-popup-header]]
    [app.model.item :as item2]
    [com.fulcrologic.rad.type-support.decimal :as math]
    [com.fluxym.model.line-item :as line-item]
@@ -172,10 +175,16 @@
      (ui-table-cell {:singleLine true} (some-> time format-time))
      (ui-table-cell {:singleLine true} (some-> start-period format-time))
      (ui-table-cell {:singleLine true} (some-> end-period format-time))
-     (ui-table-cell {:onClick #(comp/transact! this
-                                               [(import/get-import-file {:filename (some-> files first :file/name)})] )}
+     (ui-popup {:basic true
+                :trigger (ui-table-cell {:onClick #(comp/transact! this
+                                                                   [(import/get-import-file {:filename (some-> files first :file/name)})] )}
 
-                    (dom/a {:href fileUrl :download (some-> files first :file/name) } (some-> files first :file/name)))
+                                        (dom/a {:href fileUrl :download (some-> files first :file/name) } (some-> files first :file/name)))}
+               (ui-popup-content
+                {:style {:fontSize "80%"}}
+                "Click to download"))
+
+     
      #_(ui-table-cell {} (str status)))))
 
 (def ui-import (comp/factory Import {:keyfn :import/id}))
