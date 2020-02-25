@@ -722,7 +722,7 @@
             (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
             (t/inst (t/at (t/new-date 2020 3 12) "12:00"))))
 
-;; test
+;; test2 
   (d/transact (d/connect db-url)
               (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
                                                                    
@@ -731,3 +731,4 @@
                                                                    
                                                                    
                                                                    ] (d/db (d/connect db-url)))))))
+
