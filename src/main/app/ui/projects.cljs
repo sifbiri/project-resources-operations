@@ -1367,6 +1367,7 @@
                  (dr/route-deferred
                   [:component/id :project-panel]
                   (fn []
+                    
                     (df/load! app  :project-panel ProjectPanelQ {:taget [:component/id :project-panel]
                                                                  :params {:pathom/context {:project/id (uuid current-project-id)}}
                                                                  :post-mutation `dr/target-ready

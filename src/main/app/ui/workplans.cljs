@@ -275,15 +275,19 @@
      (dr/route-deferred
       [:workplan/id (uuid id)]
       (fn []
+        
+        (dr/target-ready! app [:workplan/id (uuid id)] )
         (df/load! app [:workplan/id (uuid id)] WorkPlan2
                   {:params {:by :week} :marker :workplan
                    :post-mutation `workplan/set-workplan-count-init
                    :post-mutation-params {:ident [:workplan/id (uuid id)]
                                           }
                    })
+        
+        
 
         ;(comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
-        (comp/transact! app [(dr/target-ready {:target  [:workplan/id (uuid id)]})]))))
+        #_(comp/transact! app [(dr/target-ready {:target  [:workplan/id (uuid id)]})]))))
    
    :route-segment ["workplan2" :workplan/id]
    }

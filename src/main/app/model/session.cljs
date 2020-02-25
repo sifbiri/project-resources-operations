@@ -35,8 +35,7 @@
   (let [success?
         (uism/alias-value env :session-valid?)
 
-        resource-id (uism/alias-value env :resource-id)
-        ]
+        resource-id (uism/alias-value env :resource-id)]
     
     (when success?
       ;(comp/transact! SPA `[(app.ui.root/set-resource-lines ~{:ids [#uuid "d771d4d9-34de-e911-b085-00155de0a811"]})])
