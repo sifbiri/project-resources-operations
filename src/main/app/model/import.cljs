@@ -48,8 +48,12 @@
 (defmutation get-import-file [{:keys [filename]}]
   (result-action [{:keys [state result ref]}]
                  ;; body will be a js ArrayBuffer. file-url ns has helpers to convert to data url
-                 (swap! state assoc-in (conj ref :import/fileUrl)
-                        (file-url/raw-response->file-url result "application/xls")))
+                 (let [file-url (file-url/raw-response->file-url result "application/xls")]
+                   (swap! state assoc-in (conj ref :import/fileUrl)
+                          file-url)
+                   (file-url/save-file-url-as!
+                    file-url
+                    (get-in @state (conj ref :import/files 0 :file/name)))))
   (remote [env]
           (m/with-response-type env :array-buffer)))
 

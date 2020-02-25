@@ -720,5 +720,14 @@
             #uuid "67045544-f9d3-e911-b092-00155de43b0b"
             #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
             (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
-            (t/inst (t/at (t/new-date 2020 3 12) "12:00")))))
+            (t/inst (t/at (t/new-date 2020 3 12) "12:00"))))
 
+
+  (d/transact (d/connect db-url)
+              (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+                                                                   
+                                                                   :where
+                                                                   [?e :import/time ?date]
+                                                                   
+                                                                   
+                                                                   ] (d/db (d/connect db-url)))))))

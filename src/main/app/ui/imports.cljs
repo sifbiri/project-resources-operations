@@ -172,9 +172,10 @@
      (ui-table-cell {:singleLine true} (some-> time format-time))
      (ui-table-cell {:singleLine true} (some-> start-period format-time))
      (ui-table-cell {:singleLine true} (some-> end-period format-time))
-     (ui-table-cell {:onClick #(comp/transact! this [(import/get-import-file {:filename (some-> files first :file/name)})] )}
+     (ui-table-cell {:onClick #(comp/transact! this
+                                               [(import/get-import-file {:filename (some-> files first :file/name)})] )}
 
-                    (dom/a {:href fileUrl } (some-> files first :file/name)))
+                    (dom/a {:href fileUrl :download (some-> files first :file/name) } (some-> files first :file/name)))
      #_(ui-table-cell {} (str status)))))
 
 (def ui-import (comp/factory Import {:keyfn :import/id}))
