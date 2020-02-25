@@ -176,7 +176,8 @@
      (ui-table-cell {:singleLine true} (some-> start-period format-time))
      (ui-table-cell {:singleLine true} (some-> end-period format-time))
      (ui-popup {:basic true
-                :trigger (ui-table-cell {:onClick #(comp/transact! this
+                :trigger (ui-table-cell {:style {:cursor "pointer"}
+                                         :onClick #(comp/transact! this
                                                                    [(import/get-import-file {:filename (some-> files first :file/name)})] )}
 
                                         (dom/a {:href fileUrl :download (some-> files first :file/name) } (some-> files first :file/name)))}
