@@ -38,8 +38,8 @@
 (defn same-week? [date1 date2]
   (and (= (week-number date1)
           (week-number date2))
-       #_(= (t/month date1)
-          (t/month date2))))
+       (= (t/year date1)
+          (t/year date2))))
 (defn my [x ]
   (+ 1 x))
 (defn
@@ -52,7 +52,8 @@
                           (and
                            (not (same-week? (t/date-time x) (t/date-time workplan-end)))
                            (t/<= x (t/date-time workplan-end))))
-                        (iterate #(t/+ (t/date-time %) (t/new-period 1 :weeks))
+                            (iterate #(t/+ (t/date-time %)
+                                           (t/new-period 1 :weeks))
                                  (t/date-time workplan-start))))
            (t/date-time workplan-end))
 

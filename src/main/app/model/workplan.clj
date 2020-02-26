@@ -181,7 +181,7 @@
                                       (log/spy :info workplan)
                                       (log/spy :info min-date)
                                       (log/spy :info max-date)))
-            fluxod-last-date (log/spy :info (-> fluxod-timesheets last :date))
+            fluxod-last-date (or (-> fluxod-timesheets last :date) min-date)
 
           ms-timesheets
           (sort-by
