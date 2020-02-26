@@ -84,10 +84,10 @@
 
 
 (def group-by-month 
-  #(apply str (take 7 (str (t/date (:date %))))))
+  #(str (t/month (t/date (:date %)))))
 
 (def group-by-week
-  #(week-of-year (:date %)))
+  #(str (week-of-year (:date %)) " " (t/year (t/date (:date %)))))
 
 
 (defn group-fluxod-timesheets
@@ -130,6 +130,9 @@
                                   } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month) ms-timesheets))))
+
+
+
 (pc/defresolver resource-ts [{:keys [connection db] :as env} {:keys [resource-ts/id workplan/max-date workplan/min-date] workplan :workplan/id}]
   {::pc/input #{:resource-ts/id :workplan/id :workplan/max-date :workplan/min-date}
    ::pc/output [:resource-ts/id  :resource-ts/name :resource-ts/start-date
@@ -174,14 +177,14 @@
                                     
                                     [?r :resource/fluxod-name ?fluxod-name]
                                     ] db
-                                      id
-                                      workplan
-                                      min-date
-                                      max-date))
-          fluxod-last-date (or (-> fluxod-timesheets last :date) min-date)
+                                      (log/spy :info id)
+                                      (log/spy :info workplan)
+                                      (log/spy :info min-date)
+                                      (log/spy :info max-date)))
+            fluxod-last-date (log/spy :info (-> fluxod-timesheets last :date))
 
           ms-timesheets
-          (:sorty-by
+          (sort-by
            :date
            (d/q '[:find ?work ?date
                   :keys timesheet/work-ms date 
@@ -191,18 +194,21 @@
                   ;[?r :resource/name ?rn]
                   
                   
-                  [?pinfo :project-info/fluxod-client-name ?client]
-                  [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                  [?pinfo :project-info/id ?pid]
+                  ;[?pinfo :project-info/fluxod-client-name ?client]
+                  ;[?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                  ;[?pinfo :project-info/id ?pid]
                   
                   [?e :project/id ?pid]
                   [?e :project/assignments ?a]
+                  
                   [?a :assignment/by-day ?date]
                   [?a :assignment/work ?work]
+                  [?a :assignment/resource ?r]
                   
-                  [(tick.alpha.api/>= ?date ?fluxod-last-date)] ;; fluxod last-date
+                  [(tick.alpha.api/> ?date ?fluxod-last-date)] ;; fluxod last-date
                   [(tick.alpha.api/<= ?date  ?max-date)]
-                  [?r :resource/fluxod-name ?fluxod-name]]
+                  #_[?r :resource/fluxod-name ?fluxod-name]
+                  ]
                 db
                 id
                 workplan

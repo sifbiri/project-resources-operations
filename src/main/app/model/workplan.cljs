@@ -3,6 +3,7 @@
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
             [com.fulcrologic.fulcro.algorithms.denormalize :as denormalize]
+            [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
             [com.fulcrologic.fulcro.data-fetch :as df]
             [app.application :as a :refer [SPA]]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
@@ -37,19 +38,35 @@
 (defn same-week? [date1 date2]
   (and (= (week-number date1)
           (week-number date2))
-       (= (t/month date1)
-          (t/month date2))
-       (= (t/year date1)
-          (t/year date2))))
+       #_(= (t/month date1)
+          (t/month date2))))
 (defn my [x ]
   (+ 1 x))
 (defn
   dates-from-to 
   [workplan-start workplan-end {:keys [dates] :or {dates :months }}]
   (if (= dates :weeks)
-    (take-while #(t/<= % (t/date-time workplan-end))
-                (iterate #(t/+ (t/date-time %) (t/new-period 1 :weeks))
-                         (t/date-time workplan-start)))
+    (do (js/console.log "WE GOT START" workplan-start)
+     (js/console.log "WE GOT END" workplan-end)
+     (conj (vec (take-while (fn [x]
+                          (and
+                           (not (same-week? (t/date-time x) (t/date-time workplan-end)))
+                           (t/<= x (t/date-time workplan-end))))
+                        (iterate #(t/+ (t/date-time %) (t/new-period 1 :weeks))
+                                 (t/date-time workplan-start))))
+           (t/date-time workplan-end))
+
+
+     )
+
+    (conj (vec (take-while (fn [x]
+                         (and
+                          (not (same-month? (t/date-time x) (t/date-time workplan-end)))
+                          (t/<= x (t/date-time workplan-end))))
+                           (iterate #(t/+ (t/date-time %)
+                                          (t/new-period 1 :months))
+                                    (t/date-time workplan-start))))
+          (t/date-time workplan-end))
     
     #_(loop [current (t/date-time (t/in workplan-start "GMT"))
            end (t/date-time (t/in workplan-end "GMT"))
@@ -60,7 +77,7 @@
                end
                (conj res current))))
     
-    (loop [current (t/date-time (t/in workplan-start "GMT"))
+    #_(loop [current (t/date-time (t/in workplan-start "GMT"))
            end (t/date-time (t/in workplan-end "GMT"))
            res []]
       (if (same-month? current end)
@@ -97,10 +114,13 @@
           
           (let [min-date (ns/get-in-graph @state (conj ident :workplan/min-date))
                 max-date (ns/get-in-graph @state (conj ident :workplan/max-date))
-                count (count (dates-from-to min-date max-date {:dates :weeks}))]
+                by-week? (ns/get-in-graph @state (conj ident :ui/by-week?))
+                #_#_count (count (dates-from-to min-date max-date {:dates (if by-week? :weeks :months)}))]
             (ns/swap!->
              state
-             (assoc :ui/workplan-count count)))))
+             #_(assoc :ui/workplan-count count)
+             (assoc :ui/workplan-by-week? by-week?))
+            (dr/target-ready! SPA ident ))))
 
 
 

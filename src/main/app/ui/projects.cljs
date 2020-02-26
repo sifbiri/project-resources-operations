@@ -1315,12 +1315,18 @@
                 (ui-segment {:textAlign :center} "Comming soon.")))
 
 
-(dr/defrouter ProjectPanelRouter [this props]
-  {:router-targets [ProjectInfo GovReview TimeLine ActionList AccountForm workplans/WorkPlan2]}
-  (case current-state
-    :pending (ui-container {} (ui-loader {:style {:marginTop "20px"} :active true}))
-    :failed (dom/div "Loading seems to have failed. Try another route.")
-    (dom/div "Unknown route")))
+(dr/defrouter ProjectPanelRouter
+  [this {:keys [route-factory route-props current-state] :as props}]
+  {:router-targets [ProjectInfo workplans/WorkPlan2  GovReview TimeLine ActionList AccountForm]
+   :always-render-body? true}
+  (div :.container
+       ;; Show an overlay loader on the current route when we're routing
+       (when (not= :routed current-state)
+         (div :.ui.active.inverted.dimmer
+              (div :.ui.text.loader
+                   "Loading...")))
+       (when route-factory
+         (route-factory (comp/computed route-props (comp/get-computed this))))))
 
 (def ui-project-panel-router (comp/factory ProjectPanelRouter))
 
@@ -1413,7 +1419,7 @@
                               (ui-menu-item {:name "Work Plan" :active (= active-item :workplan) :onClick (fn []
                                                                                                            (m/set-value! this :ui/active-item :workplan)
 
-                                                                                                           (dr/change-route this (log/spy :info (dr/path-to  workplans/WorkPlan2 {:workplan/id id} )))   )} )))
+                                                                                                           (dr/change-route this (dr/path-to  workplans/WorkPlan2 {:workplan/id id} ))   )} )))
 
      (ui-grid-column {:width 12} 
                      (ui-project-panel-router router))]
