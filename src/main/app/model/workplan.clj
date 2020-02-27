@@ -26,8 +26,8 @@
 
 
 (defn week-number
- [inst]
- (apply str (take 2 (drop 5 (str (t/date inst))))))
+  [inst]
+  (apply str (take 2 (drop 5 (str (t/date inst))))))
 
 (defn week-of-year
   [date]
@@ -62,23 +62,23 @@
                                        id
                                        )))
    :workplan/min-date (or (first (sort (d/q '[:find  [?date ...]
-                                           :in $  ?pid 
-                                           :where
-                                           [?fluxod :fluxod-ts/date ?date]
-                                           
-                                           [?fluxod :fluxod-ts/client ?client]
-                                           [?fluxod :fluxod-ts/po ?fluxod-po]
-                                           
-                                           [?pinfo :project-info/fluxod-client-name ?client]
-                                           [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                                           [?pinfo :project-info/id ?pid]
-                                           
-                                           [?e :project/id ?pid]
-                                           [?e :project/name ?name]
-                                           ](d/db (d/connect db-url))
-                                            id
-                                            
-                                            )))
+                                              :in $  ?pid 
+                                              :where
+                                              [?fluxod :fluxod-ts/date ?date]
+                                              
+                                              [?fluxod :fluxod-ts/client ?client]
+                                              [?fluxod :fluxod-ts/po ?fluxod-po]
+                                              
+                                              [?pinfo :project-info/fluxod-client-name ?client]
+                                              [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                              [?pinfo :project-info/id ?pid]
+                                              
+                                              [?e :project/id ?pid]
+                                              [?e :project/name ?name]
+                                              ](d/db (d/connect db-url))
+                                               id
+                                               
+                                               )))
                           
                           )
    })
@@ -118,18 +118,18 @@
   (sort-by
    :timesheet/start-ms
    (reduce-kv (fn [acc month timesheets]
-               (conj acc (reduce (fn [{:keys [timesheet/work-ms] :as m}
-                                      timesheet]
-                                   (assoc
-                                       m
-                                     :timesheet/work-ms ;; convert from hours to days  
-                                     (+ work-ms (/ (:timesheet/work-ms timesheet) 8.0))))
-                                 {:timesheet/work-ms 0
-                                  :timesheet/start-ms
-                                  (-> timesheets first :date)
-                                  :timesheet/end-ms
-                                  (-> timesheets last :date)
-                                  } timesheets )))
+                (conj acc (reduce (fn [{:keys [timesheet/work-ms] :as m}
+                                       timesheet]
+                                    (assoc
+                                        m
+                                      :timesheet/work-ms ;; convert from hours to days  
+                                      (+ work-ms (/ (:timesheet/work-ms timesheet) 8.0))))
+                                  {:timesheet/work-ms 0
+                                   :timesheet/start-ms
+                                   (-> timesheets first :date)
+                                   :timesheet/end-ms
+                                   (-> timesheets last :date)
+                                   } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month) ms-timesheets))))
 
@@ -148,7 +148,33 @@
                                           :timesheet/work-fluxod
                                           :timesheet/work-ms]}]}
 
-  (do (println "LAST" min-max-date)
+  (do (println "LAST FOR " (d/q '[:find ?name .
+                                  :in $ ?id
+                                  :where
+                                  [?r :resource/id ?id]
+                                  [?r :resource/name ?name]] db id)
+               "  WE HAVE "
+               (or
+                (last
+                 (sort
+                  (d/q '[:find [?date ...]
+                         :in $ ?rid
+                         :where
+                         [?r :resource/id ?rid]
+                         [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                         [?r :resource/fluxod-name ?fluxod-name]
+                         [?fluxod :fluxod-ts/date ?date]]
+                       db
+                       id)))
+                (first (sort (d/q '[:find [?date ...]
+                                    :in $ ?id
+                                    :where
+                                    [?p :project/id ?id]
+                                    [?p :project/assignments ?a]
+                                    [?a :assignment/by-day ?date]]
+                                  db
+                                  id
+                                  )))))
       (let [by-week? (= (-> env :query-params :by) :week)
 
             fluxod-last-date (or
@@ -164,15 +190,16 @@
                                      db
                                      id)))
                               (first (sort (d/q '[:find [?date ...]
-                                                   :in $ ?id
-                                                   :where
-                                                   [?p :project/id ?id]
-                                                   [?p :project/assignments ?a]
-                                                   [?a :assignment/by-day ?date]]
-                                                 db
-                                                 id
-                                                 ))))
-
+                                                  :in $ ?id
+                                                  :where
+                                                  [?p :project/id ?id]
+                                                  [?p :project/assignments ?a]
+                                                  [?a :assignment/by-day ?date]]
+                                                db
+                                                id
+                                                ))))
+            
+            
             
             fluxod-timesheets (sort-by
                                :date
@@ -199,7 +226,7 @@
                                       [?e :project/name ?name]
                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
                                         ;[(tick.alpha.api/>= ?date ?min-date)]
-                                      [(tick.alpha.api/<= ?date ?fluxod-last)]
+                                        ;[(tick.alpha.api/<= ?date ?fluxod-last)]
                                       
                                       [?r :resource/fluxod-name ?fluxod-name]
                                       ] db
@@ -243,38 +270,37 @@
                   ))
 
 
-          grouped-fluxod-timesheets
-          (group-fluxod-timesheets fluxod-timesheets :by-week? by-week?)
+            grouped-fluxod-timesheets
+            (group-fluxod-timesheets fluxod-timesheets :by-week? by-week?)
 
-          grouped-ms-timesheets
-          (group-ms-timesheets ms-timesheets :by-week? by-week?)
-          
-          
-          
-          resource-ts (cond
-                        (not (seq grouped-ms-timesheets) )
-                        grouped-ms-timesheets
+            grouped-ms-timesheets
+            (group-ms-timesheets ms-timesheets :by-week? by-week?)
+            
+            
+            
+             resource-ts (cond  (not (seq grouped-ms-timesheets))
+                                      grouped-fluxod-timesheets
 
-                        (same-cell?
-                         (last grouped-fluxod-timesheets)
-                         (first grouped-ms-timesheets)
-                         :by-week? by-week?)
+                                      (same-cell?
+                                       (last grouped-fluxod-timesheets)
+                                       (first grouped-ms-timesheets)
+                                       :by-week? by-week?)
 
-                        (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
-                        :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
-          ]
-      
-      
-      
-      {:resource-ts/id id
-       :resource-ts/timesheets resource-ts
-       :resource-ts/start-date (-> env :query-params :pathom/context :resource-ts/start-date)
-       :resource-ts/end-date (-> env :query-params :pathom/context :resource-ts/end-date)
-       :resource-ts/name (d/q '[:find ?name .
-                                :in $ ?id
-                                :where
-                                [?r :resource/id ?id]
-                                [?r :resource/name ?name]] db id)})))
+                                      (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
+                                      :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
+            ]
+        
+        
+        
+        {:resource-ts/id id
+         :resource-ts/timesheets resource-ts
+         :resource-ts/start-date (-> env :query-params :pathom/context :resource-ts/start-date)
+         :resource-ts/end-date (-> env :query-params :pathom/context :resource-ts/end-date)
+         :resource-ts/name (d/q '[:find ?name .
+                                  :in $ ?id
+                                  :where
+                                  [?r :resource/id ?id]
+                                  [?r :resource/name ?name]] db id)})))
 
 (pc/defresolver workplan  [{:keys [connection db] :as env} {:keys [workplan/id]}]
   {::pc/input #{:workplan/id}
@@ -285,15 +311,32 @@
     (do
       {:workplan/id id
        :workplan/resources-ts
-       (mapv #(assoc % :workplan/id id)
-             (d/q '[:find ?rid
-                    :keys resource-ts/id
-                    :in $ ?id
-                    :where
-                    [?p :project/id ?id]
-                    [?p :project/assignments ?pa]
-                    [?pa :assignment/resource ?r]
-                    [?r :resource/id ?rid]] db id))})))
+       (mapv (fn [rid]
+                {:resource-ts/id rid :workplan/id id})
+
+             (distinct (concat  (d/q '[:find [?rid ...]
+                                       
+                                       :in $ ?id
+                                       :where
+                                       [?p :project/id ?id]
+                                       [?p :project/assignments ?pa]
+                                       [?pa :assignment/resource ?r]
+                                       [?r :resource/id ?rid]] db id)
+
+                                (d/q '[:find [?rid ...]
+                                        ;:keys resource-ts/id
+                                       :in $ ?id
+                                       :where
+                                       [?pi :project-info/id ?id]
+                                       [?pi :project-info/fluxod-client-name ?client]
+                                       [?pi :project-info/fluxod-project-names ?po]
+                                       [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                                       [?r :resource/fluxod-name ?fluxod-name]
+                                       [?r :resource/id ?rid]
+                                       [?fluxod :fluxod-ts/po ?po]
+                                       [?fluxod :fluxod-ts/client ?client]
+                                       
+                                       ] (d/db (d/connect db-url)) id))))})))
 
 (def resolvers  [workplan resource-ts min-max-date])
 
