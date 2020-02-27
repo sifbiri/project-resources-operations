@@ -61,24 +61,26 @@
                                        db
                                        id
                                        )))
-   :workplan/min-date (first (sort (d/q '[:find  [?date ...]
-                                          :in $  ?pid 
-                                          :where
-                                          [?fluxod :fluxod-ts/date ?date]
-                                          
-                                          [?fluxod :fluxod-ts/client ?client]
-                                          [?fluxod :fluxod-ts/po ?fluxod-po]
-                                          
-                                          [?pinfo :project-info/fluxod-client-name ?client]
-                                          [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                                          [?pinfo :project-info/id ?pid]
-                                          
-                                          [?e :project/id ?pid]
-                                          [?e :project/name ?name]
-                                          ](d/db (d/connect db-url))
-                                           id
+   :workplan/min-date (or (first (sort (d/q '[:find  [?date ...]
+                                           :in $  ?pid 
+                                           :where
+                                           [?fluxod :fluxod-ts/date ?date]
                                            
-                                           )))
+                                           [?fluxod :fluxod-ts/client ?client]
+                                           [?fluxod :fluxod-ts/po ?fluxod-po]
+                                           
+                                           [?pinfo :project-info/fluxod-client-name ?client]
+                                           [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                           [?pinfo :project-info/id ?pid]
+                                           
+                                           [?e :project/id ?pid]
+                                           [?e :project/name ?name]
+                                           ](d/db (d/connect db-url))
+                                            id
+                                            
+                                            )))
+                          
+                          )
    })
 
 
@@ -134,7 +136,7 @@
 
 
 (pc/defresolver resource-ts [{:keys [connection db] :as env} {:keys [resource-ts/id workplan/max-date workplan/min-date] workplan :workplan/id}]
-  {::pc/input #{:resource-ts/id :workplan/id :workplan/max-date :workplan/min-date}
+  {::pc/input #{:resource-ts/id :workplan/id #_:workplan/min-date}
    ::pc/output [:resource-ts/id  :resource-ts/name :resource-ts/start-date
                 :workplan/min-date
                 :workplan/max-date
@@ -146,74 +148,99 @@
                                           :timesheet/work-fluxod
                                           :timesheet/work-ms]}]}
 
-  (do (println (-> env :query-params :by))
+  (do (println "LAST" min-max-date)
       (let [by-week? (= (-> env :query-params :by) :week)
-          fluxod-timesheets (sort-by
-                             :date
-                             (d/q '[:find ?work-fluxod ?date ?fluxod-po
-                                    :keys timesheet/work-fluxod date fluxod-po
-                                    :in $ ?rid ?pid ?min-date ?max-date
-                                    :where
-                                    [?r :resource/id ?rid]
-                                    
-                                    [?act :fluxod-ts/activity-type ?t]
-                                    [(= :mission ?t)]
-                                    [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-                                    [?fluxod :fluxod-ts/days ?work-fluxod]
-                                    [?fluxod :fluxod-ts/date ?date]
-                                    
-                                    [?fluxod :fluxod-ts/client ?client]
-                                    [?fluxod :fluxod-ts/po ?fluxod-po]
-                                    
-                                    [?pinfo :project-info/fluxod-client-name ?client]
-                                    [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                                    [?pinfo :project-info/id ?pid]
-                                    
-                                    [?e :project/id ?pid]
-                                    [?e :project/name ?name]
-                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
-                                    [(tick.alpha.api/>= ?date ?min-date)]
-                                    [(tick.alpha.api/<= ?date ?max-date)]
-                                    
-                                    [?r :resource/fluxod-name ?fluxod-name]
-                                    ] db
-                                      (log/spy :info id)
-                                      (log/spy :info workplan)
-                                      (log/spy :info min-date)
-                                      (log/spy :info max-date)))
-            fluxod-last-date (or (-> fluxod-timesheets last :date) min-date)
 
-          ms-timesheets
-          (sort-by
-           :date
-           (d/q '[:find ?work ?date
-                  :keys timesheet/work-ms date 
-                  :in $ ?rid ?pid ?fluxod-last-date ?max-date
-                  :where
-                  [?r :resource/id ?rid]
-                  ;[?r :resource/name ?rn]
-                  
-                  
-                  ;[?pinfo :project-info/fluxod-client-name ?client]
-                  ;[?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                  ;[?pinfo :project-info/id ?pid]
-                  
-                  [?e :project/id ?pid]
-                  [?e :project/assignments ?a]
-                  
-                  [?a :assignment/by-day ?date]
-                  [?a :assignment/work ?work]
-                  [?a :assignment/resource ?r]
-                  
-                  [(tick.alpha.api/> ?date ?fluxod-last-date)] ;; fluxod last-date
-                  [(tick.alpha.api/<= ?date  ?max-date)]
-                  #_[?r :resource/fluxod-name ?fluxod-name]
-                  ]
-                db
-                id
-                workplan
-                fluxod-last-date
-                max-date))
+            fluxod-last-date (or
+                              (last
+                               (sort
+                                (d/q '[:find [?date ...]
+                                       :in $ ?rid
+                                       :where
+                                       [?r :resource/id ?rid]
+                                       [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                                       [?r :resource/fluxod-name ?fluxod-name]
+                                       [?fluxod :fluxod-ts/date ?date]]
+                                     db
+                                     id)))
+                              (first (sort (d/q '[:find [?date ...]
+                                                   :in $ ?id
+                                                   :where
+                                                   [?p :project/id ?id]
+                                                   [?p :project/assignments ?a]
+                                                   [?a :assignment/by-day ?date]]
+                                                 db
+                                                 id
+                                                 ))))
+
+            
+            fluxod-timesheets (sort-by
+                               :date
+                               (d/q '[:find ?work-fluxod ?date ?fluxod-po
+                                      :keys timesheet/work-fluxod date fluxod-po
+                                      :in $ ?rid ?pid ?fluxod-last
+                                      :where
+                                      [?r :resource/id ?rid]
+                                      
+                                      [?act :fluxod-ts/activity-type ?t]
+                                      [(= :mission ?t)]
+                                      [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                                      [?fluxod :fluxod-ts/days ?work-fluxod]
+                                      [?fluxod :fluxod-ts/date ?date]
+                                      
+                                      [?fluxod :fluxod-ts/client ?client]
+                                      [?fluxod :fluxod-ts/po ?fluxod-po]
+                                      
+                                      [?pinfo :project-info/fluxod-client-name ?client]
+                                      [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                      [?pinfo :project-info/id ?pid]
+                                      
+                                      [?e :project/id ?pid]
+                                      [?e :project/name ?name]
+                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+                                        ;[(tick.alpha.api/>= ?date ?min-date)]
+                                      [(tick.alpha.api/<= ?date ?fluxod-last)]
+                                      
+                                      [?r :resource/fluxod-name ?fluxod-name]
+                                      ] db
+                                        id
+                                        workplan
+                                        fluxod-last-date
+                                        ))
+            
+
+            
+            ms-timesheets
+            (sort-by
+             :date
+             (d/q '[:find ?work ?date
+                    :keys timesheet/work-ms date 
+                    :in $ ?rid ?pid ?fluxod-last-date 
+                    :where
+                    [?r :resource/id ?rid]
+                                        ;[?r :resource/name ?rn]
+                    
+                    
+                                        ;[?pinfo :project-info/fluxod-client-name ?client]
+                                        ;[?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                        ;[?pinfo :project-info/id ?pid]
+                    
+                    [?e :project/id ?pid]
+                    [?e :project/assignments ?a]
+                    
+                    [?a :assignment/by-day ?date]
+                    [?a :assignment/work ?work]
+                    [?a :assignment/resource ?r]
+                    
+                    [(tick.alpha.api/>= ?date ?fluxod-last-date)] ;; fluxod last-date
+                                        ;[(tick.alpha.api/<= ?date  ?max-date)]
+                    #_[?r :resource/fluxod-name ?fluxod-name]
+                    ]
+                  db
+                  id
+                  workplan
+                  (or fluxod-last-date min-date)
+                  ))
 
 
           grouped-fluxod-timesheets

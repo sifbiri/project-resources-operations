@@ -178,7 +178,7 @@
 
 
 
-(defsc ResourceTimeSheet [this {:resource-ts/keys [name timesheets ] :keys [workplan/max-date workplan/min-date ] :as props} {:keys [ui/by-week?]}]
+(defsc ResourceTimeSheet [this {:resource-ts/keys [name timesheets ] :keys [workplan/max-date workplan/min-date ] :as props} {:keys [min max ui/by-week?]}]
   {:query [:resource-ts/id :resource-ts/name :workplan/max-date
            :workplan/min-date
            [:ui/workplan-count '_]
@@ -225,7 +225,7 @@
           (mapv (fn [x]
                   (ui-table-cell {} ))
                 (drop 1 (workplan/dates-from-to
-                         min-date
+                         min
                          (or (:timesheet/start-fluxod (first timesheets))
                              (:timesheet/start-ms (first timesheets)))
                          {:dates by-date}))
@@ -238,20 +238,33 @@
                    (cond (and (:timesheet/work-ms timesheet)
                               (:timesheet/work-fluxod timesheet))
 
-                         (concat acc [{:ui (ui-popup {:basic true
-                                                      :trigger (ui-table-cell {:style {:background "lightBlue"}}
-                                                                              (str (goog.string.format "%.1f" (:timesheet/work-fluxod timesheet))
-                                                                                   " | "
-                                                                                   (goog.string.format "%.1f" (:timesheet/work-ms timesheet)))
-                                                                              )}
-                                                     (ui-popup-content
-                                                      {:style {:fontSize "80%"}}
+                         (let [fluxod-end (-> acc last :ts :timesheet/end-fluxod)
+                               current-start (:timesheet/start-fluxod timesheet)]
 
-                                                      (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod timesheet))))
-                                                           
-                                                           )
-                                                      (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms timesheet)))))))
-                                       :ts timesheet}])
+                           (cond->  acc
+                             (and fluxod-end current-start)
+                             (concat (mapv
+                                      (fn [x]
+                                        {:ui (ui-table-cell {} "")})
+                                      (drop 2 (workplan/dates-from-to fluxod-end current-start {:dates by-date}))))
+                             
+                             
+
+                             true
+                             (concat [{:ui (ui-popup {:basic true
+                                               :trigger (ui-table-cell {:style {:background "lightBlue"}}
+                                                                       (str (goog.string.format "%.1f" (:timesheet/work-fluxod timesheet))
+                                                                            " | "
+                                                                            (goog.string.format "%.1f" (:timesheet/work-ms timesheet)))
+                                                                       )}
+                                              (ui-popup-content
+                                               {:style {:fontSize "80%"}}
+
+                                               (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod timesheet))))
+                                                    
+                                                    )
+                                               (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms timesheet)))))))
+                                :ts timesheet}])))
                          ;;fluxod time sheet comes first 
                          (:timesheet/work-fluxod timesheet)
                          
@@ -266,7 +279,7 @@
                              (and last-end current-start)
                              (concat (mapv
                                       (fn [x]
-                                        {:ui (ui-table-cell {} "")})
+                                        {:ui (ui-table-cell {} "S")})
                                       ;;here
                                       (drop 2 (workplan/dates-from-to last-end current-start {:dates by-date}))))
                              true
@@ -275,9 +288,11 @@
                                                                               (:timesheet/work-fluxod timesheet)))
                                        :ts timesheet}])))
                          
+
+
                          (:timesheet/work-ms timesheet)
                          (let [end-fluxod (-> acc last :ts :timesheet/end-fluxod)
-                               last-end-ms (-> acc last :ts :timesheet/start-ms)]
+                               last-end-ms (-> acc last :ts :timesheet/end-ms)]
                            
                            (cond-> acc
                              (boolean end-fluxod)
@@ -310,7 +325,9 @@
                          )) [] timesheets))
        (mapv (fn [x]
                (ui-table-cell {} ""))
-             (drop 1 (workplan/dates-from-to  (t/date-time (:timesheet/end-ms (last timesheets))) max-date {:dates by-date}))
+             (drop 1 (workplan/dates-from-to  (t/date-time (or (:timesheet/end-ms (last timesheets))
+                                                               (:timesheet/end-fluxod (last timesheets))))
+                                              max {:dates by-date}))
              )
 
        
@@ -382,134 +399,155 @@
    }
   
   
-  (ui-container
-   {}
-   (when (df/loading? (get props [df/marker-table :workplan]))
-     #_(ui-dimmer {:active true :inverted true} (ui-loader {:active true :inverted true }))
-     (div :.ui.active.inverted.dimmer
-              (div :.ui.text.loader
-                   "Loading..."))
-     )
-   [(dom/div {:style {:display "flex" :flexDirection "row" :fontSize "80%"}}
-               
-               (dom/div {:style {:border "1px solid black"
-                                 :width "18px"
-                                 :height "18px"
-                                 :background "lightGray"
-                                 :marginLeft "20px"
-                                 :marginRight "33px"
-                                 }}
-                        (dom/label {:style {:marginLeft "25px"}} "Actuals"))
-               (dom/div {:style {:border "1px solid black"
-                                 :width "18px"
-                                 :height "18px"
-                                 :marginLeft "25px"}}
-                        (dom/label {:style {:marginLeft "25px"}} "Forecast"))
-               (dom/div {:style {:border "1px solid black"
-                                 :width "18px"
-                                 :height "18px"
-                                 :background "lightBlue"
-                                 :marginLeft "75px"}}
-                        (dom/label {:style {:marginLeft "25px"}} "Both"))
-               #_(dom/div {:style {:width "18px"
-                                   :height "18px"
-                                   :marginLeft "125px"}}
-                          (dom/label {:style {:marginLeft "50px"}} "Unit day"))
+  (let [min (first (sort (remove nil?
+                             (mapv (fn
+                                     [resource-ts]
+                                     (or
+                                      (:timesheet/start-fluxod (first (:resource-ts/timesheets resource-ts)))
+                                      (:timesheet/start-ms (first (:resource-ts/timesheets resource-ts)))))
+                                   resources-ts))))
 
 
-               (ui-form
-                {:style {:marginLeft "400px"}}
-                (ui-form-group
-                 {}
-                 (ui-form-field
-                  {:inline true}
-                  (dom/label {} "By Month")
-                  (ui-radio  { :checked by-month?
-                              :onClick
-                              (fn [_]
-                                (m/toggle! this :ui/by-month?)
-                                (m/toggle! this :ui/by-week?)
-                                (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
-                                (df/refresh! this {:params
-                                                   {:by (if by-month? :week :month)}
-                                                   :marker :workplan}))}))
-                 (ui-form-field
-                  {:inline true}
-                  (dom/label {} "By Week")
-                  (ui-radio  { :checked by-week?
-                              :onClick
-                              (fn [_]
-                                (m/toggle! this :ui/by-month?)
-                                (m/toggle! this :ui/by-week?)
-                                (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
-                                (df/refresh! this {:params
-                                                   {:by  (if by-week? :month :week)}
-                                                   :marker :workplan}))}))
-                 ))
-               
-               
-               )
-      
-      (dom/div
-       {:style
-        {:overflow "scroll"
-         :max-width "880px"}}
-       (ui-table
-        {:color :blue
-         :celled true
+       max  (last (sort (remove nil?
+                             (mapv (fn
+                                     [resource-ts]
+                                     (or
+                                      (:timesheet/end-ms (last (:resource-ts/timesheets resource-ts)))
+                                      (:timesheet/end-fluxod (last (:resource-ts/timesheets resource-ts)))))
+                                   resources-ts))))]
+
+   
+   (ui-container
+    {}
+    (when (df/loading? (get props [df/marker-table :workplan]))
+      #_(ui-dimmer {:active true :inverted true} (ui-loader {:active true :inverted true }))
+      (div :.ui.active.inverted.dimmer
+           (div :.ui.text.loader
+                "Loading..."))
+      )
+    [(dom/div {:style {:display "flex" :flexDirection "row" :fontSize "80%"}}
+              
+              (dom/div {:style {:border "1px solid black"
+                                :width "18px"
+                                :height "18px"
+                                :background "lightGray"
+                                :marginLeft "20px"
+                                :marginRight "33px"
+                                }}
+                       (dom/label {:style {:marginLeft "25px"}} "Actuals"))
+              (dom/div {:style {:border "1px solid black"
+                                :width "18px"
+                                :height "18px"
+                                :marginLeft "25px"}}
+                       (dom/label {:style {:marginLeft "25px"}} "Forecast"))
+              (dom/div {:style {:border "1px solid black"
+                                :width "18px"
+                                :height "18px"
+                                :background "lightBlue"
+                                :marginLeft "75px"}}
+                       (dom/label {:style {:marginLeft "25px"}} "Both"))
+              #_(dom/div {:style {:width "18px"
+                                  :height "18px"
+                                  :marginLeft "125px"}}
+                         (dom/label {:style {:marginLeft "50px"}} "Unit day"))
+
+
+              (ui-form
+               {:style {:marginLeft "400px"}}
+               (ui-form-group
+                {}
+                (ui-form-field
+                 {:inline true}
+                 (dom/label {} "By Month")
+                 (ui-radio  { :checked by-month?
+                             :onClick
+                             (fn [_]
+                               (m/toggle! this :ui/by-month?)
+                               (m/toggle! this :ui/by-week?)
+                               (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
+                               (df/refresh! this {:params
+                                                  {:by (if by-month? :week :month)}
+                                                  :marker :workplan}))}))
+                (ui-form-field
+                 {:inline true}
+                 (dom/label {} "By Week")
+                 (ui-radio  { :checked by-week?
+                             :onClick
+                             (fn [_]
+                               (m/toggle! this :ui/by-month?)
+                               (m/toggle! this :ui/by-week?)
+                               (comp/transact! this [(workplan/set-workplan-count {:count (count (workplan/dates-from-to min-date max-date {:dates (if by-week? :months :weeks)})) } )])
+                               (df/refresh! this {:params
+                                                  {:by  (if by-week? :month :week)}
+                                                  :marker :workplan}))}))
+                ))
+              
+              
+              )
+     
+     (dom/div
+      {:style
+       {:overflow "scroll"
+        :max-width "880px"}}
+      (ui-table
+       {:color :blue
+        :celled true
                                         ; :compact true
                                         ;:fixed true
-         :textAlign :center
-         :singleLine true
+        :textAlign :center
+        :singleLine true
                                         ;:striped true
-         :style {:fontSize "85%"
+        :style {:fontSize "85%"
                                         ;:width "850px"
                                         ;:max-height "900px"
                                         ;:overflow "scroll"
                                         ;:display "block"
                                         ;:height "600px"
-                 #_#_:overflowX "scroll"}}
-        (ui-table-header
-         {:style
-          {:top 0
-           :position "sticky"}}
-         (ui-table-row
-          {}
-          (ui-table-header-cell {:style
-                                 {:position "sticky"
-                                  :left  0
-                                  :top 0
-                                  :background "white"
-                                  :color "black"
-                                  :zIndex 1
-                                  }}  "Resource")
-
-          
-          
-          (mapv #(ui-popup {:basic true
-                            :trigger (ui-table-header-cell
-                                      {:singleLine true
-                                       :style {:color "black"
-                                               :background "white"
-                                        ;:width "200px"
-                                               :position "sticky"
-                                               :top 0}}
-                                      (format-date % :by-week by-week?))}
-                           (ui-popup-content
-                            {:style {:fontSize "80%"}}
-                            (str (str/capitalize (str (t/month (t/date-time %)))))                            ))
-                (workplan/dates-from-to min-date (if by-week?
-                                                   (t/+ (t/date-time max-date)
-                                                        (t/new-duration 25 :hours))
-                                                   (t/date-time max-date))
-                                        {:dates (if by-week? :weeks :months)}))
-          )
-         )
-        (ui-table-body
+                #_#_:overflowX "scroll"}}
+       (ui-table-header
+        {:style
+         {:top 0
+          :position "sticky"}}
+        (ui-table-row
          {}
-         (mapv (fn [resource-ts]
-                 (ui-resource-timesheet (comp/computed resource-ts {:ui/by-week? by-week?})))
-               resources-ts))))]))
+         (ui-table-header-cell {:style
+                                {:position "sticky"
+                                 :left  0
+                                 :top 0
+                                 :background "white"
+                                 :color "black"
+                                 :zIndex 1
+                                 }}  "Resource")
+
+         
+         
+         (mapv #(ui-popup {:basic true
+                           :trigger (ui-table-header-cell
+                                     {:singleLine true
+                                      :style {:color "black"
+                                              :background "white"
+                                        ;:width "200px"
+                                              :position "sticky"
+                                              :top 0}}
+                                     (format-date % :by-week by-week?))}
+                          (ui-popup-content
+                           {:style {:fontSize "80%"}}
+                           (str (t/date-time %))                            ))
+
+
+               (workplan/dates-from-to min max #_(if by-week?
+                                                  #_(t/+ (t/date-time max-date)
+                                                         (t/new-duration 25 :hours))
+                                                  min
+                                                  max)
+                                       {:dates (if by-week? :weeks :months)}))
+         )
+        )
+       (ui-table-body
+        {}
+        (mapv (fn [resource-ts]
+                (ui-resource-timesheet (comp/computed resource-ts {:ui/by-week? by-week? :min min :max max})))
+              resources-ts))))])))
 
 
 
