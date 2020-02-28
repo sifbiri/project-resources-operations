@@ -167,17 +167,29 @@
    ))
 
 
-(defsc TimeSheet [this {:keys []}]
+(defsc TimeSheet 
+[this {:keys []}]
   {:query [:timesheet/start-fluxod
            :timesheet/end-fluxod
            :timesheet/start-ms
            :timesheet/end-ms
            :timesheet/work-fluxod
+           :timesheet/week-number
            :timesheet/work-ms]})
 
 
+(defn abs [n] (max n (- n)))
+(defn range2
+  [from to]
+  (if (> from to)
+    (range 0 (+ 1 (- 53 (abs (- (abs (+ 1 (-(- from 53) to))) 53)))))
+    (range 0 (+ 1 (abs (- (- to from) 1))))))
 
-
+(defn range3
+  [from to]
+  (if (> from to)
+    (range 0 (- 53 (abs (- (abs (+ 1 (-(- from 53) to))) 53))))
+    (range 0 (abs (- (- to from) 1)))))
 (defsc ResourceTimeSheet [this {:resource-ts/keys [name timesheets ] :keys [workplan/max-date workplan/min-date ] :as props} {:keys [min max ui/by-week?]}]
   {:query [:resource-ts/id :resource-ts/name :workplan/max-date
            :workplan/min-date
@@ -189,13 +201,14 @@
         row-so-far (count timesheets)
         row-count (get props :ui/workplan-count)
         by-date (if by-week? :weeks :months)
-        to-pad (- row-count row-so-far)]
+        to-pad (- row-count row-so-far)
+        week-start (:timesheet/week-number (first timesheets))
+        ]
     
 
 
-    #_(js/console.log "MIN Date" min-date "FOr " name)
-    #_(js/console.log "NEXT Date" (first timesheets) "FOR " name)
-    (js/console.log "BY" by-date)
+    
+    
     (when
         (seq timesheets)
       (ui-table-row
@@ -210,136 +223,69 @@
             :color "black"
             
             }} name)]
-        
 
-        
-        
-        
-        (when
-            (and min-date
-                 (or (:timesheet/start-fluxod (first timesheets))
-                     (:timesheet/start-ms (first timesheets))))
 
-          
-          
-          (mapv (fn [x]
-                  (ui-table-cell {} ))
-                (drop 1 (workplan/dates-from-to
-                         min
-                         (or (:timesheet/start-fluxod (first timesheets))
-                             (:timesheet/start-ms (first timesheets)))
-                         {:dates by-date}))
-                
-                ))
-        
         (mapv
-         :ui
-         (reduce (fn [acc timesheet]
-                   (cond (and (:timesheet/work-ms timesheet)
-                              (:timesheet/work-fluxod timesheet))
-
-                         (let [fluxod-end (-> acc last :ts :timesheet/end-fluxod)
-                               current-start (:timesheet/start-fluxod timesheet)]
-
-                           (cond->  acc
-                             (and fluxod-end current-start)
-                             (concat (mapv
-                                      (fn [x]
-                                        {:ui (ui-table-cell {} "")})
-                                      (drop 2 (workplan/dates-from-to fluxod-end current-start {:dates by-date}))))
-                             
-                             
-
-                             true
-                             (concat [{:ui (ui-popup {:basic true
+         (fn [week-number]
+           (let [t (first
+                    (filter (fn [t] (= (:timesheet/week-number t) week-number)) timesheets))]
+             (cond (and (:timesheet/start-ms t) (:timesheet/start-fluxod t))
+                   (ui-popup {:basic true
                                                :trigger (ui-table-cell {:style {:background "lightBlue"}}
-                                                                       (str (goog.string.format "%.1f" (:timesheet/work-fluxod timesheet))
+                                                                       (str (goog.string.format "%.1f" (:timesheet/work-fluxod t))
                                                                             " | "
-                                                                            (goog.string.format "%.1f" (:timesheet/work-ms timesheet)))
+                                                                            (goog.string.format "%.1f" (:timesheet/work-ms t)))
                                                                        )}
                                               (ui-popup-content
                                                {:style {:fontSize "80%"}}
 
-                                               (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod timesheet))))
+                                               (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod t))))
                                                     
                                                     )
-                                               (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms timesheet)))))))
-                                :ts timesheet}])))
-                         ;;fluxod time sheet comes first 
-                         (:timesheet/work-fluxod timesheet)
-                         
-                                        ;(js/console.log "dates " dates "For " name)
-                                        ;[{:ui (ui-table-cell {} "X")} {:ui (ui-table-cell {} "X")} {:ui (ui-table-cell {} "X")}]
-                         (let [last-end (-> acc last :ts :timesheet/end-fluxod)
-                               current-start (:timesheet/start-fluxod timesheet)]
-
-                           (js/console.log "last-end" last-end)
-                           (cond->
-                               acc
-                             (and last-end current-start)
-                             (concat (mapv
-                                      (fn [x]
-                                        {:ui (ui-table-cell {} "S")})
-                                      ;;here
-                                      (drop 2 (workplan/dates-from-to last-end current-start {:dates by-date}))))
-                             true
-                             (concat [{:ui (ui-table-cell {:style {:background "lightGray"}}
-                                                          (goog.string.format "%.1f"
-                                                                              (:timesheet/work-fluxod timesheet)))
-                                       :ts timesheet}])))
-                         
+                                               (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms t)))))))
 
 
-                         (:timesheet/work-ms timesheet)
-                         (let [end-fluxod (-> acc last :ts :timesheet/end-fluxod)
-                               last-end-ms (-> acc last :ts :timesheet/end-ms)]
-                           
-                           (cond-> acc
-                             (boolean end-fluxod)
-                             (concat (mapv (fn []
-                                             {:ui (ui-table-cell {} "" )
-                                              :ts timesheet}
-                                             )
-                                           (drop 2 (workplan/dates-from-to end-fluxod
-                                                                           (t/+ (t/date-time
-                                                                                 (:timesheet/start-ms timesheet))
-                                                                                )
-                                                                           {:dates by-date}))))
+                   (:timesheet/work-fluxod t)
+                   (ui-table-cell {:style {:background "lightGray"}}
+                                  (goog.string.format "%.1f"
+                                                      (:timesheet/work-fluxod t)))
 
 
-                             (boolean last-end-ms)
-                             (concat (mapv (fn []
-                                             {:ui (ui-table-cell {} "")
-                                              }
-                                             )
-                                           (drop 2 (workplan/dates-from-to (t/date-time last-end-ms) (:timesheet/start-ms timesheet)  {:dates by-date}))))
+                   
+                   (:timesheet/work-ms t)
+                   (ui-table-cell {} (goog.string.format "%.1f" (:timesheet/work-ms t)))
 
-                             
-                             true
-                             (concat  [{:ui (ui-table-cell {} (goog.string.format "%.1f" (:timesheet/work-ms timesheet)))
-                                        :ts timesheet}])))
+                   :else
+                   (ui-table-cell {} ""))))
 
-                         :else
-                         acc
-                         
-                         )) [] timesheets))
-       (mapv (fn [x]
-               (ui-table-cell {} ""))
-             (drop 1 (workplan/dates-from-to  (t/date-time (or (:timesheet/end-ms (last timesheets))
-                                                               (:timesheet/end-fluxod (last timesheets))))
-                                              max {:dates by-date}))
-             )
+         (mapv workplan/week-number
+               (workplan/dates-from-to min  max #_(if by-week?
+                                                    #_(t/+ (t/date-time max-date)
+                                                           (t/new-duration 25 :hours))
+                                                    
+                                                    )
+                                       {:dates by-date}))))
+        
 
-       
+        
+        #_(mapv #(ui-table-cell {} "X")
+              (range2 
+               (workplan/week-number min)
+               (:timesheet/week-number (first timesheets))))
+        
+        
 
-       )
+       #_(mapv (fn [x]
+               (ui-table-cell {} "X"))
+             (range3 (:timesheet/week-number (last timesheets))
+                    (workplan/week-number max))))
       
       
 
       
       
       
-      ))))
+      )))
 
 (defsc ResourceTimeSheet2 [this {:keys []}]
   {:query [:resource-ts/id :resource-ts/name :resource-ts/a]})
@@ -349,8 +295,12 @@
 (defn format-date
   [date & {:keys [by-week] :or {by-week false}}]
   (if by-week
-    (let [week-number (workplan/week-number date)
+
+
+    (let [week-number (workplan/week-number (t/date-time date))
           year (apply str (drop 2 (str (t/year date))))]
+
+      
       (str "Week " week-number " " ))
     
     (str (str/capitalize (str (t/month date))) " "
@@ -370,8 +320,8 @@
    :initial-state {:ui/by-month? true :ui/by-week? false }
    :pre-merge (fn [{:keys [current-normalized data-tree] :as params}]
                 
-                (merge {:ui/by-month? true
-                        :ui/by-week? false}
+                (merge {:ui/by-month? false
+                        :ui/by-week? true}
                        current-normalized
                        data-tree))
    :will-enter
@@ -400,12 +350,13 @@
   
   
   (let [min (first (sort (remove nil?
-                             (mapv (fn
-                                     [resource-ts]
-                                     (or
-                                      (:timesheet/start-fluxod (first (:resource-ts/timesheets resource-ts)))
-                                      (:timesheet/start-ms (first (:resource-ts/timesheets resource-ts)))))
-                                   resources-ts))))
+                                 (log/spy :info (mapv (fn
+                                          [resource-ts]
+                                          
+                                          (or
+                                           (:timesheet/start-fluxod (first (:resource-ts/timesheets resource-ts)))
+                                           (:timesheet/start-ms (first (:resource-ts/timesheets resource-ts)))))
+                                        resources-ts)))))
 
 
        max  (last (sort (remove nil?
@@ -416,7 +367,9 @@
                                       (:timesheet/end-fluxod (last (:resource-ts/timesheets resource-ts)))))
                                    resources-ts))))]
 
-   
+
+    
+    
    (ui-container
     {}
     (when (df/loading? (get props [df/marker-table :workplan]))
@@ -529,18 +482,20 @@
                                         ;:width "200px"
                                               :position "sticky"
                                               :top 0}}
-                                     (format-date % :by-week by-week?))}
+                                     (str  (format-date % :by-week by-week? )))}
                           (ui-popup-content
                            {:style {:fontSize "80%"}}
-                           (str (t/date-time %))                            ))
+                           (str (format-date %))                            ))
 
 
-               (workplan/dates-from-to min max #_(if by-week?
-                                                  #_(t/+ (t/date-time max-date)
-                                                         (t/new-duration 25 :hours))
-                                                  min
-                                                  max)
-                                       {:dates (if by-week? :weeks :months)}))
+               (workplan/dates-from-to min  max #_(if by-week?
+                                                    #_(t/+ (t/date-time max-date)
+                                                           (t/new-duration 25 :hours))
+                                                    
+                                                    )
+                                       {:dates (if by-week? :weeks :months)})
+               #_(range (inc (workplan/week-number min))
+                      (workplan/week-number max)))
          )
         )
        (ui-table-body
@@ -556,7 +511,7 @@
 (comment
   (ui-form
    {}
-   (ui-form-group
+   (Ui-form-group
     {}
     (ui-input
      {:type "month"

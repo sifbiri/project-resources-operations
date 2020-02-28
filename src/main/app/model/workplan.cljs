@@ -47,8 +47,19 @@
   [workplan-start workplan-end {:keys [dates] :or {dates :months }}]
   (if (= dates :weeks)
     (do (js/console.log "WE GOT START" workplan-start)
-     (js/console.log "WE GOT END" workplan-end)
-     (conj (vec (take-while (fn [x]
+        (js/console.log "WE GOT END" workplan-end)
+
+        #_(if
+            (t/< (t/date-time workplan-start) (t/date-time workplan-end))
+          
+          (mapv second (t/divide (t/new-interval  (t/inst workplan-start) (t/inst workplan-end))
+                                 (t/new-duration 7 :days)))
+          [])
+
+
+        
+     (conj (vec
+            (take-while (fn [x]
                           (and
                            (not (same-week? (t/date-time x) (t/date-time workplan-end)))
                            (t/<= x (t/date-time workplan-end))))
@@ -59,6 +70,13 @@
 
 
      )
+
+    #_(if
+        (t/< (t/date-time workplan-start) (t/date-time workplan-end))
+      
+      (mapv second (t/divide (t/new-interval  (t/inst workplan-start) (t/inst workplan-end))
+                             (t/new-duration 30 :days)))
+      [])
 
     (conj (vec (take-while (fn [x]
                          (and
@@ -85,7 +103,9 @@
         (conj res end)
         (recur (t/+ current (t/new-period 1 :months))
                end
-               (conj res current))))))
+               (conj res current)))))
+
+  )
 
 (defn
   weeks-from-to

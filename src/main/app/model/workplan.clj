@@ -75,7 +75,7 @@
                                               
                                               [?e :project/id ?pid]
                                               [?e :project/name ?name]
-                                              ](d/db (d/connect db-url))
+                                              ]db 
                                                id
                                                
                                                )))
@@ -108,6 +108,11 @@
                                        (-> timesheets first :date)
                                        :timesheet/end-fluxod
                                        (-> timesheets last :date)
+                                       :test-date
+                                       2
+                                       :timesheet/week-number
+                                       (/ (+ (week-of-year (-> timesheets first :date)) (week-of-year (-> timesheets last :date))) 2.0)
+                                       
                                        } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month ) fluxod-timesheets))))
@@ -129,6 +134,8 @@
                                    (-> timesheets first :date)
                                    :timesheet/end-ms
                                    (-> timesheets last :date)
+                                   :timesheet/week-number
+                                   (week-of-year (-> timesheets first :date))
                                    } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month) ms-timesheets))))
@@ -146,6 +153,7 @@
                                           :timesheet/start-ms
                                           :timesheet/end-ms
                                           :timesheet/work-fluxod
+                                          :timesheet/week-number
                                           :timesheet/work-ms]}]}
 
   (do (println "LAST FOR " (d/q '[:find ?name .
@@ -190,13 +198,19 @@
                                      db
                                      id)))
                               (first (sort (d/q '[:find [?date ...]
-                                                  :in $ ?id
+                                                  :in $ ?rid ?id
                                                   :where
                                                   [?p :project/id ?id]
                                                   [?p :project/assignments ?a]
-                                                  [?a :assignment/by-day ?date]]
+                                                  [?a :assignment/by-day ?date]
+                                                  [?a :assignment/resource ?r]
+                                                  ;; maybe we dont't need this
+                                                  [?r :resource/id ?rid ]
+                                                  ]
+                                                
                                                 db
                                                 id
+                                                workplan
                                                 ))))
             
             
@@ -278,17 +292,20 @@
             
             
             
-             resource-ts (cond  (not (seq grouped-ms-timesheets))
-                                      grouped-fluxod-timesheets
-
-                                      (same-cell?
-                                       (last grouped-fluxod-timesheets)
-                                       (first grouped-ms-timesheets)
-                                       :by-week? by-week?)
+            resource-ts (cond  (not (seq grouped-ms-timesheets))
+                               grouped-fluxod-timesheets
+                               (not (seq grouped-fluxod-timesheets))
+                               grouped-ms-timesheets
+                               (same-cell?
+                                (last grouped-fluxod-timesheets)
+                                (first grouped-ms-timesheets)
+                                :by-week? by-week?)
 
                                       (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
                                       :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
             ]
+
+        (println "DATA " (last grouped-fluxod-timesheets))
         
         
         
@@ -336,7 +353,8 @@
                                        [?fluxod :fluxod-ts/po ?po]
                                        [?fluxod :fluxod-ts/client ?client]
                                        
-                                       ] (d/db (d/connect db-url)) id))))})))
+                                       ] db
+                                         id))))})))
 
 (def resolvers  [workplan resource-ts min-max-date])
 
