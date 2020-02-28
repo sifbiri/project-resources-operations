@@ -111,7 +111,11 @@
                                        :test-date
                                        2
                                        :timesheet/week-number
-                                       (/ (+ (week-of-year (-> timesheets first :date)) (week-of-year (-> timesheets last :date))) 2.0)
+                                       (week-of-year (-> timesheets first :date))
+
+                                       :timesheet/month-number
+
+                                       
                                        
                                        } timesheets )))
 

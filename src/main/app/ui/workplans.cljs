@@ -203,7 +203,34 @@
         by-date (if by-week? :weeks :months)
         to-pad (- row-count row-so-far)
         week-start (:timesheet/week-number (first timesheets))
-        ]
+        get-table-cell (fn [t] (cond (and (:timesheet/start-ms t) (:timesheet/start-fluxod t))
+                              (ui-popup {:basic true
+                                         :trigger (ui-table-cell {:style {:background "lightBlue"}}
+                                                                 (str (goog.string.format "%.1f" (:timesheet/work-fluxod t))
+                                                                      " | "
+                                                                      (goog.string.format "%.1f" (:timesheet/work-ms t)))
+                                                                 )}
+                                        (ui-popup-content
+                                         {:style {:fontSize "80%"}}
+
+                                         (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod t))))
+                                              
+                                              )
+                                         (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms t)))))))
+
+
+                              (:timesheet/work-fluxod t)
+                              (ui-table-cell {:style {:background "lightGray"}}
+                                             (goog.string.format "%.1f"
+                                                                 (:timesheet/work-fluxod t)))
+
+
+                              
+                              (:timesheet/work-ms t)
+                              (ui-table-cell {} (goog.string.format "%.1f" (:timesheet/work-ms t)))
+
+                              :else
+                              (ui-table-cell {} "")))]
     
 
 
@@ -225,60 +252,53 @@
             }} name)]
 
 
-        (mapv
-         (fn [week-number]
-           (let [t (first
-                    (filter (fn [t] (= (:timesheet/week-number t) week-number)) timesheets))]
-             (cond (and (:timesheet/start-ms t) (:timesheet/start-fluxod t))
-                   (ui-popup {:basic true
-                                               :trigger (ui-table-cell {:style {:background "lightBlue"}}
-                                                                       (str (goog.string.format "%.1f" (:timesheet/work-fluxod t))
-                                                                            " | "
-                                                                            (goog.string.format "%.1f" (:timesheet/work-ms t)))
-                                                                       )}
-                                              (ui-popup-content
-                                               {:style {:fontSize "80%"}}
+        (if (= by-date :weeks )
+          ;; by week
+          (mapv
+           (fn [week-number]
+             (let [t (first
+                      (filter (fn [t] (= (:timesheet/week-number t) week-number)) timesheets))]
+               (get-table-cell t)))
 
-                                               (div {} "Actuals End: " (apply str (take 10 (str (:timesheet/end-fluxod t))))
-                                                    
-                                                    )
-                                               (div {} "Forecast Start: " (apply str (take 10 (str (:timesheet/start-ms t)))))))
+           (mapv workplan/week-number
+                 (workplan/dates-from-to min  max #_(if by-week?
+                                                      #_(t/+ (t/date-time max-date)
+                                                             (t/new-duration 25 :hours))
+                                                      
+                                                      )
+                                         {:dates by-date})))
 
 
-                   (:timesheet/work-fluxod t)
-                   (ui-table-cell {:style {:background "lightGray"}}
-                                  (goog.string.format "%.1f"
-                                                      (:timesheet/work-fluxod t)))
 
 
-                   
-                   (:timesheet/work-ms t)
-                   (ui-table-cell {} (goog.string.format "%.1f" (:timesheet/work-ms t)))
+          ;; by-months 
+          (mapv
 
-                   :else
-                   (ui-table-cell {} ""))))
+           (fn [my]
 
-         (mapv workplan/week-number
-               (workplan/dates-from-to min  max #_(if by-week?
-                                                    #_(t/+ (t/date-time max-date)
-                                                           (t/new-duration 25 :hours))
-                                                    
-                                                    )
-                                       {:dates by-date}))))
+             (let [t (first (filter (fn [t]
+                                      (let [date (or (:timesheet/start-ms t)
+                                                     (:timesheet/start-fluxod t))]
+                                        (= (str (t/month (t/date-time date)) " " (t/year (t/date-time date))) my)))
+                                    timesheets))]
+               (get-table-cell t)
+
+               ))
+           
+           
+           (mapv
+            #(str (t/month (t/date-time %)) " " (t/year (t/date-time %)))
+            (workplan/dates-from-to min  max #_(if by-week?
+                                                 #_(t/+ (t/date-time max-date)
+                                                        (t/new-duration 25 :hours))
+                                                 
+                                                 )
+                                    {:dates by-date})
+            ))))
         
 
         
-        #_(mapv #(ui-table-cell {} "X")
-              (range2 
-               (workplan/week-number min)
-               (:timesheet/week-number (first timesheets))))
-        
-        
-
-       #_(mapv (fn [x]
-               (ui-table-cell {} "X"))
-             (range3 (:timesheet/week-number (last timesheets))
-                    (workplan/week-number max))))
+        )
       
       
 
