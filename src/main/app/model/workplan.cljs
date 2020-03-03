@@ -145,3 +145,6 @@
 
 
 
+(defn month-of-year
+  [date]
+	(str (t/month (t/date date)) " " (t/year (t/date date))))

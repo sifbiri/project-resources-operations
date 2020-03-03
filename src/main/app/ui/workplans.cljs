@@ -175,6 +175,7 @@
            :timesheet/end-ms
            :timesheet/work-fluxod
            :timesheet/week-number
+           :timesheet/month
            :timesheet/work-ms]})
 
 
@@ -255,12 +256,16 @@
         (if (= by-date :weeks )
           ;; by week
           (mapv
-           (fn [week-number]
+           (fn [[week-number month-of-year]]
+             (js/console.log "MOY" month-of-year)
              (let [t (first
-                      (filter (fn [t] (= (:timesheet/week-number t) week-number)) timesheets))]
+                      (filter (fn [t] (and (= (:timesheet/week-number t) week-number)
+                                           ;(= (:timesheet/month t) month-of-year)
+                                           ))
+                              timesheets))]
                (get-table-cell t)))
 
-           (mapv workplan/week-number
+           (mapv (juxt workplan/week-number workplan/month-of-year)
                  (workplan/dates-from-to min  max #_(if by-week?
                                                       #_(t/+ (t/date-time max-date)
                                                              (t/new-duration 25 :hours))
@@ -271,8 +276,22 @@
 
 
 
-          ;; by-months 
+          ;; by-months
           (mapv
+           (fn [month]
+             (let [t (first
+                      (filter (fn [t] (= (:timesheet/month t) month)) timesheets))]
+               (get-table-cell t)))
+
+           (mapv workplan/month-of-year
+                 (workplan/dates-from-to min  max #_(if by-week?
+                                                      #_(t/+ (t/date-time max-date)
+                                                             (t/new-duration 25 :hours))
+                                                      
+                                                      )
+                                         {:dates by-date})))
+          
+          #_(mapv
 
            (fn [my]
 
@@ -352,11 +371,9 @@
         
         
         (df/load! app [:workplan/id (uuid id)] WorkPlan2
-                  {:params {:by :month} :marker :workplan
+                  {:params {:by :week} :marker :workplan
                    :post-mutation `workplan/set-workplan-count-init
-                   :post-mutation-params {:ident [:workplan/id (uuid id)]
-                                          }
-                   })
+                   :post-mutation-params {:ident [:workplan/id (uuid id)]}})
 
         
         

@@ -35,6 +35,19 @@
 		(.setTime cal date)
 		(.get cal Calendar/WEEK_OF_YEAR)))
 
+(defn month-of-year2
+  [date]
+	(let [cal (Calendar/getInstance)]
+		(.setTime cal date)
+		(mod (+ (.get cal Calendar/MONTH) 1) 12)))
+
+
+
+(defn month-of-year
+  [date]
+	(str (t/month (t/+ (t/date-time date)
+                     (t/new-duration 12 :hours))) " " (t/year (t/date date))))
+
 
 (defn same-cell? [fluxod-ts ms-ts & {:keys [by-week?] :or {by-week? false}}]
   (let [fluxod-last (-> fluxod-ts :timesheet/end-fluxod)
@@ -86,7 +99,7 @@
 
 
 (def group-by-month 
-  #(str (t/month (t/date (:date %)))))
+  #(str (month-of-year (:date %)) " " (t/year (t/date (:date %)))))
 
 (def group-by-week
   #(str (week-of-year (:date %)) " " (t/year (t/date (:date %)))))
@@ -112,11 +125,8 @@
                                        2
                                        :timesheet/week-number
                                        (week-of-year (-> timesheets first :date))
-
-                                       
-
-                                       
-                                       
+                                       :timesheet/month
+                                       (month-of-year (-> timesheets first :date))
                                        } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month ) fluxod-timesheets))))
@@ -140,6 +150,8 @@
                                    (-> timesheets last :date)
                                    :timesheet/week-number
                                    (week-of-year (-> timesheets first :date))
+                                   :timesheet/month
+                                   (month-of-year (-> timesheets first :date))
                                    } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month) ms-timesheets))))
@@ -147,7 +159,7 @@
 
 
 (pc/defresolver resource-ts [{:keys [connection db] :as env} {:keys [resource-ts/id workplan/max-date workplan/min-date] workplan :workplan/id}]
-  {::pc/input #{:resource-ts/id :workplan/id #_:workplan/min-date}
+  {::pc/input #{:resource-ts/id :workplan/id :workplan/min-date}
    ::pc/output [:resource-ts/id  :resource-ts/name :resource-ts/start-date
                 :workplan/min-date
                 :workplan/max-date
@@ -158,6 +170,7 @@
                                           :timesheet/end-ms
                                           :timesheet/work-fluxod
                                           :timesheet/week-number
+                                          :timesheet/month
                                           :timesheet/work-ms]}]}
 
   (do (println "LAST FOR " (d/q '[:find ?name .
@@ -223,7 +236,7 @@
                                :date
                                (d/q '[:find ?work-fluxod ?date ?fluxod-po
                                       :keys timesheet/work-fluxod date fluxod-po
-                                      :in $ ?rid ?pid ?fluxod-last
+                                      :in $ ?rid ?pid ;?fluxod-last
                                       :where
                                       [?r :resource/id ?rid]
                                       
@@ -250,7 +263,7 @@
                                       ] db
                                         id
                                         workplan
-                                        fluxod-last-date
+                                        ;fluxod-last-date
                                         ))
             
 
@@ -272,7 +285,6 @@
                     
                     [?e :project/id ?pid]
                     [?e :project/assignments ?a]
-                    
                     [?a :assignment/by-day ?date]
                     [?a :assignment/work ?work]
                     [?a :assignment/resource ?r]
@@ -296,17 +308,14 @@
             
             
             
-            resource-ts (cond  (not (seq grouped-ms-timesheets))
-                               grouped-fluxod-timesheets
-                               (not (seq grouped-fluxod-timesheets))
-                               grouped-ms-timesheets
-                               (same-cell?
+            resource-ts (cond
+                          (same-cell?
                                 (last grouped-fluxod-timesheets)
                                 (first grouped-ms-timesheets)
                                 :by-week? by-week?)
 
-                                      (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
-                                      :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
+                          (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
+                          :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
             ]
 
         (println "DATA " (last grouped-fluxod-timesheets))
@@ -314,7 +323,7 @@
         
         
         {:resource-ts/id id
-         :resource-ts/timesheets resource-ts
+         :resource-ts/timesheets (concat grouped-fluxod-timesheets grouped-ms-timesheets)
          :resource-ts/start-date (-> env :query-params :pathom/context :resource-ts/start-date)
          :resource-ts/end-date (-> env :query-params :pathom/context :resource-ts/end-date)
          :resource-ts/name (d/q '[:find ?name .
@@ -361,6 +370,71 @@
                                          id))))})))
 
 (def resolvers  [workplan resource-ts min-max-date])
+
+(comment
+  (group-ms-timesheets
+   (group-by-week (sort-by
+     :date
+     (d/q '[:find ?work ?date
+            :keys timesheet/work-ms date 
+            :in $ ?rid ?pid ?fluxod-last-date 
+            :where
+            [?r :resource/id ?rid]
+                                        ;[?r :resource/name ?rn]
+            
+            
+                                        ;[?pinfo :project-info/fluxod-client-name ?client]
+                                        ;[?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                        ;[?pinfo :project-info/id ?pid]
+            
+            [?e :project/id ?pid]
+            [?e :project/assignments ?a]
+            [?a :assignment/by-day ?date]
+            [?a :assignment/work ?work]
+            [?a :assignment/resource ?r]
+            
+                                        ;[(tick.alpha.api/>= ?date ?fluxod-last-date)] ;; fluxod last-date
+                                        ;[(tick.alpha.api/<= ?date  ?max-date)]
+            [(tick.alpha.api/>= ?date ?fluxod-last-date)]
+            #_[?r :resource/fluxod-name ?fluxod-name]
+            ]
+          (d/db (d/connect db-url))
+                                        ;#uuid "65045544-f9d3-e911-b092-00155de43b0b" ;id
+          #uuid "95d42096-fbd3-e911-b083-00155de88f18"
+          
+          #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60" ;workplan
+          (or
+           (last
+            (sort
+             (d/q '[:find [?date ...]
+                    :in $ ?rid
+                    :where
+                    [?r :resource/id ?rid]
+                    [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                    [?r :resource/fluxod-name ?fluxod-name]
+                    [?fluxod :fluxod-ts/date ?date]]
+                  (d/db (d/connect db-url))
+                  #uuid "95d42096-fbd3-e911-b083-00155de88f18")))
+           (first (sort (d/q '[:find [?date ...]
+                               :in $ ?rid ?id
+                               :where
+                               [?p :project/id ?id]
+                               [?p :project/assignments ?a]
+                               [?a :assignment/by-day ?date]
+                               [?a :assignment/resource ?r]
+                               ;; maybe we dont't need this
+                               [?r :resource/id ?rid ]
+                               ]
+                             
+                             (d/db (d/connect db-url))
+                             #uuid "65045544-f9d3-e911-b092-00155de43b0b"
+                             #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+                             ))));(or fluxod-last-date min-date)
+          )))
+
+   :by-week? false))
+
+
 
 
 
