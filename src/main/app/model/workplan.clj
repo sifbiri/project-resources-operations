@@ -101,8 +101,54 @@
 (def group-by-month 
   #(str (month-of-year (:date %)) " " (t/year (t/date (:date %)))))
 
+(defn month-of-year
+  [date]
+	(str (t/month (t/date date)) " " (t/year (t/date date))))
+
+(defn
+  week-of-year2
+  [inst]
+  (str (week-of-year inst) " " (t/year (t/date inst))))
+
+
+
 (def group-by-week
   #(str (week-of-year (:date %)) " " (t/year (t/date (:date %)))))
+
+
+
+
+
+(defn same-week? [x y]
+  (= (week-of-year2 x) (week-of-year2 y)))
+
+(defn same-month? [x y]
+  (= (month-of-year x) (month-of-year y)))
+
+(defn
+  dates-from-to 
+  [workplan-start workplan-end {:keys [dates] :or {dates :months }}]
+  (if (= dates :weeks)
+    (conj (vec
+           (take-while (fn [x]
+                         (and
+                          (not (same-week? (t/inst x)
+                                           workplan-end))
+                          (t/<= x (t/date-time workplan-end))))
+                       (iterate #(t/+ (t/date-time %)
+                                      (t/new-period 1 :weeks))
+                                (t/date-time workplan-start))))
+          (t/date-time workplan-end))
+
+    
+    (conj (vec (take-while (fn [x]
+                         (and
+                          (not (same-month? (t/date-time x) (t/date-time workplan-end)))
+                          (t/<= x (t/date-time workplan-end))))
+                           (iterate #(t/+ (t/date-time %)
+                                          (t/new-period 1 :months))
+                                    (t/date-time workplan-start))))
+          (t/date-time workplan-end))))
 
 
 (defn group-fluxod-timesheets
@@ -124,13 +170,28 @@
                                        :test-date
                                        2
                                        :timesheet/week-number
-                                       (week-of-year (-> timesheets first :date))
+                                       (week-of-year2 (-> timesheets first :date))
                                        :timesheet/month
                                        (month-of-year (-> timesheets first :date))
                                        } timesheets )))
 
               [] (group-by (if by-week? group-by-week group-by-month ) fluxod-timesheets))))
 
+
+
+(defn fill-resource-ts
+  [resource-ts min max by-week?]
+  (mapv
+   (fn [date]
+     (let [t (first
+              (filter (fn [t] (if by-week?
+                                (= (:timesheet/week-number t) date)
+                                (= (:timesheet/month t) date))) resource-ts))]
+       (or t {})))
+
+   (mapv (if by-week? (comp week-of-year2 t/inst) month-of-year)
+         (dates-from-to min  max
+                        {:dates (if by-week? :weeks :months)}))))
 
 (defn group-ms-timesheets
   [ms-timesheets & {:keys [by-week?] :or {by-week? false}}]
@@ -149,7 +210,7 @@
                                    :timesheet/end-ms
                                    (-> timesheets last :date)
                                    :timesheet/week-number
-                                   (week-of-year (-> timesheets first :date))
+                                   (week-of-year2 (-> timesheets first :date))
                                    :timesheet/month
                                    (month-of-year (-> timesheets first :date))
                                    } timesheets )))
@@ -158,8 +219,14 @@
 
 
 
-(pc/defresolver resource-ts [{:keys [connection db] :as env} {:keys [resource-ts/id workplan/max-date workplan/min-date] workplan :workplan/id}]
-  {::pc/input #{:resource-ts/id :workplan/id :workplan/min-date}
+(pc/defresolver resource-ts [{:keys [connection db] :as env}
+
+                             {:keys [resource-ts/id workplan/max-date workplan/min-date resource/allow-actuals? resource/allow-forecast?]
+                                                              workplan :workplan/id}]
+  {::pc/input #{:resource-ts/id :workplan/id :workplan/min-date :workplan/max-date
+                :resource/allow-actuals?
+                :resource/allow-forecast?
+                }
    ::pc/output [:resource-ts/id  :resource-ts/name :resource-ts/start-date
                 :workplan/min-date
                 :workplan/max-date
@@ -232,81 +299,84 @@
             
             
             
-            fluxod-timesheets (sort-by
-                               :date
-                               (d/q '[:find ?work-fluxod ?date ?fluxod-po
-                                      :keys timesheet/work-fluxod date fluxod-po
-                                      :in $ ?rid ?pid ;?fluxod-last
-                                      :where
-                                      [?r :resource/id ?rid]
-                                      
-                                      [?act :fluxod-ts/activity-type ?t]
-                                      [(= :mission ?t)]
-                                      [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-                                      [?fluxod :fluxod-ts/days ?work-fluxod]
-                                      [?fluxod :fluxod-ts/date ?date]
-                                      
-                                      [?fluxod :fluxod-ts/client ?client]
-                                      [?fluxod :fluxod-ts/po ?fluxod-po]
-                                      
-                                      [?pinfo :project-info/fluxod-client-name ?client]
-                                      [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-                                      [?pinfo :project-info/id ?pid]
-                                      
-                                      [?e :project/id ?pid]
-                                      [?e :project/name ?name]
+            fluxod-timesheets (if allow-forecast?
+                                (sort-by
+                                :date
+                                (d/q '[:find ?work-fluxod ?date ?fluxod-po
+                                       :keys timesheet/work-fluxod date fluxod-po
+                                       :in $ ?rid ?pid ?min ;?fluxod-last
+                                       :where
+                                       [?r :resource/id ?rid]
+                                       
+                                       [?act :fluxod-ts/activity-type ?t]
+                                       [(= :mission ?t)]
+                                       [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+                                       [?fluxod :fluxod-ts/days ?work-fluxod]
+                                       [?fluxod :fluxod-ts/date ?date]
+                                       
+                                       [?fluxod :fluxod-ts/client ?client]
+                                       [?fluxod :fluxod-ts/po ?fluxod-po]
+                                       
+                                       [?pinfo :project-info/fluxod-client-name ?client]
+                                       [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+                                       [?pinfo :project-info/id ?pid]
+                                       
+                                       [?e :project/id ?pid]
+                                       [?e :project/name ?name]
                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
-                                        ;[(tick.alpha.api/>= ?date ?min-date)]
+                                       [(tick.alpha.api/>= ?date ?min)]
                                         ;[(tick.alpha.api/<= ?date ?fluxod-last)]
-                                      
-                                      [?r :resource/fluxod-name ?fluxod-name]
-                                      ] db
-                                        id
-                                        workplan
+                                       
+                                       [?r :resource/fluxod-name ?fluxod-name]
+                                       ] db
+                                         id
+                                         workplan
+                                         min-date
                                         ;fluxod-last-date
-                                        ))
+                                         ))
+                                [])
             
 
             
             ms-timesheets
-            (sort-by
-             :date
-             (d/q '[:find ?work ?date
-                    :keys timesheet/work-ms date 
-                    :in $ ?rid ?pid ?fluxod-last-date 
-                    :where
-                    [?r :resource/id ?rid]
+            (if allow-actuals?
+              (sort-by
+              :date
+              (d/q '[:find ?work ?date
+                     :keys timesheet/work-ms date 
+                     :in $ ?rid ?pid ?fluxod-last-date ?max-date
+                     :where
+                     [?r :resource/id ?rid]
                                         ;[?r :resource/name ?rn]
-                    
-                    
+                     
+                     
                                         ;[?pinfo :project-info/fluxod-client-name ?client]
                                         ;[?pinfo :project-info/fluxod-project-names ?fluxod-po]
                                         ;[?pinfo :project-info/id ?pid]
-                    
-                    [?e :project/id ?pid]
-                    [?e :project/assignments ?a]
-                    [?a :assignment/by-day ?date]
-                    [?a :assignment/work ?work]
-                    [?a :assignment/resource ?r]
-                    
-                    [(tick.alpha.api/>= ?date ?fluxod-last-date)] ;; fluxod last-date
-                                        ;[(tick.alpha.api/<= ?date  ?max-date)]
-                    #_[?r :resource/fluxod-name ?fluxod-name]
-                    ]
-                  db
-                  id
-                  workplan
-                  (or fluxod-last-date min-date)
-                  ))
-
+                     
+                     [?e :project/id ?pid]
+                     [?e :project/assignments ?a]
+                     [?a :assignment/by-day ?date]
+                     [?a :assignment/work ?work]
+                     [?a :assignment/resource ?r]
+                     
+                     [(tick.alpha.api/>= ?date ?fluxod-last-date)] ;; fluxod last-date
+                     [(tick.alpha.api/<= ?date  ?max-date)]
+                     #_[?r :resource/fluxod-name ?fluxod-name]
+                     ]
+                   db
+                   id
+                   workplan
+                   (or fluxod-last-date min-date)
+                   max-date
+                   ))
+              [])
 
             grouped-fluxod-timesheets
             (group-fluxod-timesheets fluxod-timesheets :by-week? by-week?)
 
             grouped-ms-timesheets
             (group-ms-timesheets ms-timesheets :by-week? by-week?)
-            
-            
             
             resource-ts (cond
                           (same-cell?
@@ -316,14 +386,16 @@
 
                           (merge-timesheets grouped-fluxod-timesheets grouped-ms-timesheets)
                           :else (concat grouped-fluxod-timesheets grouped-ms-timesheets))
-            ]
 
-        (println "DATA " (last grouped-fluxod-timesheets))
+            filled-resource-ts
+            (fill-resource-ts resource-ts min-date max-date by-week?)]
+
+        
         
         
         
         {:resource-ts/id id
-         :resource-ts/timesheets (concat grouped-fluxod-timesheets grouped-ms-timesheets)
+         :resource-ts/timesheets filled-resource-ts
          :resource-ts/start-date (-> env :query-params :pathom/context :resource-ts/start-date)
          :resource-ts/end-date (-> env :query-params :pathom/context :resource-ts/end-date)
          :resource-ts/name (d/q '[:find ?name .
@@ -331,6 +403,11 @@
                                   :where
                                   [?r :resource/id ?id]
                                   [?r :resource/name ?name]] db id)})))
+
+
+
+
+(def resource-ts->resource (pc/alias-resolver2 :resource/id :resource-ts/id))
 
 (pc/defresolver workplan  [{:keys [connection db] :as env} {:keys [workplan/id]}]
   {::pc/input #{:workplan/id}
@@ -369,7 +446,26 @@
                                        ] db
                                          id))))})))
 
-(def resolvers  [workplan resource-ts min-max-date])
+
+(pc/defresolver actuals-forcecats [{:keys [connection db] :as env} {:keys [resource-ts/id]}]
+  {::pc/input #{:resource-ts/id}
+   ::pc/output [:resource/allow-actuals? :resource/allow-forecast? :resource-ts/id]}
+
+  (let [r (d/q '[:find ?allow-actuals ?allow-forecast ?rid
+                 :keys resource/allow-actuals? resource/allow-forecast?  resource-ts/id
+                 :in $ ?rid
+                 :where
+                 [?r :resource/id ?rid]
+                 [?r :resource/allow-actuals ?allow-actuals]
+                 [?r :resource/allow-forecast ?allow-forecast]]
+               db
+               id)]
+    (merge
+     {:resource/allow-actuals? false :resource/allow-forecast? false :resource-ts/id id}
+     (if (vector? r) {} r))))
+
+
+(def resolvers  [workplan resource-ts min-max-date actuals-forcecats resource-ts->resource])
 
 (comment
   (group-ms-timesheets
@@ -433,6 +529,7 @@
           )))
 
    :by-week? false))
+
 
 
 

@@ -2,6 +2,7 @@
   (:require [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.algorithms.merge :as merge]
+            [com.fulcrologic.fulcro.algorithms.normalized-state :as ns]
             [clojure.set :as set]
             ;[app.ui.root :refer [ResourceCheckboxItem]]
             [app.math :as math]
@@ -77,5 +78,21 @@
             (swap! state assoc-in [:resource/id id :resource/active?] value)
             (swap! state assoc-in [:checkbox/id id :resource/active?] value)))
 
-  (remote [env]
+  (remote [{:keys [ast ref]}]
           true))
+
+(defmutation set-resource-actuals? [{:keys [value]}]
+  (action [{:keys [state] :as env}]
+          (ns/update-caller! env assoc :resource/allow-actuals? value))
+
+  (remote [{:keys [ast ref]}]
+          (let [params (get ast :params)]
+            (assoc ast :params (merge params {:id (second ref)})))))
+
+(defmutation set-resource-forecast? [{:keys [value]}]
+  (action [{:keys [state] :as env}]
+          (ns/update-caller! env assoc :resource/allow-forecast? value))
+
+  (remote [{:keys [ast ref]}]
+          (let [params (get ast :params)]
+            (assoc ast :params (merge params {:id (second ref)})))))

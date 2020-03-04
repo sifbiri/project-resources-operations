@@ -33,13 +33,30 @@
          (str/split (t/date inst) #"-")
          )]
     (goog.date.getWeekNumber year (- month 1) day)
-    )
-  )
+    ))
+
 (defn same-week? [date1 date2]
   (and (= (week-number date1)
           (week-number date2))
        (= (t/year date1)
           (t/year date2))))
+
+(defn timesheet-+
+  ([] 0)
+  ([t1] (+ (or (:timesheet/work-fluxod t1) 0)
+           (or (:timesheet/work-ms t1) 0)))
+  ([t1 t2]
+     (+ (or (:timesheet/work-fluxod t1) 0)
+        (or (:timesheet/work-fluxod t2) 0)
+        (or (:timesheet/work-ms t1) 0)
+        (or (:timesheet/work-ms t2) 0)))
+
+  ([t1 t2 & more]
+     (reduce (fn [acc t]
+               (+ acc (timesheet-+ acc t) )) (timesheet-+ t1 t2) more)))
+
+
+
 (defn my [x ]
   (+ 1 x))
 (defn

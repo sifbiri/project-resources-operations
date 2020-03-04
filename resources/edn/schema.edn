@@ -980,6 +980,27 @@
 
  {:db/id #db/id[:db.part/db]
 
+  :db/ident :resource/allow-actuals?
+
+  
+  :db/valueType :db.type/boolean
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :resource/allow-forecast?
+  
+  :db/valueType :db.type/boolean
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
   :db/ident :resource/name
 
   :db/valueType :db.type/string

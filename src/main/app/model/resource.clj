@@ -51,6 +51,31 @@
   {:resource/id id})
 
 
+(pc/defmutation set-resource-actuals? [{:keys [db connection]} {:keys [id value]}]
+  {::pc/sym `set-resource-actuals?
+   ::pc/params [:id :val]
+   ::pc/output [:resource/id]}
+
+  
+  
+  (d/transact connection
+              [{:db/id [:resource/id id] :resource/allow-actuals? value}])
+  
+  {:resource/id id})
+
+
+(pc/defmutation set-resource-forecast? [{:keys [db connection]} {:keys [id value]}]
+  {::pc/sym `set-resource-forecast?
+   ::pc/params [:id :val]
+   ::pc/output [:resource/id]}
+
+    
+  (d/transact connection
+              [{:db/id [:resource/id id] :resource/allow-forecast? value}])
+  
+  {:resource/id id})
+
+
 (pc/defresolver all-resources-resolver [{:keys [db connection]} _]
   {::pc/output [{:resource/all-resources [:resource/id :resource/name :resource/email-address]}]}
   {:resource/all-resources (map #(d/touch (d/entity  db [:resource/id (:resource/id %)]))
@@ -60,4 +85,4 @@
                                                       [?e :resource/id ?f]
                                                       ] db))))})
 
-(def resolvers  [set-resource-profile resource-resolver all-resources-resolver set-resource-active? ])
+(def resolvers  [set-resource-profile resource-resolver all-resources-resolver set-resource-active? set-resource-actuals? set-resource-forecast?])

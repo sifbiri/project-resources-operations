@@ -253,73 +253,26 @@
             }} name)]
 
 
-        (if (= by-date :weeks )
-          ;; by week
-          (mapv
-           (fn [[week-number month-of-year]]
-             (js/console.log "MOY" month-of-year)
-             (let [t (first
-                      (filter (fn [t] (and (= (:timesheet/week-number t) week-number)
-                                           ;(= (:timesheet/month t) month-of-year)
-                                           ))
-                              timesheets))]
-               (get-table-cell t)))
-
-           (mapv (juxt workplan/week-number workplan/month-of-year)
-                 (workplan/dates-from-to min  max #_(if by-week?
-                                                      #_(t/+ (t/date-time max-date)
-                                                             (t/new-duration 25 :hours))
-                                                      
-                                                      )
-                                         {:dates by-date})))
-
-
-
-
-          ;; by-months
-          (mapv
-           (fn [month]
-             (let [t (first
-                      (filter (fn [t] (= (:timesheet/month t) month)) timesheets))]
-               (get-table-cell t)))
-
-           (mapv workplan/month-of-year
-                 (workplan/dates-from-to min  max #_(if by-week?
-                                                      #_(t/+ (t/date-time max-date)
-                                                             (t/new-duration 25 :hours))
-                                                      
-                                                      )
-                                         {:dates by-date})))
-          
-          #_(mapv
-
-           (fn [my]
-
-             (let [t (first (filter (fn [t]
-                                      (let [date (or (:timesheet/start-ms t)
-                                                     (:timesheet/start-fluxod t))]
-                                        (= (str (t/month (t/date-time date)) " " (t/year (t/date-time date))) my)))
-                                    timesheets))]
-               (get-table-cell t)
-
-               ))
-           
-           
+        (conj
+         (if (= by-date :weeks )
+           ;; by week
            (mapv
-            #(str (t/month (t/date-time %)) " " (t/year (t/date-time %)))
-            (workplan/dates-from-to min  max #_(if by-week?
-                                                 #_(t/+ (t/date-time max-date)
-                                                        (t/new-duration 25 :hours))
-                                                 
-                                                 )
-                                    {:dates by-date})
-            ))))
-        
+            (fn [t]
+              
+              (get-table-cell t))
 
-        
-        )
-      
-      
+            timesheets)
+
+
+
+
+           ;; by-months
+           (mapv
+            (fn [t]
+              (get-table-cell t))
+            timesheets))
+         (ui-table-cell {}
+                        (goog.string.format "%.1f" (apply workplan/timesheet-+ timesheets))))))
 
       
       
@@ -525,21 +478,54 @@
                            (str (format-date %))                            ))
 
 
-               (workplan/dates-from-to min  max #_(if by-week?
+               (workplan/dates-from-to min-date  max-date #_(if by-week?
                                                     #_(t/+ (t/date-time max-date)
                                                            (t/new-duration 25 :hours))
                                                     
                                                     )
                                        {:dates (if by-week? :weeks :months)})
                #_(range (inc (workplan/week-number min))
-                      (workplan/week-number max)))
+                        (workplan/week-number max)))
+
+         (ui-table-header-cell {:style
+                                {:position "sticky"
+                                 :left  0
+                                 :top 0
+                                 :background "white"
+                                 :color "black"
+                                 :zIndex 1
+                                 }}  "Total")
+         
          )
         )
        (ui-table-body
         {}
         (mapv (fn [resource-ts]
                 (ui-resource-timesheet (comp/computed resource-ts {:ui/by-week? by-week? :min min :max max})))
-              resources-ts))))])))
+              resources-ts)
+        (ui-table-row
+         {}
+         (concat
+          [
+           (ui-table-cell
+            {:style
+             {:position "sticky"
+              :left  0
+              :background "#3281b9"
+              :color "white"
+              
+              }} "Total")]
+
+
+
+          (mapv
+           #(ui-table-cell {} (goog.string.format "%.1f" %))
+
+           (apply mapv workplan/timesheet-+
+                  (map :resource-ts/timesheets resources-ts)))
+
+
+          )))))])))
 
 
 

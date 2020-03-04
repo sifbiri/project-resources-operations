@@ -366,15 +366,14 @@
    
    }
   
-  (when id
-    (first (d/q '[:find ?name ?ea
-                 :in $ ?id
-                 :keys resource/name resource/email-address
-                 :where
-                 [?r :resource/id ?id]
-                 [?r :resource/name ?name]
-                 [?r :resource/email-address ?ea]
-                  ] db (api/uuid id)))))
+  (first (d/q '[:find ?name ?ea
+                :in $ ?id
+                :keys resource/name resource/email-address
+                :where
+                [?r :resource/id ?id]
+                [?r :resource/name ?name]
+                [?r :resource/email-address ?ea]
+                ] db (api/uuid id))))
 
 
 
@@ -1105,22 +1104,22 @@
   {::pc/input #{:project/id}
    ::pc/output [:project/id   :project/modified-date :project/last-published-date 
                 :project/created-date]}
-  (d/q  '[:find ?pi  ?pm ?pl  ?pc ?pw
-          :keys project/id   project/modified-date project/last-published-date 
-          project/created-date project/work
-          :in $ ?pi
-          :where
-          
-          [?p :project/id ?pi]
-          [?p :project/name ?pn]
-          
-          [?p :project/modified-date ?pm]
-          [?p :project/last-published-date ?pl]
-          
-          [?p :project/created-date ?pc]
-          [?p :project/work ?pw]
-          
-          ] (d/db conn) id))
+  (first (d/q  '[:find ?pi  ?pm ?pl  ?pc ?pw
+           :keys project/id   project/modified-date project/last-published-date 
+           project/created-date project/work
+           :in $ ?pi
+           :where
+           
+           [?p :project/id ?pi]
+           [?p :project/name ?pn]
+           
+           [?p :project/modified-date ?pm]
+           [?p :project/last-published-date ?pl]
+           
+           [?p :project/created-date ?pc]
+           [?p :project/work ?pw]
+           
+           ] (d/db conn) id)))
 
 
 

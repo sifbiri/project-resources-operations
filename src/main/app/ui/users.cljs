@@ -118,8 +118,9 @@
 
 
 (defsc Resource
-  [this {:resource/keys [id name email-address fluxod-name profile active?]}]
-  {:query [:resource/id :resource/name  :resource/email-address :resource/fluxod-name :resource/active? :resource/profile]
+  [this {:resource/keys [id name email-address fluxod-name profile active? allow-actuals? allow-forecast?]}]
+  {:query [:resource/id :resource/name  :resource/email-address :resource/fluxod-name :resource/active? :resource/profile
+           :resource/allow-actuals? :resource/allow-forecast?]
    :ident :resource/id
    :pre-merge (fn [{:keys [current-normalized data-tree]}]
                 
@@ -181,6 +182,36 @@
          (fn [e d]
            (m/toggle! this :resource/active?)
            (comp/transact! this [(resource/set-resource-active?
+                                  {:value  (.-checked d) :id id})]))}))))
+
+    (ui-table-cell
+     {}
+     (ui-form
+      {}
+      (ui-form-field
+       {}
+       (ui-form-checkbox
+        {
+         :checked allow-actuals?
+         :onChange
+         (fn [e d]
+           #_(m/toggle! this :resource/active?)
+           (comp/transact! this [(resource/set-resource-actuals?
+                                  {:value  (.-checked d)})]))}))))
+
+    (ui-table-cell
+     {}
+     (ui-form
+      {}
+      (ui-form-field
+       {}
+       (ui-form-checkbox
+        {
+         :checked allow-forecast?
+         :onChange
+         (fn [e d]
+           (m/toggle! this :resource/active?)
+           (comp/transact! this [(resource/set-resource-forecast?
                                   {:value  (.-checked d) :id id})]))}))))])
 
   )
@@ -238,7 +269,8 @@
                       {:fullWidth true :style {:position "sticky" :top 0}}
                       (ui-table-row
                        {}
-                       (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["MS Name" "Fluxod Name" "Email" "Profile" "Enable"])))
+                       (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
+                                                                                              "Enable" "Allow Actuals" "Allow Forecast"])))
                      (ui-table-body
                       {}
                       (mapv ui-resource resources))))
