@@ -237,8 +237,8 @@
 
     
     
-    (when
-        (seq timesheets)
+    (when-not
+        (every? empty? timesheets)
       (ui-table-row
        {}
        (concat
