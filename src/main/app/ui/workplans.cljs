@@ -518,11 +518,13 @@
 
 
 
-          (mapv
-           #(ui-table-cell {} (goog.string.format "%.1f" %))
+          (conj
+           (mapv
+            #(ui-table-cell {} (goog.string.format "%.1f" %))
 
-           (apply mapv workplan/timesheet-+
-                  (map :resource-ts/timesheets resources-ts)))
+            (apply mapv workplan/timesheet-+
+                   (map :resource-ts/timesheets resources-ts)))
+           (ui-table-cell {} ""))
 
 
           )))))])))

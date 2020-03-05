@@ -1047,7 +1047,8 @@
 (def ui-project-info2 (comp/factory ProjectInfo2))
 
 (defsc ProjectInfo [this {:project-info/keys [start-date modified-date finish-date id new  name    finish-date project-lead functional-lead
-                                              technical-lead status phase entity fluxod-name fluxod-project-names fluxod-client-name]
+                                              technical-lead status phase entity fluxod-name fluxod-project-names fluxod-client-name
+                                              last-published-date]
                            
                           :ui/keys [loading? new-fluxod-project-name] :as props}]
   {:query [:project-info/id :project-info/modified-date :project-info/start-date  :project-info/finish-date
@@ -1163,7 +1164,7 @@
                      
                      (ui-form-input  {:label "Modified Date" :type "datetime-local" :readOnly true
                                       :value
-                                        (str-date modified-date )
+                                        (str-date last-published-date )
 
                                       :onChange
                                       (fn [e d] )})

@@ -1226,8 +1226,8 @@
   {::pc/output [{:projects [:project/id :project/name]}]}
   (let [id (get-in env [:ast :params :resource/id])]
     {:projects (mapv (fn [row]
-                      (zipmap [:project/name :project/id :project/modified-date :project/last-published-date] row))
-                    (d/q  '[:find ?pn ?pi ?last-modified ?last-published
+                      (zipmap [:project/name :project/id  :project/last-published-date] row))
+                    (d/q  '[:find ?pn ?pi  ?last-published
                             :in $ ?id
                             
                             :where

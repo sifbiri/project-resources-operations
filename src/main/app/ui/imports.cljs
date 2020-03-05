@@ -190,8 +190,10 @@
 
 (def ui-import (comp/factory Import {:keyfn :import/id}))
 
-(defsc ImportMain [this {:ui/keys [modal-open?] :imports/keys [new-import imports] :as props}]
-  {:query         [:ui/modal-open? {:imports/new-import (comp/get-query Import)} {:imports/imports (comp/get-query Import)}]
+(defsc ImportMain [this {:ui/keys
+                         [modal-open? progress] :imports/keys [new-import imports] :as props}]
+  {:query         [:ui/modal-open? {:imports/new-import (comp/get-query Import)} {:imports/imports (comp/get-query Import)}
+                   :ui/progress]
    :ident         (fn [] [:component/id :imports])
    :route-segment ["imports"]
    :will-enter (fn [app {:keys [] :as params}]
@@ -210,6 +212,8 @@
   (log/info "VAL OF" (:import/start-period new-import))
   (js/console.log "IMPORTS" imports)
   (ui-container {}
+                #_(dom/span {} (str "Progress: " progress))
+
                 (ui-table
                  {:style
                   {:fontSize   "85%"
@@ -265,63 +269,73 @@
                                       :selection   true
                                       :search      true
                                       :options
-                                      [{:text "Fluxod TimeSheet" :value :fluxod-timesheet}]
+                                      [{:text "Fluxod timesheet" :value :fluxod-timesheet}
+                                       {:text "MS project" :value :ms-project}]
                                       :value       (:import/type new-import)
-                                      :onChange    (fn [e d])})]}
+                                      :onChange    (fn [e d]
+                                                     
+                                                     (comp/transact! this [(import/set-new-import-type {:val (keyword (comp/isoget d :value))})]))})]}
                          
                          ))
-                       (ui-form-group
-                        {}
-                        (ui-form-field
-                         {:inline true}
-                         (dom/label
-                          {} "File")
-                         (ui-input
-                          {:type     "file"
-                           :style
-                           {:margin "0px"}
+                       (when (= (:import/type new-import) :fluxod-timesheet)
+                         [(ui-form-group
+                          {}
+                          (ui-form-field
+                           {:inline true}
+                           (dom/label
+                            {} "File")
+                           (ui-input
+                            {:type     "file"
+                             :style
+                             {:margin "0px"}
                                         ;:accept   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-                           ;; Set `:multiple true` if you want to upload more than one at a time
-                           :onChange
-                           (fn [evt]
-                             (let [files
-                                   (file-upload/evt->uploads evt)]
-                               
-                               #_(js/console.log {:upload (-> files first :file/content meta)})
-                               
-                               (comp/transact!
-                                this
-                                [(import/set-import-files {:files files})
-                                 (import/produce-dates-from-file
-                                  (-> files first (select-keys [:file/name]) ))]
-                                {:optimistic? true})
-                               ))
+                             ;; Set `:multiple true` if you want to upload more than one at a time
+                             :onChange
+                             (fn [evt]
+                               (let [files
+                                     (file-upload/evt->uploads evt)]
+                                 
+                                 #_(js/console.log {:upload (-> files first :file/content meta)})
+                                 
+                                 (comp/transact!
+                                  this
+                                  [(import/set-import-files {:files files})
+                                   (import/produce-dates-from-file
+                                    (-> files first (select-keys [:file/name]) ))]
+                                  {:optimistic? true})
+                                 ))
                                         ;:icon (ui-icon {:name "file outline"} )
-                           })))
-                       (ui-form-group
-                        {}
-                        (ui-form-field
-                         {:inline true}
-                         (dom/label {} "Start Period")
-                         (ui-input
-                          {:type     "date"
-                           :value
-                           (import/period-to-string (:import/start-period new-import))
-                           :onChange (fn [e e1]
-                                       (let [v (js/Date. (evt/target-value e))]
-                                         (comp/transact! this [(import/set-start-period {:import/start-period v})])))})))
-                       (ui-form-group
-                        {}
-                        (ui-form-field
-                         {:inline true}
-                         (dom/label {} "Start Period")
-                         (ui-input
-                          {:type     "date"
-                           :value
-                           (import/period-to-string (:import/end-period new-import))
-                           :onChange (fn [e e1]
-                                       (let [v (js/Date. (evt/target-value e))]
-                                         (comp/transact! this [(import/set-end-period {:import/end-period v})])))})))))
+                             })))
+                         (ui-form-group
+                          {}
+                          (ui-form-field
+                           {:inline true}
+                           (dom/label {} "Start Period")
+                           (ui-input
+                            {:type     "date"
+                             :value
+                             (import/period-to-string (:import/start-period new-import))
+                             :onChange (fn [e e1]
+                                         (let [v (js/Date. (evt/target-value e))]
+                                           (comp/transact! this [(import/set-start-period {:import/start-period v})])))})))
+                         (ui-form-group
+                          {}
+                          (ui-form-field
+                           {:inline true}
+                           (dom/label {} "Start Period")
+                           (ui-input
+                            {:type     "date"
+                             :value
+                             (import/period-to-string (:import/end-period new-import))
+                             :onChange (fn [e e1]
+                                         (let [v (js/Date. (evt/target-value e))]
+                                           (comp/transact! this [(import/set-end-period {:import/end-period v})])))})))])
+
+
+
+                       
+
+                       ))
                      (ui-modal-actions
                       {}
                       [(ui-button
@@ -334,10 +348,17 @@
                                                 (let
                                                     [files (:import/files new-import)]
                                                   
-                                                  (comp/transact!
-                                                   this
-                                                   [(import/import-file
-                                                     (file-upload/attach-uploads {:new-import (assoc new-import :import/time (t/inst (t/now)))} files))])
+                                                  (cond (= (:import/type new-import) :fluxod-timesheet)
+                                                        (comp/transact!
+                                                         this
+                                                         [(import/import-file
+                                                           (file-upload/attach-uploads {:new-import (assoc new-import :import/time (t/inst (t/now)))} files))])
+
+                                                        (= (:import/type new-import) :ms-project)
+                                                        (comp/transact!
+                                                         this
+                                                         [(import/update-db
+                                                           {})]))
                                                   (m/toggle! this :ui/modal-open?)
                                                   
                                                   ))}

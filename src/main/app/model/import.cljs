@@ -17,6 +17,8 @@
             
             [com.fulcrologic.fulcro.algorithms.form-state :as fs]
             [com.fulcrologic.fulcro.algorithms.denormalize :as fdn]
+            [com.fulcrologic.fulcro.networking.http-remote :as http-remote]
+
             [taoensso.timbre :as log]
             [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]))
@@ -31,9 +33,28 @@
        (str/join "")))
 
 
+(defmutation set-new-import-type [{:keys [:val]}]
+  (action [{:keys [state ref] :as env}]
+          (ns/update-caller-in! env [:imports/new-import ] assoc :import/type val)))
+
+(defmutation update-db [{:keys [:val]}]
+  (action [{:keys [state ref] :as env}]
+          (ns/update-caller-in! env [:imports/new-import ] assoc :import/type val))
+  (remote
+   [env]
+   true)
+  (progress-action
+   [{:keys [state ref] :as env}]
+   (swap! state assoc-in [:component/id :imports :ui/progress]
+          (http-remote/overall-progress env) ))
+  (ok-action
+   [env]
+   (js/alert "Update finished")))
+
+
 (defmutation set-import-files [{:keys [:files]}]
   (action [{:keys [state ref] :as env}]
-          (ns/update-caller-in! env [:imports/new-import ] assoc :import/files files)))
+          (ns/update-caller-in! env [:imports/new-import] assoc :import/files files)))
 
 (defmutation set-start-period [{:keys [:import/start-period]}]
   (action [{:keys [state ref] :as env}]

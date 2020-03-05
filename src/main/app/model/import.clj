@@ -9,6 +9,7 @@
    [clojure.set :as set]
    [app.model.api :as api]
    [dk.ative.docjure.spreadsheet :as s]
+   [app.model.api :as api]
    [tick.alpha.api :as t]
    [clojure.string :as str]
    [clojure.java.io :as io]
@@ -177,7 +178,16 @@
      :file/name      filename
      :file/source    f}))
 
-(def resolvers [import-file name->fluxod-name all-imports import get-import-file])
+(pc/defmutation
+  update-db
+  [{:keys [env connection] :as env} {:keys []}]
+  {::pc/input []
+   ::pc/output []}
+  (do
+    (api/update-db)
+    {}))
+
+(def resolvers [import-file name->fluxod-name all-imports import get-import-file update-db])
 
 
 
