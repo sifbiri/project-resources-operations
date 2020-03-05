@@ -240,33 +240,8 @@
                                           :timesheet/month
                                           :timesheet/work-ms]}]}
 
-  (do (println "LAST FOR " (d/q '[:find ?name .
-                                  :in $ ?id
-                                  :where
-                                  [?r :resource/id ?id]
-                                  [?r :resource/name ?name]] db id)
-               "  WE HAVE "
-               (or
-                (last
-                 (sort
-                  (d/q '[:find [?date ...]
-                         :in $ ?rid
-                         :where
-                         [?r :resource/id ?rid]
-                         [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-                         [?r :resource/fluxod-name ?fluxod-name]
-                         [?fluxod :fluxod-ts/date ?date]]
-                       db
-                       id)))
-                (first (sort (d/q '[:find [?date ...]
-                                    :in $ ?id
-                                    :where
-                                    [?p :project/id ?id]
-                                    [?p :project/assignments ?a]
-                                    [?a :assignment/by-day ?date]]
-                                  db
-                                  id
-                                  )))))
+  (do (println "allow-forecast" allow-forecast?)
+      (println "allow-actuals" allow-actuals?)
       (let [by-week? (= (-> env :query-params :by) :week)
 
             fluxod-last-date (or
@@ -339,7 +314,7 @@
 
             
             ms-timesheets
-            (if allow-actuals?
+            (if allow-forecast?
               (sort-by
               :date
               (d/q '[:find ?work ?date
@@ -451,18 +426,18 @@
   {::pc/input #{:resource-ts/id}
    ::pc/output [:resource/allow-actuals? :resource/allow-forecast? :resource-ts/id]}
 
-  (let [r (d/q '[:find ?allow-actuals ?allow-forecast ?rid
-                 :keys resource/allow-actuals? resource/allow-forecast?  resource-ts/id
-                 :in $ ?rid
-                 :where
-                 [?r :resource/id ?rid]
-                 [?r :resource/allow-actuals ?allow-actuals]
-                 [?r :resource/allow-forecast ?allow-forecast]]
-               db
-               id)]
-    (merge
-     {:resource/allow-actuals? false :resource/allow-forecast? false :resource-ts/id id}
-     (if (vector? r) {} r))))
+  (let [r (first (d/q '[:find ?actuals ?forecast ?rid
+                        :keys resource/allow-actuals? resource/allow-forecast? resource-ts/id
+                  :in $ ?rid
+                  :where
+                  [?r :resource/id ?rid]
+                                        ;[?r :resource/allow-actuals ?allow-actuals]
+                                        ;[?r :resource/allow-forecast ?allow-forecast]
+                  [?r :resource/allow-forecast? ?forecast]
+                  [?r :resource/allow-actuals? ?actuals]]
+                db
+                id))]
+    (or r {:resource/allow-actuals? false :resource/allow-forecast? false :resource-ts/id id})))
 
 
 (def resolvers  [workplan resource-ts min-max-date actuals-forcecats resource-ts->resource])
@@ -535,3 +510,16 @@
 
 
 
+(let [r (d/q '[:find #_?allow-actuals #_?allow-forecast ?rid
+               :keys #_resource/allow-actuals? #_resource/allow-forecast?  resource-ts/id
+               :in $ ?name
+               :where
+               [?r :resource/id ?rid]
+               ;[?r :resource/allow-actuals ?allow-actuals]
+               ;[?r :resource/allow-forecast ?allow-forecast]
+               [?r  :resource/name ?name]]
+             (d/db (d/connect db-url))
+             #uuid "68045544-f9d3-e911-b092-00155de43b0b")]
+  (merge
+   {:resource/allow-actuals? false :resource/allow-forecast? false :resource-ts/id #uuid "68045544-f9d3-e911-b092-00155de43b0b"}
+   (if (vector? r) {} r)))

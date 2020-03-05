@@ -210,7 +210,7 @@
          :checked allow-forecast?
          :onChange
          (fn [e d]
-           (m/toggle! this :resource/active?)
+           
            (comp/transact! this [(resource/set-resource-forecast?
                                   {:value  (.-checked d) :id id})]))}))))])
 

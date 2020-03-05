@@ -55,9 +55,6 @@
   {::pc/sym `set-resource-actuals?
    ::pc/params [:id :val]
    ::pc/output [:resource/id]}
-
-  
-  
   (d/transact connection
               [{:db/id [:resource/id id] :resource/allow-actuals? value}])
   
