@@ -61,6 +61,16 @@
   {:resource/id id})
 
 
+(pc/defmutation set-resource-hlcr [{:keys [db connection]} {:keys [id value]}]
+  {::pc/sym `set-resource-hlcr
+   ::pc/params [:id :val]
+   ::pc/output [:resource/id]}
+  (d/transact connection
+              [{:db/id [:resource/id id] :resource/hlcr value}])
+  
+  {:resource/id id})
+
+
 
 (pc/defmutation set-resource-active? [{:keys [db connection]} {:keys [id value]}]
   {::pc/sym `set-resource-active?
@@ -103,4 +113,5 @@
                                                       [?e :resource/id ?f]
                                                       ] db))))})
 
-(def resolvers  [resource-profile set-resource-profile resource-resolver all-resources-resolver set-resource-active? set-resource-actuals? set-resource-forecast?])
+(def resolvers  [resource-profile set-resource-profile resource-resolver all-resources-resolver set-resource-active? set-resource-actuals? set-resource-forecast?
+                 set-resource-hlcr])

@@ -118,8 +118,9 @@
 
 
 (defsc Resource
-  [this {:resource/keys [id name email-address fluxod-name profile active? allow-actuals? allow-forecast?] :as props}]
+  [this {:resource/keys [id name email-address fluxod-name profile active? allow-actuals? allow-forecast? hlcr] :as props}]
   {:query [:resource/id :resource/name  :resource/email-address :resource/fluxod-name :resource/active? :resource/profile
+           :resource/hlcr
            :resource/allow-actuals? :resource/allow-forecast?
            [:component/id :session]]
    :ident :resource/id
@@ -160,14 +161,15 @@
      (cond
        (= current-profile :profile/team-leader)
        
-       (ui-table-cell {}({:profile/admin "Admin"
+       (ui-table-cell {}
+                      ({:profile/admin "Admin"
                           :profile/project-manager "Project Manager"
                           :profile/user "User"
                           :profile/project-leader "Project Leader"} profile))
 
        (= current-profile :profile/admin)
        (ui-table-cell
-        {}
+        {:singleLine true :textAlign :right}
         (ui-dropdown
          {:compact true :basic true 
           :options [{:text "Admin" :value :profile/admin}
@@ -180,9 +182,7 @@
           :onChange (fn [event data]
                       (comp/transact!
                        this
-                       [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
-                      
-                      )
+                       [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})]))
           }))
        :else
        (ui-table-cell {} ""))
@@ -229,7 +229,35 @@
           (fn [e d]
             
             (comp/transact! this [(resource/set-resource-forecast?
-                                   {:value  (.-checked d) :id id})]))}))))]))
+                                   {:value  (.-checked d) :id id})]))}))))
+
+     (cond
+       (= current-profile :profile/team-leader)
+       
+       (ui-table-cell {:singleLine true}
+                      (or
+                       ({:currency/CAD "CAD"
+                         :currency/EUR "EUR"
+                         :currency/USD "USD"} hlcr) ""))
+
+       (= current-profile :profile/admin)
+       (ui-table-cell
+        {:textAlign :right :singleLine true}
+        (ui-dropdown
+         {:compact true :basic true 
+          :options [{:text "EUR" :value :currency/EUR}
+                    {:text "CAD" :value :currency/CAD}
+                    {:text "USD" :value :currency/USD}]
+
+          ;; TODO handle this on the server 
+          :value  (or hlcr "Not found")
+          :onChange (fn [event data]
+                      (comp/transact!
+                       this
+                       [(resource/set-resource-hlcr {:value (keyword (str "currency/" (.-value data))) :id id})]))
+          }))
+       :else
+       (ui-table-cell {} ""))]))
 
   )
 
@@ -285,7 +313,9 @@
                        {}
                        (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0
                                                               :zIndex 2}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
-                                                                                              "Enable" "Allow Actuals" "Allow Forecast"])))
+                                                                              "Enable" "Allow Actuals"
+                                                                              "Allow Forecast"
+                                                                              "HLCR"])))
                      (ui-table-body
                       {}
                       (mapv ui-resource resources))))

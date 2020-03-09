@@ -1076,6 +1076,16 @@
   :db/cardinality :db.cardinality/one
   
   }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :resource/hlcr
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
  
 
  {:db/ident :profile/admin}

@@ -71,6 +71,16 @@
           (let [Resource (comp/registry-key->class :app.ui.users/Resource)]
             true)))
 
+(defmutation set-resource-hlcr [{:keys [id value]}]
+  (action [{:keys [state]}]
+          (let [tasks (vals (get @state :task/id))]
+            (swap! state assoc-in [:resource/id id :resource/hlcr] value)))
+
+  (remote [env]
+          true))
+
+
+
 
 (defmutation set-resource-active? [{:keys [id value]}]
   (action [{:keys [state]}]
