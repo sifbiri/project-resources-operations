@@ -31,6 +31,8 @@
             
             }
 
+           com.cerner/clara-rules {:mvn/version "0.20.0"}
+
            fulcrologic/fulcro-rad
            {:git/url "https://github.com/fulcrologic/fulcro-rad.git" :sha "355dc83387b32529193a5444f3674bbadbbee4ed"
             

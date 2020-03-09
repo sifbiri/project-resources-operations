@@ -414,12 +414,12 @@
 
                                       (ui-table-cell {:error (t/< due-date (t/inst (t/now)))} (apply str (take 10 (str (t/instant due-date)))))
                                       (ui-table-cell {} (ui-icon {:name "times"
-                                                          :basic true
-                                                          :onClick (fn []
-                                                                     (if (js/confirm  "Are you sure?")
-                                                                       (do (remove-action id)
-                                                                           (load-action-label))
-                                                                       (m/set-value! this :ui/modal-open? false)))})))
+                                                                  :basic true
+                                                                  :onClick (fn []
+                                                                             (if (js/confirm  "Are you sure?")
+                                                                               (do (remove-action id)
+                                                                                   (load-action-label))
+                                                                               (m/set-value! this :ui/modal-open? false)))})))
                :open modal-open?
                                         ;:closeIcon true
                :onClose #(m/set-value! this :ui/modal-open? false)
@@ -487,14 +487,14 @@
                                                                 
                                                                 (ui-table-header-cell {:colSpan 5}
                                                                                       (ui-icon {:basic true
-                                                                                                  :onClick  #(merge/merge-component! this ActionRow
-                                                                                                                                     {:ui/new? true
-                                                                                                                                      :db/id (tempid/tempid)
-                                                                                                                                      :action/action ""
-                                                                                                                                      :action/owner ""
-                                                                                                                                      :action/status :open
-                                                                                                                                      :action/due-date (-> t/now t/inst)}
-                                                                                                                                     :append [:action-list/id id :action-list/actions])
+                                                                                                :onClick  #(merge/merge-component! this ActionRow
+                                                                                                                                   {:ui/new? true
+                                                                                                                                    :db/id (tempid/tempid)
+                                                                                                                                    :action/action ""
+                                                                                                                                    :action/owner ""
+                                                                                                                                    :action/status :open
+                                                                                                                                    :action/due-date (-> t/now t/inst)}
+                                                                                                                                   :append [:action-list/id id :action-list/actions])
                                                                                                 :name "plus"}
                                                                                                )))))))
     
@@ -552,11 +552,11 @@
                                         ;(js/console.log "props" props)
   (let [options (get props :resource/options2)]
     #_(js/console.log "PPPPPPP" (reverse (conj (mapv (fn [t] (vals (select-keys t [:task/parent-task-name :task/name :task/start-date :task/end-date]))) tasks-level3)
-                                             [{:type :string :id :parent}
-                                              {:type :string :id :name}
+                                               [{:type :string :id :parent}
+                                                {:type :string :id :name}
                                         ;{:type :string :id :te}
-                                              {:type :date :id :start}
-                                              {:type :date :id :end}])))
+                                                {:type :date :id :start}
+                                                {:type :date :id :end}])))
     ;; level 2 
     (ui-chart {:height "1000px" :width "100%" :chartType "Timeline" :data (reverse (conj (mapv (fn [t] (vals (dissoc t :task/id :task/outline-number))) tasks-level2)
                                                                                          [{:type :string :id :name}
@@ -775,7 +775,7 @@
              (if (= status :submitted)
                (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "Submitted the " (apply str (take 21 (str submitted-at)))
                           (when (and (not (keyword? (:resource/email-address submitted-by)))
-                                    (not (nil? (:resource/email-address submitted-by))))
+                                     (not (nil? (:resource/email-address submitted-by))))
                             (str " by " (:resource/email-address submitted-by))))
                (dom/label {:style {:alignSelf "flex-start" :paddingTop "5px"}} "-"))
              )))
@@ -970,39 +970,39 @@
                                                                        :append [:action-list/id id :action-list/actions]
                                                                        :replace [:component/id :gov-review :gov-review/new-action])))})
                   #_(ui-menu {#_#_:vertical true :size :tiny :compact true :borderless true   :basic true
-                            :style {:paddingBottom "0px" :position "relative ":top "-2px" :selfAlign :right
-                                    :border "0.5px solid #dedede"}
-                            }
+                              :style {:paddingBottom "0px" :position "relative ":top "-2px" :selfAlign :right
+                                      :border "0.5px solid #dedede"}
+                              }
 
 
-                           (ui-dropdown {:item true :text "Add" :style {:border "5px"}}
-                                        (ui-dropdown-menu {:style {:border "1px"}}
-                                                          (ui-dropdown-item {:onClick (fn [e d]
-                                                                                        (m/toggle! this :ui/modal-open?)
-                                                                                        (merge/merge-component! this ActionRow
-                                                                                                                {:ui/new? true
-                                                                                                                 :db/id (tempid/tempid)
-                                                                                                                 :action/action ""
-                                                                                                                 :ui/modal-open? true
-                                                                                                                 :action/owner ""
-                                                                                                                 :action/status :open
-                                                                                                                 :action/due-date (-> t/now t/inst)}
-                                                                                                                :append [:action-list/id id :action-list/actions]
-                                                                                                                :replace [:component/id :gov-review :gov-review/new-action])) } "Action")
-                                                          #_(ui-dropdown-item {} "Risk"))))
+                             (ui-dropdown {:item true :text "Add" :style {:border "5px"}}
+                                          (ui-dropdown-menu {:style {:border "1px"}}
+                                                            (ui-dropdown-item {:onClick (fn [e d]
+                                                                                          (m/toggle! this :ui/modal-open?)
+                                                                                          (merge/merge-component! this ActionRow
+                                                                                                                  {:ui/new? true
+                                                                                                                   :db/id (tempid/tempid)
+                                                                                                                   :action/action ""
+                                                                                                                   :ui/modal-open? true
+                                                                                                                   :action/owner ""
+                                                                                                                   :action/status :open
+                                                                                                                   :action/due-date (-> t/now t/inst)}
+                                                                                                                  :append [:action-list/id id :action-list/actions]
+                                                                                                                  :replace [:component/id :gov-review :gov-review/new-action])) } "Action")
+                                                            #_(ui-dropdown-item {} "Risk"))))
 
                   (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e d]
-                                                                                        (m/toggle! this :ui/modal-open?)
-                                                                                        (merge/merge-component! this ActionRow
-                                                                                                                {:ui/new? true
-                                                                                                                 :db/id (tempid/tempid)
-                                                                                                                 :action/action ""
-                                                                                                                 :ui/modal-open? true
-                                                                                                                 :action/owner ""
-                                                                                                                 :action/status :open
-                                                                                                                 :action/due-date (-> t/now t/inst)}
-                                                                                                                :append [:action-list/id id :action-list/actions]
-                                                                                                                :replace [:component/id :gov-review :gov-review/new-action]))
+                                                                                   (m/toggle! this :ui/modal-open?)
+                                                                                   (merge/merge-component! this ActionRow
+                                                                                                           {:ui/new? true
+                                                                                                            :db/id (tempid/tempid)
+                                                                                                            :action/action ""
+                                                                                                            :ui/modal-open? true
+                                                                                                            :action/owner ""
+                                                                                                            :action/status :open
+                                                                                                            :action/due-date (-> t/now t/inst)}
+                                                                                                           :append [:action-list/id id :action-list/actions]
+                                                                                                           :replace [:component/id :gov-review :gov-review/new-action]))
                                } "Add Action")
 
                   
@@ -1049,7 +1049,7 @@
 (defsc ProjectInfo [this {:project-info/keys [start-date modified-date finish-date id new  name    finish-date project-lead functional-lead
                                               technical-lead status phase entity fluxod-name fluxod-project-names fluxod-client-name
                                               last-published-date]
-                           
+                          
                           :ui/keys [loading? new-fluxod-project-name] :as props}]
   {:query [:project-info/id :project-info/modified-date :project-info/start-date  :project-info/finish-date
            :project-info/last-published-date
@@ -1073,8 +1073,8 @@
    :ident   (fn [] [:project-info/id id])
    :initial-state (fn [p] {:ui/loading true :project-info/fluxod-project-names []})
    #_#_:pre-merge (fn [{:keys [current-normalized data-tree]}]
-                (merge current-normalized
-                       (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"])))
+                    (merge current-normalized
+                           (assoc data-tree :project-info/fluxod-project-names ["A" "B" "C" "D"])))
    :will-enter (fn [app {:keys [project-info/id] :as params}]
                  
                  (dr/route-deferred
@@ -1164,20 +1164,17 @@
                      
                      (ui-form-input  {:label "Modified Date" :type "datetime-local" :readOnly true
                                       :value
-                                        (str-date last-published-date )
+                                      (str-date last-published-date )
 
                                       :onChange
                                       (fn [e d] )})
                      
                      (ui-form-input  {:label "Start Date" :type "datetime-local" :readOnly true
                                       :value (str-date start-date)
-                                      
-                                      
-                                      
                                       })
                      (ui-form-input  {:label "End Date" :type "datetime-local" :readOnly true
                                       :value
-                                        (str-date finish-date)
+                                      (str-date finish-date)
                                       
                                       }))
       (ui-divider {})
@@ -1263,19 +1260,19 @@
                      :onKeyDown (fn [e]
                                   (when (evt/enter? e)
                                     (comp/transact! this [(project/add-fluxod-project-names
-                                                          {:new-name new-fluxod-project-name
-                                                           :project-info/id id})])))})
+                                                           {:new-name new-fluxod-project-name
+                                                            :project-info/id id})])))})
           (when (seq fluxod-project-names)
             (ui-table
-            {}
-            (map #(ui-table-row
-                   {:textAlign :left}
-                   (ui-table-cell {}  (str  % ))
-                   (ui-table-cell {:textAlign :right
-                                   }
-                                  (ui-icon {:name "x"
-                                            :onClick (fn [_]
-                                                       (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}) ))  fluxod-project-names ))))
+             {}
+             (map #(ui-table-row
+                    {:textAlign :left}
+                    (ui-table-cell {}  (str  % ))
+                    (ui-table-cell {:textAlign :right
+                                    }
+                                   (ui-icon {:name "x"
+                                             :onClick (fn [_]
+                                                        (comp/transact! this [(project/remove-fluxod-project-name {:name %  :id id})]))}) ))  fluxod-project-names ))))
          )
         
         
@@ -1418,9 +1415,9 @@
                                                                                                            (m/set-value! this :ui/active-item :timeline)
                                                                                                            (dr/change-route this (dr/path-to  TimeLine {:timeline/id  id} )) )} )
                               (ui-menu-item {:name "Work Plan" :active (= active-item :workplan) :onClick (fn []
-                                                                                                           (m/set-value! this :ui/active-item :workplan)
+                                                                                                            (m/set-value! this :ui/active-item :workplan)
 
-                                                                                                           (dr/change-route this (dr/path-to  workplans/WorkPlan2 {:workplan/id id} ))   )} )))
+                                                                                                            (dr/change-route this (dr/path-to  workplans/WorkPlan2 {:workplan/id id} ))   )} )))
 
      (ui-grid-column {:width 12} 
                      (ui-project-panel-router router))]
@@ -1472,14 +1469,16 @@
             #_(js/console.log (comp/get-initial-state Root {})))))
 
 
-(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction] :as props}]
+(defsc AdminProjects [this {:admin-projects/keys [admin-projects router] :ui/keys [in-progress? cancelled? closed? sales? ui/column ui/direction project-leads]
+                            :keys [resource/options2 ]:as props}]
   {:query         [{:admin-projects/admin-projects  (comp/get-query AdminProject)}
+                   :ui/project-leads 
                    {:admin-projects/router (comp/get-query ProjectPanelRouter)}
                    [::uism/asm-id ::session/session]
 
                    :ui/column
                    :ui/direction
-                   
+                   [:resource/options2 '_]
                    :ui/in-progress?
                    :ui/closed?
                    :ui/sales?
@@ -1488,7 +1487,8 @@
                    [df/marker-table :admin-projects]]
    
    :ident         (fn [] [:component/id :admin-projects])
-   :initial-state (fn [p] {:ui/in-progress? true :ui/cancelled? false :ui/closed? false :ui/sales? false :ui/column nil :ui/direction nil})
+   :initial-state (fn [p] {:ui/in-progress? true :ui/cancelled? false :ui/closed? false :ui/sales? false :ui/column nil :ui/direction nil
+                           })
    :initLocalState (fn [this props]
                      {:active-index -1})
    :will-enter (fn [app route-params]
@@ -1509,7 +1509,8 @@
    }
 
   
-  (let [sort-by-column (fn [clicked-column]
+  (let [current-project-leads (filter #(get-in [:project-info/project-lead] %) admin-projects)
+        sort-by-column (fn [clicked-column]
                          (if (not= column clicked-column)
                            (do
                              (m/set-value! this :ui/column clicked-column)
@@ -1545,60 +1546,117 @@
                           (ui-accordion
                            {:as Menu  :vertical true :style {:color "#3281b9"}}
                            
-                           (ui-menu-item {} (ui-accordion-title
-                                             {:active (= active-index 1)
-                                              :content "Status"
-                                              :index 1
-                                              :onClick handleClick
-                                              :style {:color "#3281b9"}})
-                                         (ui-accordion-content {:active (= active-index 1)
-                                                                :content (ui-form {}
-                                                                                  (ui-form-group {:grouped true}
-                                                                                                 (ui-form-field {}                                                                                                                   
-                                                                                                                (dom/div :.ui.checkbox
-                                                                                                                         (dom/input   {
-                                                                                                                                       :type "Checkbox"
-                                                                                                                                       :checked  in-progress?
-                                                                                                                                       
-                                                                                                                                       :style {:padding "10px"}
-                                                                                                                                       
-                                                                                                                                       :onChange (fn [_ d]
-                                                                                                                                                   (m/toggle! this :ui/in-progress?))})
-                                                                                                                         (dom/label {:style {:color "#3281b9" }} "In Progress")))
-                                                                                                 (ui-form-field {}                                                                                                                   
-                                                                                                                (dom/div :.ui.checkbox
-                                                                                                                         (dom/input   {
-                                                                                                                                       :type "Checkbox"
-                                                                                                                                       :checked sales?
-                                                                                                                                       
-                                                                                                                                       :style {:padding "10px"}
-                                                                                                                                       
-                                                                                                                                       :onChange (fn [_ d]
-                                                                                                                                                   (m/toggle! this :ui/sales?))})
-                                                                                                                         (dom/label {:style {:color "#3281b9" }} "Sales")))
-                                                                                                 (ui-form-field {}                                                                                                                   
-                                                                                                                (dom/div :.ui.checkbox
-                                                                                                                         (dom/input   {
-                                                                                                                                       :type "Checkbox"
-                                                                                                                                       :checked closed?
-                                                                                                                                       
-                                                                                                                                       :style {:padding "10px"}
-                                                                                                                                       
-                                                                                                                                       :onChange (fn [_ d]
-                                                                                                                                                   (m/toggle! this :ui/closed?))})
-                                                                                                                         (dom/label {:style {:color "#3281b9" }} "Closed")))
-                                                                                                 (ui-form-field {}                                                                                                                   
-                                                                                                                (dom/div :.ui.checkbox
-                                                                                                                         (dom/input   {
-                                                                                                                                       :type "Checkbox"
-                                                                                                                                       :checked cancelled?
-                                                                                                                                       
-                                                                                                                                       :style {:padding "10px"}
-                                                                                                                                       
-                                                                                                                                       :onChange (fn [_ d]
-                                                                                                                                                   (m/toggle! this :ui/cancelled?))})
-                                                                                                                         (dom/label {:style {:color "#3281b9" }} "Cancelled")))
-                                                                                                 ))}))
+                           (ui-menu-item {}
+                                         (ui-accordion-title
+                                          {:active (= active-index 1)
+                                           :content "Status"
+                                           :index 1
+                                           :onClick handleClick
+                                           :style {:color "#3281b9"}})
+                                         (ui-accordion-content
+                                          {:active (= active-index 1)
+                                           :content (ui-form
+                                                     {}
+                                                     (ui-form-group
+                                                      {:grouped true}
+                                                      
+                                                      (ui-form-field
+                                                       {}                                                                                                                   
+                                                       (dom/div :.ui.checkbox
+                                                                (dom/input
+                                                                 {
+                                                                  :type "Checkbox"
+                                                                  :checked  in-progress?
+                                                                  :style {:padding "10px"}
+                                                                  :onChange (fn [_ d]
+                                                                              (m/toggle! this :ui/in-progress?))})
+                                                                (dom/label {:style {:color "#3281b9" }} "In Progress")))
+                                                      (ui-form-field {}                                                                                                                   
+                                                                     (dom/div :.ui.checkbox
+                                                                              (dom/input
+                                                                               {
+                                                                                :type "Checkbox"
+                                                                                :checked sales?
+                                                                                
+                                                                                :style {:padding "10px"}
+                                                                                :onChange (fn [_ d]
+                                                                                            (m/toggle! this :ui/sales?))})
+                                                                              (dom/label {:style {:color "#3281b9" }} "Sales")))
+                                                      (ui-form-field
+                                                       {}                                                                                                                   
+                                                       (dom/div :.ui.checkbox
+                                                                (dom/input
+                                                                 {
+                                                                  :type "Checkbox"
+                                                                  :checked closed?
+                                                                  
+                                                                  :style {:padding "10px"}
+                                                                  
+                                                                  :onChange (fn [_ d]
+                                                                              (m/toggle! this :ui/closed?))})
+                                                                (dom/label
+                                                                 {:style {:color "#3281b9" }} "Closed")))
+                                                      (ui-form-field
+                                                       {}                                                                                                                   
+                                                       (dom/div :.ui.checkbox
+                                                                (dom/input
+                                                                 {
+                                                                  :type "Checkbox"
+                                                                  :checked cancelled?
+                                                                  
+                                                                  :style {:padding "10px"}
+                                                                  
+                                                                  :onChange (fn [_ d]
+                                                                              (m/toggle! this :ui/cancelled?))})
+                                                                (dom/label
+                                                                 {:style {:color "#3281b9" }} "Cancelled")))
+                                                      ))})
+
+                                         )
+                           (ui-menu-item
+                            {}
+                            (ui-accordion-title
+                             {:active (= active-index 2)
+                              :content "Project Lead"
+                              :index 2
+                              :onClick handleClick
+                              :style {:color "#3281b9"}})
+                            (ui-accordion-content
+                             {:active (= active-index 2)
+                              :content (ui-form
+                                        {}
+                                        (ui-form-group
+                                         {:grouped true}
+                                         
+                                         (map #(ui-form-field
+                                                {}                                                                                                                   
+                                                (dom/div :.ui.checkbox
+                                                         (dom/input
+                                                          {
+                                                           :type "Checkbox"
+                                                           ;:checked  in-progress?
+                                                           :style {:padding "10px"}
+                                                           :onChange (fn [_ d]
+                                                                       (comp/transact! this [(project/toggle-project-lead! {:val %})]))})
+                                                         (dom/label {:style {:color "#3281b9" }} %)))
+
+                                              
+
+                                              (reduce (fn [acc p]
+                                                        (let [st1 (-> p :project-info/project-lead :resource/name )
+                                                              st2 (if (keyword? st1)  "" (str st1))
+                                                              r? (> (-> st2 count) 1)]
+                                                          (js/console.log "ST" st2)
+                                                          (if (and r?
+                                                                     (not (contains? acc st2)))
+                                                            (conj acc st2)
+                                                            acc)))
+                                                      #{}
+                                                      admin-projects))
+                                         
+                                         ))})
+
+                            )
                            ))
          (ui-grid-column {:width 13}
                          #_(dom/h3 {:style {:textAlign "center"}} "Projects" )
@@ -1652,7 +1710,13 @@
                                                                                                                                  #(= (:project-info/status %) :closed)
                                                                                                                                  cancelled?
                                                                                                                                  #(= (:project-info/status %) :cancelled))) p)))
-                                                                                           identity) admin-projects)))
+                                                                                           identity)
+                                                                                         (if (and project-leads (not (empty? project-leads)))
+                                                                                           (filter #(contains? project-leads (-> %
+                                                                                                                                 :project-info/project-lead
+                                                                                                                                 :resource/name ))
+                                                                                                               admin-projects)
+                                                                                           admin-projects))))
                                    )
                          #_(ui-button {:onClick (fn [] (comp/transact! this [(testm)])) :basic true} "No Name"))]
         )

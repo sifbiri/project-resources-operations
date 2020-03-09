@@ -1524,6 +1524,7 @@
                                         ;{:workplan/selected (comp/get-query SelectedProject)}
 
                    [:resource/options '_]
+                   [:component/id :session]
                    {:workplan/teams (comp/get-query teams/Team)}  
                    [:checkbox/id '_]
                    [:team/id '_]
@@ -1558,6 +1559,7 @@
                                :post-mutation `app.ui.teams/merge-team-checkboxes
                                })
                     (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
+   
    
                                         ;:shouldComponentUpdate (fn [_ _ _] true)
    :initial-state (fn [params]
@@ -1638,7 +1640,7 @@
     
 
     
-    
+    ;(js/console.log "ZZZZ" (get props [:component/id :ses]))
     (if (and dates logged-in?)
       
       [
@@ -1806,12 +1808,12 @@
 (defsc Session
   "Session representation. Used primarily for server queries. On-screen representation happens in Login component."
   [this {:keys [:session/valid? :account/name] :as props}]
-  {:query         [:session/valid? :account/name :account/resource]
+  {:query         [:session/valid? :account/name :account/resource :resource/profile]
    :ident         (fn [] [:component/id :session])
    :pre-merge     (fn [{:keys [data-tree]}]
-                    (merge {:session/valid? false :account/name "" :account/resource nil}
+                    (merge {:session/valid? false :account/name "" :account/resource nil :resource/profile :profile/user}
                            data-tree))
-   :initial-state {:session/valid? false :account/name "" :account/resource nil}})
+   :initial-state {:session/valid? false :account/name "" :account/resource nil :resource/profile :profile/user}})
 
 
 
@@ -1831,33 +1833,77 @@
                    :root/current-session {}}
                                         ;:shouldComponentUpdate (fn [_ _ _] true)
    }
-  (let [current-tab (some-> (dr/current-route this this) first keyword)]
+  (let [current-tab (some-> (dr/current-route this this) first keyword)
+        profile (-> current-session :resource/profile)]
+    (js/console.log "MY " profile)
     (ui-grid { :container true  :divided false :columns 2 } 
              (ui-grid-row  {:strechted true}
                            (ui-menu {:style {:width "100%"} :stackable true :size "tiny" :floated true}
                                     (ui-menu-item {}
                                                   (dom/img {:src "fluxym.png" :avatar false :size "mini" :inline true :style {:marginLeft "15px"}} ))
-                                    (ui-menu-item {:name "Resource Plan" :active (= :workplan current-tab) :onClick (fn [event]
-                                                                                                                 (dr/change-route this (dr/path-to  WorkPlan)))} )
+
+                                    (when (get #{:profile/admin
+                                                 :profile/team-leader
+                                                 :profile/project-manager
+                                                 :profile/user} profile)
+
+                                      (ui-menu-item {:name "Resource Plan" :active (= :workplan current-tab) :onClick (fn [event]
+                                                                                                                        (dr/change-route this (dr/path-to  WorkPlan)))
+
+
+                                                     }
+
+                                                    ))
+
+                                    (when (get #{:profile/admin
+                                                 :profile/team-leader
+                                                 :profile/project-manager
+                                                 :profile/user} profile)
+                                      (ui-menu-item {:name "Calendar" :active (= :main current-tab) :onClick (fn [event] (dr/change-route this ["main"]))
+                                                     } ))
+
 
 
                                     
-                                    (ui-menu-item {:name "Calendar" :active (= :main current-tab) :onClick (fn [event] (dr/change-route this ["main"]))} )
-                                    (ui-menu-item { :name "Projects" :active (= current-tab :admin-projects)  :onClick #(dr/change-route this (dr/path-to projects/AdminProjects))} )
+                                    (when (get #{:profile/admin
+                                                 :profile/team-leader
+                                                 :profile/project-manager
+                                                 } profile)
+                                      (ui-menu-item { :name "Projects" :active (= current-tab :admin-projects)  :onClick #(dr/change-route this (dr/path-to projects/AdminProjects))} ))
                                     
-                                    (ui-menu-item {:position :right :active (or (= current-tab :admin-teams)
-                                                                                (= current-tab :admin-users))
-                                                   :content
-                                                   (ui-dropdown {:item true :text "Admin"}
-                                                                (ui-dropdown-menu {}
-                                                                                  (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
-                                                                                  (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
-                                                                                  (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")
-                                                                                  ))}
-                                                  )
+                                    (when
+                                        (get #{:profile/admin
+                                                :profile/team-leader
+                                                :profile/project-manager
+                                                } profile)
 
-                                    
-                                    (ui-menu-item {:style {:borderLeft "1px solid #e8e9e9"} :name "Login"}
+                                        (ui-menu-item {:position :right :active (or (= current-tab :admin-teams)
+                                                                                 (= current-tab :admin-users))
+                                                    :content
+                                                    (ui-dropdown {:item true :text "Admin"}
+                                                                 (ui-dropdown-menu {}
+                                                                                   (if (get #{:profile/admin
+                                                                                              :profile/team-leader
+                                                                                              
+                                                                                              } profile)
+                                                                                     
+                                                                                     [(ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
+                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
+                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")]
+
+                                                                                     
+                                                                                     [(ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")])
+                                                                                   
+
+                                                                                   
+                                                                                   
+                                                                                   ))                                                  }))
+
+                                    #_(ui-menu-item {})
+                                    (ui-menu-item {:style {:borderLeft "1px solid #e8e9e9"}
+                                                   :name "Login"
+                                                   :position (if (= profile :profile/user) :right nil)
+                                                   }
                                                   (ui-login login))
                                     )
                            

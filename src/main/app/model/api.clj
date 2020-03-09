@@ -730,5 +730,10 @@
                                                                    [?e :import/time ?date]
                                                                    
                                                                    
-                                                                   ] (d/db (d/connect db-url)))))))
+                                                                   ] (d/db (d/connect db-url))))))
+
+  (d/transact (d/connect db-url)
+              [{:db/id [:resource/id #uuid "d771d4d9-34de-e911-b085-00155de0a811" ]
+                :resource/profile :profile/user}])
+)
 

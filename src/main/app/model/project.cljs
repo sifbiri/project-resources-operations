@@ -182,6 +182,17 @@
                                        [:resource/id  lead-id])))))
   (remote [env] true))
 
+(defmutation toggle-project-lead! [{:keys [val]}]
+  (action [{:keys [state ref]}]
+          (swap! state (fn [s]
+                         (let [path (conj ref :ui/project-leads)
+                               c-project-leads (or (get-in s path) #{})]
+                           (assoc-in s  path (if (contains? c-project-leads val)
+                                               (disj c-project-leads val)
+                                               (conj c-project-leads val))))))))
+
+
+
 (defmutation add-fluxod-project-names [{:keys [new-name project-info/id]}]
   (action [{:keys [state ref] :as env}]
           (js/console.log " NEW FORM TX " ref)

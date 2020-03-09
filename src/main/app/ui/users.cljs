@@ -118,110 +118,124 @@
 
 
 (defsc Resource
-  [this {:resource/keys [id name email-address fluxod-name profile active? allow-actuals? allow-forecast?]}]
+  [this {:resource/keys [id name email-address fluxod-name profile active? allow-actuals? allow-forecast?] :as props}]
   {:query [:resource/id :resource/name  :resource/email-address :resource/fluxod-name :resource/active? :resource/profile
-           :resource/allow-actuals? :resource/allow-forecast?]
+           :resource/allow-actuals? :resource/allow-forecast?
+           [:component/id :session]]
    :ident :resource/id
-   :pre-merge (fn [{:keys [current-normalized data-tree]}]
+   #_#_:pre-merge (fn [{:keys [current-normalized data-tree]}]
                 
                 (merge data-tree
                        {:resource/profile (or (merge/nilify-not-found (:resource/profile data-tree))
                                               :profile/user)}))
    }
-
   
-  (ui-table-row
-   {}
-   [(ui-table-cell
-     {}
-     name)
-    
-    (ui-table-cell
-     {}
-     (ui-form
+  
+  (let [current-profile (-> props (get [:component/id :session]) :resource/profile)]
+    (js/console.log "Profile: " current-profile)
+    (ui-table-row
+    {}
+    [(ui-table-cell
       {}
-      (ui-form-field
+      name)
+     
+     (ui-table-cell
+      {}
+      (ui-form
        {}
-       (ui-input
-        {:size :mini
-         :value (if (string? fluxod-name) fluxod-name "")
-         :onChange (fn [e e2] (m/set-string! this :resource/fluxod-name :event e))
-         :onBlur (fn [e] (comp/transact! this [(user/save-fluxod-name {:resource/fluxod-name fluxod-name
-                                                                       :resource/id id})]))}
-        ))))
-    (ui-table-cell
-     {}
-     email-address)
-    (ui-table-cell
-     {}
-     (ui-dropdown
-      {:compact true :basic true 
-       :options [{:text "Admin" :value :profile/admin}
-                 {:text "Team Leader" :value :profile/team-leader}
-                 {:text "Project Manager" :value :profile/project-manager}
-                 {:text "User" :value :profile/user}]
+       (ui-form-field
+        {}
+        (ui-input
+         {:size :mini
+          :value (if (string? fluxod-name) fluxod-name "")
+          :onChange (fn [e e2] (m/set-string! this :resource/fluxod-name :event e))
+          :onBlur (fn [e] (comp/transact! this [(user/save-fluxod-name {:resource/fluxod-name fluxod-name
+                                                                        :resource/id id})]))}
+         ))))
+     (ui-table-cell
+      {}
+      email-address)
 
-       ;; TODO handle this on the server 
-       :value  profile
-       :onChange (fn [event data]
-                   (comp/transact!
-                    this
-                    [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
-                   
-                   )}))
-    (ui-table-cell
-     {}
-     (ui-form
-      {}
-      (ui-form-field
-       {}
-       (ui-form-checkbox
-        {
-         :checked active?
-         :onChange
-         (fn [e d]
-           (m/toggle! this :resource/active?)
-           (comp/transact! this [(resource/set-resource-active?
-                                  {:value  (.-checked d) :id id})]))}))))
 
-    (ui-table-cell
-     {}
-     (ui-form
-      {}
-      (ui-form-field
-       {}
-       (ui-form-checkbox
-        {
-         :checked allow-actuals?
-         :onChange
-         (fn [e d]
-           #_(m/toggle! this :resource/active?)
-           (comp/transact! this [(resource/set-resource-actuals?
-                                  {:value  (.-checked d)})]))}))))
+     (cond
+       (= current-profile :profile/team-leader)
+       
+       (ui-table-cell {}({:profile/admin "Admin"
+                          :profile/project-manager "Project Manager"
+                          :profile/user "User"
+                          :profile/project-leader "Project Leader"} profile))
 
-    (ui-table-cell
-     {}
-     (ui-form
+       (= current-profile :profile/admin)
+       (ui-table-cell
+        {}
+        (ui-dropdown
+         {:compact true :basic true 
+          :options [{:text "Admin" :value :profile/admin}
+                    {:text "Team Leader" :value :profile/team-leader}
+                    {:text "Project Manager" :value :profile/project-manager}
+                    {:text "User" :value :profile/user}]
+
+          ;; TODO handle this on the server 
+          :value  profile
+          :onChange (fn [event data]
+                      (comp/transact!
+                       this
+                       [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})])
+                      
+                      )
+          }))
+       :else
+       (ui-table-cell {} ""))
+     (ui-table-cell
       {}
-      (ui-form-field
+      (ui-form
        {}
-       (ui-form-checkbox
-        {
-         :checked allow-forecast?
-         :onChange
-         (fn [e d]
-           
-           (comp/transact! this [(resource/set-resource-forecast?
-                                  {:value  (.-checked d) :id id})]))}))))])
+       (ui-form-field
+        {}
+        (ui-form-checkbox
+         {
+          :checked active?
+          :onChange
+          (fn [e d]
+            (m/toggle! this :resource/active?)
+            (comp/transact! this [(resource/set-resource-active?
+                                   {:value  (.-checked d) :id id})]))}))))
+
+     (ui-table-cell
+      {}
+      (ui-form
+       {}
+       (ui-form-field
+        {}
+        (ui-form-checkbox
+         {
+          :checked allow-actuals?
+          :onChange
+          (fn [e d]
+            #_(m/toggle! this :resource/active?)
+            (comp/transact! this [(resource/set-resource-actuals?
+                                   {:value  (.-checked d)})]))}))))
+
+     (ui-table-cell
+      {}
+      (ui-form
+       {}
+       (ui-form-field
+        {}
+        (ui-form-checkbox
+         {
+          :checked allow-forecast?
+          :onChange
+          (fn [e d]
+            
+            (comp/transact! this [(resource/set-resource-forecast?
+                                   {:value  (.-checked d) :id id})]))}))))]))
 
   )
 
 
 
 (def ui-resource (comp/factory Resource {:keyfn :resource/id}))
-
-
-
 
 #_(defmutation set-resources
     [{:keys [id]}]
@@ -269,7 +283,8 @@
                       {:fullWidth true :style {:position "sticky" :top 0}}
                       (ui-table-row
                        {}
-                       (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
+                       (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0
+                                                              :zIndex 99}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
                                                                                               "Enable" "Allow Actuals" "Allow Forecast"])))
                      (ui-table-body
                       {}

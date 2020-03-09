@@ -1,32 +1,53 @@
+
 (ns app.model.resource
   (:require
    [com.wsscode.pathom.connect :as pc]
    [app.model.database :refer [conn]]
    [app.model.api :as api]
    [clojure.set :as set]
-   
-   [datomic.api :as d]))
+   [datomic.api :as d]
+   [app.model.database :refer [db-url]]))
 
 
 
 
 (pc/defresolver resource-resolver [{:keys [db]} {:resource/keys [id]}]
   {::pc/input  #{:resource/id}
-   ::pc/output [:resource/name :resource/email-address]}
+   ::pc/output [:resource/name  :resource/id :resource/email-address]}
   (when id
-    (first (d/q '[:find ?name ?ea ?profile ?active
-                 :in $ ?id
-                 :keys resource/name resource/email-address resource/profile resource/active?
-                 :where
-                 [?r :resource/id ?id]
-                 [?r :resource/name ?name]
-                 [?r :resource/email-address ?ea]
+    (first (d/q '[:find ?name ?ea  ?active
+                  :in $ ?id
+                  :keys resource/name resource/email-address  resource/active?
+                  :where
+                  [?r :resource/id ?id]
+                  [?r :resource/name ?name]
+                  [?r :resource/email-address ?ea]
+                  [?r :resource/active? ?active]
 
-                 [?r :resource/profile ?profile]
-                 [?r :resource/active? ?active]
+                  
+                  ] db (api/uuid id)))))
 
-                 
-                 ] db (api/uuid id)))))
+
+
+
+
+
+(pc/defresolver resource-profile [{:keys [db]} {:resource/keys [id]}]
+  {::pc/input  #{:resource/id}
+   ::pc/output [:resource/profile]}
+  (when id
+    {:resource/profile
+     (or (d/q '[:find ?profile .
+                :in $ ?id
+                
+                :where
+                [?r :resource/id ?id]
+                [?r :resource/profile ?profile]
+                
+
+                
+                ] db id)
+         :profile/user)}))
 
 
 
@@ -82,4 +103,4 @@
                                                       [?e :resource/id ?f]
                                                       ] db))))})
 
-(def resolvers  [set-resource-profile resource-resolver all-resources-resolver set-resource-active? set-resource-actuals? set-resource-forecast?])
+(def resolvers  [resource-profile set-resource-profile resource-resolver all-resources-resolver set-resource-active? set-resource-actuals? set-resource-forecast?])

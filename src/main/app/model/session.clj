@@ -30,22 +30,7 @@
 
 
 
-(defresolver current-session-resolver [{:keys [db connection] :as env} input]
-  {::pc/output [{::current-session [:session/valid? :account/name]}]}
-  (let [{:keys [account/name session/valid?]} (get-in env [:ring/request :session])]
-    (if valid?
-      (do
-        (let [resource-id (d/q
-                           '[:find ?rid .
-                             :in $ ?email
-                             :where
-                             [?e :resource/email-address ?email]
-                             [?e :resource/id ?rid]] db name)]
-          
-          
-          (log/info name "already logged in!")
-          {::current-session {:session/valid? true :account/name name :account/resource resource-id}}))
-      {::current-session {:session/valid? false}})))
+
 
 (defn response-updating-session
   "Uses `mutation-response` as the actual return value for a mutation, but also stores the data into the (cookie-based) session."
@@ -63,7 +48,7 @@
 
 
 (defmutation login [{:keys [db connection] :as env} {:keys [username password]}]
-  {::pc/output [:session/valid? :account/name]}
+  {::pc/output [:session/valid? :account/name :resource/profile]}
   (log/info "Authenticating" username)
   (let [response (client/post "https://login.microsoftonline.com/extSTS.srf"
                               {:body (make-load username password)
@@ -74,12 +59,20 @@
                            :in $ ?email
                            :where
                            [?e :resource/email-address ?email]
-                           [?e :resource/id ?rid]] db username)]
+                           [?e :resource/id ?rid]] db username)
+            resource-type (d/q
+                           '[:find ?rtype .
+                             :in $ ?email
+                             :where
+                             [?e :resource/email-address ?email]
+                             [?e :resource/profile ?rtype]
+                             ] db username)]
         
         (response-updating-session env
                                    {:session/valid? true
                                     :account/name   username
-                                    :account/resource resource-id}))
+                                    :account/resource resource-id
+                                    :resource/profile resource-type}))
       (do
         (log/error "Invalid credentials supplied for" username)
         (throw (ex-info "Invalid credentials" {:username username}))))))
@@ -94,5 +87,28 @@
   (swap! account-database assoc email {:email    email
                                        :password password})
   {:signup/result "OK"})
+
+(defresolver current-session-resolver [{:keys [db connection] :as env} input]
+  {::pc/output [{::current-session [:session/valid? :account/name :resource/profile]}]}
+  (let [{:keys [account/name session/valid?]} (get-in env [:ring/request :session])]
+    (if valid?
+      (do
+        (let [resource-id (d/q
+                           '[:find ?rid .
+                             :in $ ?email
+                             :where
+                             [?e :resource/email-address ?email]
+                             [?e :resource/id ?rid]] db name)
+
+              resource-type (d/q
+                             '[:find ?rtype .
+                               :in $ ?email
+                               :where
+                               [?e :resource/email-address ?email]
+                               [?e :resource/profile ?rtype]
+                               ] db name)]
+          (log/info name "already logged in!")
+          {::current-session {:session/valid? true :account/name name :account/resource resource-id :resource/profile resource-type}}))
+      {::current-session {:session/valid? false}})))
 
 (def resolvers [current-session-resolver login logout signup!])
