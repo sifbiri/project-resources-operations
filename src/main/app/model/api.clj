@@ -735,9 +735,10 @@
   (d/transact (d/connect db-url)
               [{: [:resource/id #uuid "59045544-f9d3-e911-b092-00155de43b0b"]
                 :resource/profile :profile/admin}])
+  (d/pull (d/db (d/connect db-url)) '[*]  [:resource/id #uuid "59045544-f9d3-e911-b092-00155de43b0b"])
 )
 
-(d/pull (d/db (d/connect db-url)) '[*]  [:resource/id #uuid "59045544-f9d3-e911-b092-00155de43b0b"])
+
 
 
 
