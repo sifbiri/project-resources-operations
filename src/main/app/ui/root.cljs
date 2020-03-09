@@ -1399,8 +1399,11 @@
              (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
                          :onClick (fn [e]
                                     #_(m/toggle! this :list/show-more?)
-                                    (comp/set-state! this  {:list/show-more? (not show-more?)}))}
-                        (if show-more? "Show less" "Show more")))))
+                                    #_(comp/set-state! this  {:list/show-more? (not show-more?)})
+                                    (comp/set-state! this  {:list/show-more? (not (comp/get-state this :list/show-more?))}))}
+                        (if (comp/get-state this :list/show-more?)
+                          "Show less"
+                          "Show more")))))
 
 (def ui-resources-checkboxes  (comp/factory ResourcesCheckboxes))
 
