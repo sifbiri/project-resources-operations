@@ -1697,7 +1697,7 @@
 
                                                                               (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/exec-summary-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
                                                                               (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/client-relationship-color p) :empty true :key (:gov-review-week/exec-summary-color p)}))
-                                                                              (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/finance-color p) :empty true :key (:gov-review-week/finance-color p)}))
+                                                                             (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/finance-color p) :empty true :key (:gov-review-week/finance-color p)}))
                                                                               (ui-table-cell {:textAlign :center} (ui-label {:circular true :color (:gov-review-week/scope-schedule-color p) :empty true :key (:gov-review-week/scope-schedule-color p)}))
 
                                                                               

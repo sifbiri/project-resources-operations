@@ -284,7 +284,7 @@
                       (ui-table-row
                        {}
                        (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0
-                                                              :zIndex 99}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
+                                                              :zIndex 2}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
                                                                                               "Enable" "Allow Actuals" "Allow Forecast"])))
                      (ui-table-body
                       {}
