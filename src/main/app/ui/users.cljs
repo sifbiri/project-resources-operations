@@ -137,7 +137,7 @@
     (ui-table-row
     {}
     [(ui-table-cell
-      {}
+      {:textAlign :right}
       name)
      
      (ui-table-cell
@@ -154,14 +154,14 @@
                                                                         :resource/id id})]))}
          ))))
      (ui-table-cell
-      {}
+      {:textAlign :right}
       email-address)
 
 
      (cond
        (= current-profile :profile/team-leader)
        
-       (ui-table-cell {}
+       (ui-table-cell {:textAlign :right}
                       ({:profile/admin "Admin"
                           :profile/project-manager "Project Manager"
                           :profile/user "User"
@@ -185,9 +185,9 @@
                        [(resource/set-resource-profile {:value (keyword (str "profile/" (.-value data))) :id id})]))
           }))
        :else
-       (ui-table-cell {} ""))
+       (ui-table-cell {:textAlign :right} ""))
      (ui-table-cell
-      {}
+      {:textAlign :right}
       (ui-form
        {}
        (ui-form-field
@@ -202,7 +202,7 @@
                                    {:value  (.-checked d) :id id})]))}))))
 
      (ui-table-cell
-      {}
+      {:textAlign :right}
       (ui-form
        {}
        (ui-form-field
@@ -217,7 +217,7 @@
                                    {:value  (.-checked d)})]))}))))
 
      (ui-table-cell
-      {}
+      {:textAlign :right}
       (ui-form
        {}
        (ui-form-field
@@ -234,7 +234,7 @@
      (cond
        (= current-profile :profile/team-leader)
        
-       (ui-table-cell {:singleLine true}
+       (ui-table-cell {:singleLine true :textAlign :right}
                       (or
                        ({:currency/CAD "CAD"
                          :currency/EUR "EUR"
@@ -257,7 +257,7 @@
                        [(resource/set-resource-hlcr {:value (keyword (str "currency/" (.-value data))) :id id})]))
           }))
        :else
-       (ui-table-cell {} ""))]))
+       (ui-table-cell {:textAlign :right} ""))]))
 
   )
 
@@ -311,7 +311,8 @@
                       {:fullWidth true :style {:position "sticky" :top 0}}
                       (ui-table-row
                        {}
-                       (mapv  #(ui-table-header-cell {:style {:position "sticky" :top 0
+                       (mapv  #(ui-table-header-cell {:textAlign :right
+                                                      :style {:position "sticky" :top 0
                                                               :zIndex 2}} %) ["MS Name" "Fluxod Name" "Email" "Profile"
                                                                               "Enable" "Allow Actuals"
                                                                               "Allow Forecast"

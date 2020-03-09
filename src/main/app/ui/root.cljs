@@ -1800,8 +1800,23 @@
 
                                         ;(dr/change-route)
 
-(dr/defrouter TopRouter [this props]
-  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel imports/ImportMain]})
+(dr/defrouter TopRouter [this {:keys [route-factory route-props current-state] :as props}]
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel imports/ImportMain]
+   :always-render-body? true}
+  (ui-grid-row {:centered true :columns 2}
+               (when (not= :routed current-state)
+                 (div :.ui.active.inverted.dimmer
+                      (div :.ui.text.loader
+                           )))
+               (when route-factory
+                 (route-factory (comp/computed route-props (comp/get-computed this))))  ))
+
+
+#_(dr/defrouter ProjectPanelRouter
+  [this { :as props}]
+  {:router-targets [ProjectInfo workplans/WorkPlan2  GovReview TimeLine ActionList AccountForm]
+   :always-render-body? true}
+  )
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -1910,8 +1925,7 @@
                            
                            )
              
-             (ui-grid-row {:centered true :columns 2}
-                          (ui-top-router router))
+             (ui-top-router router)
              (ui-grid-row {:style {:paddingTop "250px"}} (div  {:style {:flex 1 :display "flex"
                                             :marginTop "200px"
                                             :alignItems "center"
