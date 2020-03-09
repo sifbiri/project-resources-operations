@@ -1902,7 +1902,8 @@
                                     #_(ui-menu-item {})
                                     (ui-menu-item {:style {:borderLeft "1px solid #e8e9e9"}
                                                    :name "Login"
-                                                   :position (if (= profile :profile/user) :right nil)
+                                                   :position (if (or (nil? profile)
+                                                                     (= profile :profile/user)) :right nil)
                                                    }
                                                   (ui-login login))
                                     )

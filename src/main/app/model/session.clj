@@ -60,13 +60,13 @@
                            :where
                            [?e :resource/email-address ?email]
                            [?e :resource/id ?rid]] db username)
-            resource-type (d/q
-                           '[:find ?rtype .
-                             :in $ ?email
-                             :where
-                             [?e :resource/email-address ?email]
-                             [?e :resource/profile ?rtype]
-                             ] db username)]
+            resource-type (or (d/q
+                            '[:find ?rtype .
+                              :in $ ?email
+                              :where
+                              [?e :resource/email-address ?email]
+                              [?e :resource/profile ?rtype]
+                              ] db username) :profile/user)]
         
         (response-updating-session env
                                    {:session/valid? true
@@ -100,13 +100,13 @@
                              [?e :resource/email-address ?email]
                              [?e :resource/id ?rid]] db name)
 
-              resource-type (d/q
-                             '[:find ?rtype .
-                               :in $ ?email
-                               :where
-                               [?e :resource/email-address ?email]
-                               [?e :resource/profile ?rtype]
-                               ] db name)]
+              resource-type (or (d/q
+                              '[:find ?rtype .
+                                :in $ ?email
+                                :where
+                                [?e :resource/email-address ?email]
+                                [?e :resource/profile ?rtype]
+                                ] db name) :profile/user)]
           (log/info name "already logged in!")
           {::current-session {:session/valid? true :account/name name :account/resource resource-id :resource/profile resource-type}}))
       {::current-session {:session/valid? false}})))
