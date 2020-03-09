@@ -274,7 +274,7 @@
             
             
             
-            fluxod-timesheets (if allow-forecast?
+            fluxod-timesheets (if allow-actuals?
                                 (sort-by
                                 :date
                                 (d/q '[:find ?work-fluxod ?date ?fluxod-po
@@ -314,7 +314,8 @@
 
             
             ms-timesheets
-            (if allow-forecast?
+            (if
+                allow-forecast?
               (sort-by
               :date
               (d/q '[:find ?work ?date
