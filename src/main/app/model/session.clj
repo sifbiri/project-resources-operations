@@ -60,7 +60,8 @@
                            :where
                            [?e :resource/email-address ?email]
                            [?e :resource/id ?rid]] db username)
-            resource-type (or (d/q
+            resource-type (or
+                           (d/q
                             '[:find ?rtype .
                               :in $ ?email
                               :where

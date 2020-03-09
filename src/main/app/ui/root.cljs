@@ -1364,7 +1364,7 @@
 
 (def ui-resource-checkbox-item  (comp/factory ResourceCheckboxItem {:keyfn :checkbox/value}))
 
-(defsc ResourcesCheckboxes [this {:list/keys [items all-checked? show-more?]}]
+(defsc ResourcesCheckboxes [this {:list/keys [items all-checked? show-more? ] }]
   {:query [{:list/items (comp/get-query ResourceCheckboxItem)  } :list/all-checked? :list/show-more?]
    :ident (fn [] [:component/id :checkboxes])
    ;:shouldComponentUpdate (fn [_ _ _] true)
@@ -1372,7 +1372,7 @@
   (let [#_#_all-checked? (every? item-checked? items)
         show-more? (comp/get-state this :list/show-more?)]
 
-    
+    (js/console.log "SHOW MRE" show-more?)
     (dom/div :.ui.checkbox
              (dom/input {
                          :type "checkbox"
@@ -1709,7 +1709,8 @@
                                                                                     (ui-form-group {:grouped true}
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
                                                                                                                   (ui-resources-checkboxes {:list/items active-resources
-                                                                                                                                            :list/all-checked? false})  )
+                                                                                                                                            :list/all-checked? false
+                                                                                                                                            :list/show-more? false})  )
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
                                                                                                                   )))}))
                              (ui-menu-item {} (ui-accordion-title
