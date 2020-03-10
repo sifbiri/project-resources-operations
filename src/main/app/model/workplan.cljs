@@ -66,16 +66,17 @@
     (do (js/console.log "WE GOT START" workplan-start)
         (js/console.log "WE GOT END" workplan-end)
 
-        #_(if
+        (if
             (t/< (t/date-time workplan-start) (t/date-time workplan-end))
           
-          (mapv second (t/divide (t/new-interval  (t/inst workplan-start) (t/inst workplan-end))
+            (mapv second (t/divide (t/new-interval  (t/inst workplan-start)
+                                                    (t/inst workplan-end))
                                  (t/new-duration 7 :days)))
           [])
 
 
         
-     (conj (vec
+     #_(conj (vec
             (take-while (fn [x]
                           (and
                            (not (same-week? (t/date-time x) (t/date-time workplan-end)))
