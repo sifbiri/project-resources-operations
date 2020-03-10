@@ -1732,8 +1732,7 @@
                                                                                                                                                       
                                                                                                                                                       )))})
                                                                                                                            (dom/label {:style {:color "#3281b9"}} "Check all")
-                                                                                                                           (ui-divider {})
-                                                                                                                           
+                                                                                                                           (ui-divider {})                                                                                                                           
                                                                                                                            (mapv #(ui-resource-checkbox-item  % )
                                                                                                                                  (take (if show-more? 100 10) (sort-by :checkbox/label active-resources)))
                                                                                                                            (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}

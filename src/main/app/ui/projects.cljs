@@ -991,25 +991,27 @@
                                                                                                                   :replace [:component/id :gov-review :gov-review/new-action])) } "Action")
                                                             #_(ui-dropdown-item {} "Risk"))))
 
-                  (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e d]
-                                                                                   (m/toggle! this :ui/modal-open?)
-                                                                                   (merge/merge-component! this ActionRow
-                                                                                                           {:ui/new? true
-                                                                                                            :db/id (tempid/tempid)
-                                                                                                            :action/action ""
-                                                                                                            :ui/modal-open? true
-                                                                                                            :action/owner ""
-                                                                                                            :action/status :open
-                                                                                                            :action/due-date (-> t/now t/inst)}
-                                                                                                           :append [:action-list/id id :action-list/actions]
-                                                                                                           :replace [:component/id :gov-review :gov-review/new-action]))
-                               } "Add Action")
+                  (ui-grid-row
+                   {}
+                   (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e d]
+                                                                                                (m/toggle! this :ui/modal-open?)
+                                                                                    (merge/merge-component! this ActionRow
+                                                                                                            {:ui/new? true
+                                                                                                             :db/id (tempid/tempid)
+                                                                                                             :action/action ""
+                                                                                                             :ui/modal-open? true
+                                                                                                             :action/owner ""
+                                                                                                             :action/status :open
+                                                                                                             :action/due-date (-> t/now t/inst)}
+                                                                                                            :append [:action-list/id id :action-list/actions]
+                                                                                                            :replace [:component/id :gov-review :gov-review/new-action]))
+                                } "Add Action")
 
-                  
-                  
+                   
+                   
 
 
-                  (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit")
+                   (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e] (comp/transact! this [(project/submit-current-gov-review-week {:gov-review-week current-week :project-info/id id})]))} "Submit"))
                   
                   (ui-modal {:open (:ui/modal-open? new-action) :onClose #(comp/transact! this [(close-new-modal {:action-id (:db/id new-action) :action-list-id id})])}
                             (ui-modal-content {} (ui-action-form new-action))
@@ -1537,11 +1539,16 @@
 
     (if logged-in?
       
-      #_if  #_(df/loading? marker) 
-      #_(div :.ui.active.inverted.dimmer
-             (div :.ui.text.loader))
       
-      [(ui-grid-column  {:width 3 :style {:color "#3281b9"}}
+      [(when (df/loading? marker)
+         (div :.ui.active.inverted.dimmer
+              (div :.ui.text.loader
+                   )))
+       
+
+       (ui-grid-column  {:width 3 :style {:color "#3281b9"}}
+
+                        
                         (ui-accordion
                          {:as Menu  :vertical true :style {:color "#3281b9"}}
                          
