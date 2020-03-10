@@ -1514,7 +1514,7 @@
 
 ;; TODO rename WorkPlan to ResourcePlan
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
-                       :keys [ui/dates ui/loading ui/show-more? workplan/teams ui/show-more? ui/check-all?]:as props}]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all?]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
                    :ui/check-all?
                    :ui/loading :ui/show-more?
@@ -1734,7 +1734,11 @@
                                                                                                                            (dom/label {:style {:color "#3281b9"}} "Check all")
                                                                                                                            (ui-divider {})                                                                                                                           
                                                                                                                            (mapv #(ui-resource-checkbox-item  % )
-                                                                                                                                 (take (if show-more? 100 10) (sort-by :checkbox/label active-resources)))
+
+                                                                                                                                 (if show-more?
+                                                                                                                                   (sort-by :checkbox/label active-resources)
+                                                                                                                                   (take 10 (sort-by :checkbox/label active-resources))))
+                                                                                                                           
                                                                                                                            (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
                                                                                                                                        :onClick (fn [e]
                                                                                                                                                   (m/toggle! this :ui/show-more?)
