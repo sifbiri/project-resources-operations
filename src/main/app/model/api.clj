@@ -732,7 +732,24 @@
                                                                    
                                                                    ] (d/db (d/connect db-url))))))
 
-  )
+
+
+  (sort (d/q '[:find  [?date ...]
+               :in $  ?pid 
+               :where
+               [?fluxod :fluxod-ts/date ?date]
+               
+               [?fluxod :fluxod-ts/client ?client]
+               [?fluxod :fluxod-ts/po ?fluxod-po]
+               
+               [?pinfo :project-info/fluxod-client-name ?client]
+               [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+               [?pinfo :project-info/id ?pid]
+               
+               [?e :project/id ?pid]
+               [?e :project/name ?name]
+               ](d/db (d/connect db-url))
+                #uuid "8c98f847-f853-ea11-9d73-b4ae2be9eec5")))
 
 
 
