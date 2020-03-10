@@ -1398,8 +1398,6 @@
                   (take (if show-more? 100 10) items))
              (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
                          :onClick (fn [e]
-                                    #_(m/toggle! this :list/show-more?)
-                                    #_(comp/set-state! this  {:list/show-more? (not show-more?)})
                                     (comp/set-state! this  {:list/show-more? (not (comp/get-state this :list/show-more?))}))}
                         (if (comp/get-state this :list/show-more?)
                           "Show less"
@@ -1516,9 +1514,9 @@
 
 ;; TODO rename WorkPlan to ResourcePlan
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
-                       :keys [ui/dates ui/loading ui/show-more? workplan/teams]:as props}]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams ui/show-more? ui/check-all?]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
-
+                   :ui/check-all?
                    :ui/loading :ui/show-more?
                                         ;{:workplan/projects (comp/get-query Project)}
                                         ;{:workplan/project-lines (comp/get-query ProjectLine)}
@@ -1711,9 +1709,40 @@
                                                                   :content (ui-form {}
                                                                                     (ui-form-group {:grouped true}
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
-                                                                                                                  (ui-resources-checkboxes {:list/items active-resources
+                                                                                                                  #_(ui-resources-checkboxes {:list/items active-resources
                                                                                                                                             :list/all-checked? false
-                                                                                                                                            :list/show-more? false})  )
+                                                                                                                                              :list/show-more? false})
+
+                                                                                                                  (dom/div :.ui.checkbox
+                                                                                                                           (dom/input {
+                                                                                                                                       :type "checkbox"
+                                                                                                                                       :style {:color "#3281b9"}
+                                                                                                                                       :checked (comp/get-state this :all-checked?)
+                                                                                                                                       :onClick (fn [a b]
+                                                                                                                                                  
+                                                                                                                                                  #_(comp/set-state! this {:all-checked? (not (comp/get-state this :all-checked?))} )
+                                                                                                                                                  (m/toggle! this :all-checked?)
+                                                                                                                                                  
+                                                                                                                                                  (let [{:keys [all-checked?]}(comp/get-state this)]
+                                                                                                                                                    
+                                                                                                                                                    (if all-checked?
+                                                                                                                                                      (comp/transact! this [(uncheck-all-resource-boxes )])
+                                                                                                                                                      (comp/transact! this [(check-all-resource-boxes )])
+                                                                                                                                                      
+                                                                                                                                                      
+                                                                                                                                                      )))})
+                                                                                                                           (dom/label {:style {:color "#3281b9"}} "Check all")
+                                                                                                                           (ui-divider {})
+                                                                                                                           
+                                                                                                                           (mapv #(ui-resource-checkbox-item  % )
+                                                                                                                                 (take (if show-more? 100 10) (sort-by :checkbox/label active-resources)))
+                                                                                                                           (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
+                                                                                                                                       :onClick (fn [e]
+                                                                                                                                                  (m/toggle! this :ui/show-more?)
+                                                                                                                                                  #_(comp/set-state! this  {:list/show-more? (not (comp/get-state this :list/show-more?))}))}
+                                                                                                                                      (if show-more?
+                                                                                                                                        "Show less"
+                                                                                                                                        "Show more"))))
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
                                                                                                                   )))}))
                              (ui-menu-item {} (ui-accordion-title
