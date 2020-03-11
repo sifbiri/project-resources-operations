@@ -27,20 +27,20 @@
 
             fulcrologic/fulcro
 
-           {:git/url "https://github.com/fulcrologic/fulcro" :sha "17bb71a9594a944287f2b750c2124995f539cb87"
+           {:git/url "https://github.com/fulcrologic/fulcro" :sha "bb413bc15ddfc5ac2b2a4a2f3634031e93b50c7a"
             
             }
 
            com.cerner/clara-rules {:mvn/version "0.20.0"}
 
            fulcrologic/fulcro-rad
-           {:git/url "https://github.com/fulcrologic/fulcro-rad.git" :sha "355dc83387b32529193a5444f3674bbadbbee4ed"
+           {:git/url "https://github.com/fulcrologic/fulcro-rad.git" :sha "a459d4f4edf35d59471a51dc4cf62caaa0756b4f"
             
             }
 
 
            fulcrologic/fulcro-rad-datomic
-           {:git/url "https://github.com/fulcrologic/fulcro-rad-datomic.git" :sha "57874e04e8e1d1d83e3a742780cd3f92c2b6dc27"
+           {:git/url "https://github.com/fulcrologic/fulcro-rad-datomic.git" :sha "5c66f3d0af8b0f103ab78178c836f3872655e03a"
             
             }
 

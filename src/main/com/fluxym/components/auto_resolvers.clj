@@ -11,4 +11,5 @@
   (vec
    (concat
     (res/generate-resolvers all-attributes)
+    ;; do we need this to be added? 
     (datomic/generate-resolvers all-attributes :dev))))

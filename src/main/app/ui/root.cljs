@@ -634,15 +634,9 @@
 
   (div (ui-date date)))
 
-
-
-
-
-
-
 (defsc SelectedProject
   [this {:selected/keys [project]}]
-  {:query [:selected/project (comp/get-query projects/Project)
+  {:query [{:selected/project (comp/get-query projects/Project)}
            {:selected/resource (comp/get-query users/Resource)}]
    :ident (fn [] [:component/id :selected])}
 
@@ -1268,8 +1262,8 @@
           ))
 
 
-(defmutation set-resource-lines
-  [{:keys [ids]}]
+(defmutation set-resource-lines 
+  [{:keys [ids append?]}]
   (action [{:keys [state]}]
           
           (doseq [id ids]
@@ -1277,8 +1271,13 @@
                    {:resource-line/resource [:resource/id id]
                     :resource-line/id id}
                    ))
-          (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
-                                 ] (mapv (fn [id] [:resource-line/id id]) ids)))
+
+          (if append?
+            (let [prv (get-in @state [:component/id :workplan :workplan/resource-lines])]
+              (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
+                                     ] (vec (distinct (concat prv (mapv (fn [id] [:resource-line/id id]) ids))))))
+            (swap! state assoc-in [:component/id :workplan :workplan/resource-lines
+                                   ] (mapv (fn [id] [:resource-line/id id]) ids))))
 
   )
 
@@ -1303,6 +1302,12 @@
           (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines])
           (swap! state update-in [:team/id] dissoc  id ))
   )
+
+(defmutation remove-resource-lines [{:keys [ids]}]
+  (action [{:keys [state] :as env}]
+          (doseq [id ids]
+            (swap! state merge/remove-ident* [:resource-line/id id] [:component/id :workplan :workplan/resource-lines])
+            (swap! state update-in [:team/id] dissoc  id ))))
 
 (defmutation uncheck-all-resource-boxes [{:keys []}]
   (action [{:keys [state] :as env}]
@@ -1478,44 +1483,87 @@
  ; :shouldComponentUpdate (fn [_ _ _] true)
   (let []
     (dom/div {}
-            (dom/div :.ui.checkbox (dom/input  {:style {}
-                                                :type "checkbox"
-                                                :checked checked?
+             (dom/div
+              :.ui.checkbox
+              (dom/input
+               {:style {}
+                :type "checkbox"
+                :checked checked?
                                         ;:indeterminate true
                                         ;:style {:padding "10px"}
-                                                
-                                                :onChange (fn [e]
+                
+                :onChange (fn [e]
+                            (m/toggle! this :ui/checked?)
                                                             
-
-                                                            (m/toggle! this :ui/checked?)
-
-                                                            
-                                                            
-                                                            
-                                                            (if  checked?
-                                                              (comp/transact! this [(remove-resource-line-for-team {:team-id (:db/id team)})])
-                                                              ;; TAG
-
-                                                              ;; (merge/merge-component! SPA  ResourceLine
-                                                              ;;                         {:resource-line/resource [:resource/id value]
-                                                              ;;                          :resource-line/id value}
-                                                              ;;                         :append [:component/id :workplan :workplan/resource-lines])
-                                                              (comp/transact! this [(set-resource-line-for-team {:team-id (:db/id team)})])
-                                                              
-                                                              )
+                            (if  checked?
+                              (comp/transact! this [(remove-resource-line-for-team {:team-id (:db/id team)})])
+                              ;; TAG
+                              
+                              ;; (merge/merge-component! SPA  ResourceLine
+                              ;;                         {:resource-line/resource [:resource/id value]
+                              ;;                          :resource-line/id value}
+                              ;;                         :append [:component/id :workplan :workplan/resource-lines])
+                              (comp/transact! this [(set-resource-line-for-team {:team-id (:db/id team)})])
+                              
+                              )
                                                             
                                                             
                                                             )})
-                     (dom/label {:style {:color "#3281b9"}} (:team/name team))
-                     (dom/br {})))))
+              (dom/label {:style {:color "#3281b9"}} (:team/name team))
+              ))))
 
 
 (def ui-team-checkbox (comp/factory TeamCheckbox))
 
 ;; TODO rename WorkPlan to ResourcePlan
+
+(defsc Project2 [this props]
+  {:query [:project/name :project/id
+           :project-info/status
+           {:project/resources [:resource/name :resource/id]} ]})
+
+
+
+(defsc
+  ProjectCheckBox
+  [this {:keys [project/name project/id project/resources ui/checked?] :as p}]
+  {:query [:ui/checked? :project/name :project/id {:project/resources [:resource/name :resource/id]} :project-info/status]
+   :ident (fn [] [:project-checkbox/id id])
+   :initLocalState (fn [_] {:checked? false})}
+   
+  (dom/div
+  :.ui.checkbox
+  (dom/input
+   {:style {}
+    :type "checkbox"
+  
+                                        ;:indeterminate true
+                                        ;:style {:padding "10px"}
+    
+    :onChange (fn [e f]
+                
+                (comp/set-state! this {:checked? (not (comp/get-state this :checked?))})
+                (if (comp/get-state this :checked?)
+                  (comp/transact! this [(remove-resource-lines {:ids (mapv :resource/id
+                                                                               (:project/resources p))})])
+                  (comp/transact! this [(set-resource-lines {:ids (mapv :resource/id
+                                                                        (:project/resources p))
+                                                             :append? true})])
+
+                    )
+                
+                
+                
+                )})
+  (dom/label {:style {:color "#3281b9"}} (:project/name p))
+  ))
+
+(def ui-project-checkbox (comp/factory ProjectCheckBox {:keyfn :project/id}))
+
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
-                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all?]:as props}]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? workplan/projects]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
+                   {:workplan/projects (comp/get-query ProjectCheckBox)}
                    :ui/check-all?
                    :ui/loading :ui/show-more?
                                         ;{:workplan/projects (comp/get-query Project)}
@@ -1545,9 +1593,16 @@
                                                                           :target
 
                                                                           [:component/id :admin-users :admin-users/resources]})
+
+                    (df/load! app :all-projects ProjectCheckBox
+                              {
+                               :target [:component/id :workplan :workplan/projects]
+                               
+                               })
+                    
                     (df/load! app :teams teams/Team
 
-                              {:parallel true
+                              {
                                :target 
 
                                
@@ -1559,6 +1614,9 @@
                                
                                :post-mutation `app.ui.teams/merge-team-checkboxes
                                })
+
+                    
+                    
                     (comp/transact! app [(dr/target-ready {:target [:component/id :workplan]})]))))
    
    
@@ -1622,6 +1680,7 @@
                         )
    
    }
+  
   (let [resources-options (:resource/options (comp/props this))
         marker (get props [df/marker-table :projects] )
         active-resources (vec (filter (fn [m] (:resource/active? m))
@@ -1761,6 +1820,61 @@
                                                                                                    (ui-form-field {}                                                                                                                                                                                                                         
                                                                                                                   (mapv #(ui-team-checkbox  %) (remove #(nil? (:team/name %)) team-checkboxes)))
                                                                                                    ))})
+                                           )
+
+
+                             (ui-menu-item {} (ui-accordion-title
+                                               {:active (= active-index 3)
+                                                :content "Projects"
+                                                :index 3
+                                                :onClick handleClick
+                                                :style {:color "#3281b9"}}
+                                               )
+                                           (ui-accordion-content {:active (= active-index 3)
+                                                                  :content
+                                                                  (ui-form
+                                                                   {}
+                                                                   (ui-form-group
+                                                                    {:grouped true}
+                                                                    (ui-form-field
+                                                                     {}
+                                                                     (mapv #(ui-project-checkbox (assoc % :ui/checked? false ))
+                                                                           (sort-by :project/name
+                                                                                    (filterv #(= (:project-info/status %) :in-progress)
+                                                                                             projects)))
+                                                                     #_(fn [p]
+                                                                            (dom/div
+                                                                             :.ui.checkbox
+                                                                             (dom/input
+                                                                              {:style {}
+                                                                               :type "checkbox"
+                                                                               
+                                        ;:indeterminate true
+                                        ;:style {:padding "10px"}
+                                                                               
+                                                                               :onChange (fn [e f]
+                                                                                           (js/console.log "E" (.-value e))
+                                                                                           (js/console.log "F"  (.-target e))
+                                                                                           (m/toggle! this :ui/checked?)
+                                                                                           #_(comp/transact! this [(set-resource-lines {:ids (mapv :resource/id
+                                                                                                                                                   (:project/resources p))})])
+                                                                                           #_(if  checked?
+                                                                                               (comp/transact! this [(remove-resource-line-for-team {:team-id (:db/id team)})])
+                                                                                               ;; TAG
+                                                                                               
+                                                                                               ;; (merge/merge-component! SPA  ResourceLine
+                                                                                               ;;                         {:resource-line/resource [:resource/id value]
+                                                                                               ;;                          :resource-line/id value}
+                                                                                               ;;                         :append [:component/id :workplan :workplan/resource-lines])
+                                                                                               
+                                                                                               
+                                                                                               )
+                                                                                           
+                                                                                           
+                                                                                           )})
+                                                                             (dom/label {:style {:color "#3281b9"}} (:project/name p))
+                                                                             ))
+                                                                     )))})
                                            ))))
        
        (ui-grid-column {:width 13}

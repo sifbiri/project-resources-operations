@@ -362,9 +362,7 @@
 
 (pc/defresolver resource-resolver [{:keys [db]} {:keys [resource/id]}]
   {::pc/input  #{:resource/id}
-   ::pc/output [:resource/name :resource/email-address]
-   
-   }
+   ::pc/output [:resource/name :resource/email-address]}
   
   (first (d/q '[:find ?name ?ea
                 :in $ ?id
@@ -1143,15 +1141,13 @@
   {:b 2})
 
 (pc/defresolver all-projects-resolver [env _]
-  {::pc/output [{:all-projects [:project/id :project/name :project/start-date :project/modified-date]}]}
-  (let [id (get-in env [:ast :params :resource/id])]
-    (println "AST" (get-in env :ast :params))
-    {:all-projects (d/q  '[:find ?pi
-                           :keys project/id
-                           :where
-                           
-                           [?p :project/id ?pi]
-                           ] (d/db conn))}))
+  {::pc/output [{:all-projects [:project/id]}]}
+  {:all-projects (d/q  '[:find ?pi
+                         :keys project/id
+                         :where
+                         
+                         [?p :project/id ?pi]
+                         ] (d/db conn))})
 
 
 (pc/defresolver project-panel [env _]
@@ -1187,13 +1183,48 @@
   (do
     
     {:action-list-label/count
-    (d/q '[:find (count ?a) .
-           :in $ ?id
-           :where
-           [?al :action-list/id ?id]
-           [?al :action-list/actions ?a]]
-         db id)
-    :project/id id}))
+     (d/q '[:find (count ?a) .
+            :in $ ?id
+            :where
+            [?al :action-list/id ?id]
+            [?al :action-list/actions ?a]]
+          db id)
+     :project/id id}))
+
+
+
+(pc/defresolver action-list-label-count [{:keys [db connection]} {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [:action-list-label/count]
+   }
+  (do
+    
+    {:action-list-label/count
+     (d/q '[:find (count ?a) .
+            :in $ ?id
+            :where
+            [?al :action-list/id ?id]
+            [?al :action-list/actions ?a]]
+          db id)
+     :project/id id}))
+
+
+(pc/defresolver project-resources [{:keys [db connection]} {:keys [project/id]}]
+  {::pc/input #{:project/id}
+   ::pc/output [{:project/resources [:resource/id]}]
+   }
+  {:project/resources
+   (d/q '[:find ?rid
+          :keys resource/id
+          :in $ ?id
+          :where
+          [?p :project/id ?id]
+          [?p :project/assignments ?a]
+          [?a :assignment/resource ?r]
+          [?r :resource/id ?rid]]
+        
+        db
+        id)})
 
 
 
@@ -1358,6 +1389,7 @@
                  remove-fluxod-project-name
                  save-fluxod-client-name
                  fluxod-client-name
+                 project-resources
                  a b
                  ])
 

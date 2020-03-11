@@ -1,5 +1,10 @@
 (ns app.server-components.middleware
+  
   (:require
+   [com.fulcrologic.rad.middleware.save-middleware :as r.s.middleware]
+   [com.fulcrologic.rad.database-adapters.datomic :as datomic]
+   ;[com.example.components.datomic :refer [datomic-connections]];
+   ;[com.example.model :as model]
     [app.server-components.config :refer [config]]
     [app.server-components.pathom :refer [parser]]
     [mount.core :refer [defstate]]
@@ -24,6 +29,8 @@
     {:status  404
      :headers {"Content-Type" "text/plain"}
      :body    "NOPE"}))
+
+
 
 
 (defn wrap-api [handler uri]
@@ -124,6 +131,7 @@
         (wrap-api "/api")
         (wrap-file-response)
         (file-upload/wrap-mutation-file-uploads {})
+        
         
      wrap-transit-params
       wrap-transit-response
