@@ -1431,29 +1431,11 @@
   
   )
 
-
-
-
-
-
-
-
-
-
 #_(defsc GovernanceReview2 [this props]
     {:query []
      :route-segment ["governance-review2" :governance-review/id]
      :ident (fn [] [:component/id :governance-review2])}
     (dom/p {} "GOV REVIEW2"))
-
-
-
-
-
-
-
-
-
 
 (defsc AdminProject [this {:keys [project/id ]}]
   {:query [:project/id :project/name

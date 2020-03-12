@@ -1169,6 +1169,7 @@
                        :in $ ?id
                        :where
                        [?a :action/due-date ?due-date]
+                       [?a :action/status :open]
                        [?al :action-list/id ?id]
                        [?al :action-list/actions ?a]
                        [(tick.alpha.api/< ?due-date (tick.alpha.api/inst (tick.alpha.api/now)))]]
