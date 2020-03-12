@@ -1561,7 +1561,7 @@
 (def ui-project-checkbox (comp/factory ProjectCheckBox {:keyfn :project/id}))
 
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
-                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? workplan/projects]:as props}]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? ui/show-more-projects? workplan/projects]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
                    {:workplan/projects (comp/get-query ProjectCheckBox)}
                    :ui/check-all?
@@ -1573,6 +1573,7 @@
                                         ;{:workplan/selected (comp/get-query SelectedProject)}
 
                    [:resource/options '_]
+                   :ui/show-more-projects?
                    [:component/id :session]
                    {:workplan/teams (comp/get-query teams/Team)}  
                    [:checkbox/id '_]
@@ -1627,6 +1628,7 @@
                      :ui/loading false
                      :ui/show-more? false
                      :ui/all-checked? false
+                     :ui/show-more-projects? false
 
                      ;; :workplan/resource-lines
                      
@@ -1793,7 +1795,6 @@
                                                                                                                            (dom/label {:style {:color "#3281b9"}} "Check all")
                                                                                                                            (ui-divider {})                                                                                                                           
                                                                                                                            (mapv #(ui-resource-checkbox-item  % )
-
                                                                                                                                  (if show-more?
                                                                                                                                    (sort-by :checkbox/label active-resources)
                                                                                                                                    (take 10 (sort-by :checkbox/label active-resources))))
@@ -1839,9 +1840,21 @@
                                                                     (ui-form-field
                                                                      {}
                                                                      (mapv #(ui-project-checkbox (assoc % :ui/checked? false ))
-                                                                           (sort-by :project/name
-                                                                                    (filterv #(= (:project-info/status %) :in-progress)
-                                                                                             projects)))
+                                                                           (if show-more-projects?
+                                                                             (sort-by :project/name
+                                                                                      (filterv #(= (:project-info/status %) :in-progress)
+                                                                                               projects))
+                                                                             (take 5 (sort-by :project/name
+                                                                                       (filterv #(= (:project-info/status %) :in-progress)
+                                                                                                projects)))))
+
+                                                                     
+                                                                     (ui-button {:size "mini" :basic true :style {:marginLeft "30px" :marginTop "5px"}
+                                                                                 :onClick (fn [e]
+                                                                                            (m/toggle! this :ui/show-more-projects?))}
+                                                                                (if show-more-projects?
+                                                                                  "Show less"
+                                                                                  "Show more"))
                                                                      #_(fn [p]
                                                                             (dom/div
                                                                              :.ui.checkbox
