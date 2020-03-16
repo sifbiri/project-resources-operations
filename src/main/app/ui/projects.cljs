@@ -632,7 +632,7 @@
                                                                                                                                                   SPA Order
                                                                                                                                                   {:ui/new? true
                                                                                                                                                    :order/id random-id
-                                                                                                                                                   :order/name "N"
+                                                                                                                                                   :order/name ""
                                                                                                                                                    :order/currency :currency/CAD
                                                                                                                                                    :order/days 0
                                                                                                                                                    :order/amount 0}
