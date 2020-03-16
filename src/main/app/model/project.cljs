@@ -208,12 +208,12 @@
 
 (defn order-valid?
   "A user-written item validator (by field)"
-  [{:item/keys [name days amount] :as order} field]
+  [{:order/keys [name days amount] :as order} field]
   (try
     (case field
       :order/name (boolean (seq name))
-      :order/days (math/> days 0)
-      :item/amount (math/>= amount 0)
+      :order/days (math/>= days 0)
+      :order/amount (math/>= amount 0)
       true)
     (catch :default _
       false)))
@@ -271,22 +271,15 @@
                              :as        params}]
   (action [{:keys [app state]}]
           (let [state-map       @state
-                ident           [:order/by-id id]
+                ident           [:order/id id]
                 completed-state (fs/mark-complete* state-map ident)
                 order            (get-in completed-state ident)
                 Order    (comp/registry-key->class :app.ui.projects/Order)
-                item-props      (fdn/db->tree (comp/get-query Order) order completed-state)
-                valid?          (= :valid (order-validator item-props))]
+                order-props      (fdn/db->tree (comp/get-query Order) order completed-state)
+                valid?          (= :valid (order-validator order-props))]
             (if valid?
               (comp/transact! app [(save-order params)])
               (reset! state completed-state)))))
-
-
-
-
-
-
-
 
 (defmutation set-project-status [{:keys [project-info/id status]}]
 
