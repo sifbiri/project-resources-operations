@@ -456,7 +456,7 @@
                              :onChange (fn [evt] (when onChange
                                                    (onChange evt)))}
                       type (assoc :type type)))
-     (div :.ui.left.pointing.red.basic.label
+     (div :.ui.up.pointing.red.basic.label
           {:classes [(when (not= :invalid (project/order-validator props field)) "hidden")]}
           (or validation-message "Invalid value")))))
 
