@@ -92,6 +92,25 @@
                                                id
                                                
                                                )))
+
+                          (first (sort (d/q '[:find [?date ...]
+                                             :in $ ?id
+                                             :where
+                                             [?p :project/id ?id]
+                                             [?p :project/assignments ?a]
+                                             [?a :assignment/by-day ?date]]
+                                           db
+                                           id
+                                           )))
+
+                          
+
+                          #_(d/q '[:find ?date .
+                                 :in $ ?pid
+                                 :where
+                                 [?p :project/id ?pid]
+                                 [?p :project/start-date ?pid]]
+                               db id)
                           
                           )
    })
@@ -271,8 +290,6 @@
                                                 id
                                                 workplan
                                                 ))))
-            
-            
             
             fluxod-timesheets (if allow-actuals?
                                 (sort-by

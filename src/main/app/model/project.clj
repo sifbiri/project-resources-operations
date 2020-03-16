@@ -1177,6 +1177,25 @@
    :project/id id})
 
 
+(pc/defresolver order [{:keys [db connection]}
+                       {:order/keys [id]}]
+  {::pc/input  #{:order/id}
+   ::pc/output [:order/name :order/currency :order/days :order/amount :order/id]}
+  (d/pull db [:order/name :order/currency :order/days :order/amount :order/id] [:order/id id]))
+
+(pc/defresolver all-orders [{:keys [db connection]} {:keys [finance/id]}]
+  {::pc/input #{:finance/id}
+   ::pc/output [{:finance/orders [:order/id]}]}
+  {:finance/orders (d/q '[:find ?oid
+                          :keys order/id
+                          :in $ ?id
+                          :where
+                          [?f :finance/id ?id]
+                          [?f :finance/orders ?o]
+                          [?o :order/id ?oid]] db id)})
+
+
+
 (pc/defresolver action-list-label-count [{:keys [db connection]} {:keys [project/id]}]
   {::pc/input #{:project/id}
    ::pc/output [:action-list-label/count]
@@ -1192,6 +1211,38 @@
           db id)
      :project/id id}))
 
+(pc/defmutation save-order [{:keys [db connection] :as env} {:order/keys [id]
+                                :keys      [diff finance]}]
+  {::pc/output [:order/id]}
+                                        ;(throw (ex-info "Boo" {}))
+  (let [new-values (get diff [:order/id id])
+        new?       (not (d/q '[:find ?o .
+                           :in $ ?id
+                           :where [?o :order/id ?id]] db id))
+        
+        ]
+
+    
+   (if new?
+     (let [{:keys [tempids]} @(d/transact connection [(-> new-values
+                                                          (assoc :db/id "new")
+                                                          (update :order/amount bigdec)
+                                                          (update :order/days bigdec)
+                                                          )])
+            new-id (-> tempids vals first)
+            finance-entity (d/entity db [:finance/id finance])]
+        (if finance-entity
+          @(d/transact connection [[:db/add [:finance/id  action-list] :finance/orders new-id]])
+          (do
+            @(d/transact connection [[:db/add "new-finance" :finance/id finance]
+                                     [:db/add "new-finance" :finance/orders new-id]])))
+        
+        {:order/id id})
+      (do
+        @(d/transact connection [(assoc new-values :db/id [:order/id id])])
+        @(d/transact connection [[:db/add [:finance/id finance] :finance/actions [:order/id id]]])
+
+        {:order/id id}))))
 
 
 (pc/defresolver action-list-label-count [{:keys [db connection]} {:keys [project/id]}]
@@ -1378,6 +1429,9 @@
                  alias-project-panel
                  level3-tasks
                  save-action
+                 save-order
+                 all-orders
+                 order
                  action
                  action-list
                  action-list-label-overdue?

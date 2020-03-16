@@ -1203,6 +1203,9 @@
   
   }
 
+
+ 
+
  {:db/id #db/id[:db.part/db]
 
   :db/ident :action-list/actions
@@ -1215,6 +1218,87 @@
   
   }
 
+ ;; ORder
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :order/days
+
+  :db/valueType :db.type/bigdec
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :order/amount
+
+  :db/valueType :db.type/bigdec
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :order/currency
+
+  :db/valueType :db.type/keyword
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :order/id
+  
+  :db/valueType :db.type/uuid
+  :db/cardinality :db.cardinality/one
+  :db/unique  :db.unique/identity
+  }
+
+ 
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :order/name
+
+  :db/valueType :db.type/string
+  
+  :db/cardinality :db.cardinality/one
+
+                                        ;:db/unique  :db.unique/value
+  
+  }
+
+ ;; Finance
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :finance/id
+
+  :db/valueType :db.type/uuid
+  
+  :db/unique  :db.unique/identity
+  
+  :db/cardinality :db.cardinality/one
+  
+  }
+ 
+
+ {:db/id #db/id[:db.part/db]
+
+  :db/ident :finance/orders
+
+  :db/isComponent true
+  
+  :db/valueType :db.type/ref
+  
+  :db/cardinality :db.cardinality/many
+  
+  }
+
+ 
  
  
  ]

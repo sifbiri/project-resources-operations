@@ -1,7 +1,7 @@
 (ns app.ui.projects
   (:require
                                         ;[com.fulcrologic.semantic-ui.elements.input :as ui-input]
-
+   
    
    [app.ui.users :as users]
    [app.ui.workplans :as workplans]
@@ -31,7 +31,7 @@
    ["semantic-ui-react/dist/commonjs/modules/Dropdown/Dropdown" :default Dropdown]
    [clojure.set :as set]
    [clojure.string :as str]
-   [app.math :as math2]
+   [app.math :as math]
    ["react-number-format" :as NumberFormat]
    ["react-country-flag" :as  ReactCountryFlag]
                                         ;["react-collapsing-table" :as ReactCollapsingTable]
@@ -52,7 +52,7 @@
    [com.fulcrologic.semantic-ui.elements.flag.ui-flag :refer [ui-flag]]
    [com.fulcrologic.semantic-ui.collections.table.ui-table-footer :refer [ui-table-footer]]
    [app.model.item :as item2]
-   [com.fulcrologic.rad.type-support.decimal :as math]
+   [com.fulcrologic.rad.type-support.decimal :as math2]
    [com.fluxym.model.line-item :as line-item]
    [com.fluxym.model.item :as item]
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
@@ -87,6 +87,7 @@
    [com.fulcrologic.semantic-ui.modules.accordion.ui-accordion :refer [ui-accordion]]
    [com.fulcrologic.semantic-ui.modules.accordion.ui-accordion-title :refer [ui-accordion-title]]
    [com.fulcrologic.semantic-ui.modules.accordion.ui-accordion-content :refer [ui-accordion-content]]
+   [com.fulcrologic.semantic-ui.elements.button.ui-button-group :refer [ui-button-group]]
    [com.fulcrologic.semantic-ui.collections.menu.ui-menu :refer [ui-menu]]
    [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
@@ -161,7 +162,7 @@
    ))
 
 (def month-to-number #(get {t/JANUARY 1 t/FEBRUARY 2 t/MARCH 3 t/APRIL 4 t/MAY 5 t/JUNE 6  t/JULY 7  t/AUGUST 8 t/SEPTEMBER 9  t/OCTOBER 10  t/NOVEMBER 11 t/DECEMBER 12} %))
-
+(def ui-number-format (interop/react-factory NumberFormat))
 (defn week-number
   "Week number according to the ISO-8601 standard, weeks starting on
   Monday. The first week of the year is the week that contains that
@@ -444,9 +445,246 @@
 
 (def ui-action-row (comp/factory ActionRow {:keyfn :db/id}))
 
+(defn table-cell-field [this field {:keys [prefix onChange validation-message input-tag value-xform type]}]
+  (let [props         (comp/props this)
+        value         (get props field "")
+        input-factory (or input-tag dom/input)
+        xform         (or value-xform identity)]
+    (td
+     (input-factory (cond-> {:prefix prefix
+                             :value    (xform value)
+                             :onChange (fn [evt] (when onChange
+                                                   (onChange evt)))}
+                      type (assoc :type type)))
+     (div :.ui.left.pointing.red.basic.label
+          {:classes [(when (not= :invalid (project/order-validator props field)) "hidden")]}
+          (or validation-message "Invalid value")))))
 
 
 
+(defn ui-decimal-input
+  "Render a money input component. Props can contain:
+  :value - The current controlled value (as a bigdecimal)
+  :onChange - A (fn [bigdec]) that is called on changes"
+  [{:keys [prefix
+           value
+           onBlur
+           onChange]}]
+  (let [attrs {:thousandSeparator true
+               :prefix            (or prefix "$")
+               :value             (math/bigdec->str value)
+               :onBlur            (fn [] (when onBlur (onBlur)))
+               :onValueChange     (fn [v]
+                                    (let [str-value (.-value v)]
+                                      (when (and (seq str-value) onChange)
+                                        (onChange (math/bigdecimal str-value)))))}]
+    (ui-number-format attrs)))
+
+
+(defsc Order [this {:order/keys [name id currency days amount] :ui/keys [new? saving?] :as props} {:keys [remove-order save-order]}]
+  {:query [:order/name :order/id :order/currency :order/days :order/amount :ui/new? :ui/saving?
+           fs/form-config-join]
+   :ident :order/id
+   :pre-merge   (fn [{:keys [data-tree]}] (fs/add-form-config Order data-tree))
+   :form-fields #{:order/name :order/days :order/amount :order/currency :order/id}}
+  (ui-table-row
+   {}
+   
+   (ui-table-cell
+    {}
+
+    (table-cell-field this :order/name {:validation-message "Name must not be empty"
+                                        :input-tag ui-input
+                                        :onChange           #(m/set-string! this :order/name :event %)})
+    #_(ui-form-input  {:type "input"
+                       #_#_:error (= :invalid (project/action-validator props :action/action))
+                       :value name
+                       
+                       :onChange #(m/set-string! this :order/name :event %)
+                       }))
+   (ui-table-cell
+    {:textAlign :right :singleLine true}
+    (ui-dropdown
+     {:compact true :basic true 
+      :options [{:text "EUR" :value :currency/EUR}
+                {:text "CAD" :value :currency/CAD}
+                {:text "USD" :value :currency/USD}]
+
+      ;; TODO handle this on the server 
+      :value  currency
+      :onChange (fn [event data]
+                  (comp/transact!
+                   this
+                   [(project/set-order-currency {:value (keyword (str "currency/" (.-value data))) :id id})]))
+      }))
+
+   
+   
+
+   (table-cell-field this :order/days {:validation-message "Amount must be a positive amount."
+                                       :input-tag          ui-decimal-input
+                                       :prefix ""
+                                       :onChange           #(m/set-value! this :order/days %)})
+   (table-cell-field this :order/amount {:validation-message "Days must be a positive amount."
+                                         :input-tag          ui-decimal-input
+                                         :prefix "$"
+                                         :onChange           #(m/set-value! this :order/amount %)})
+   #_(ui-table-cell {} amount)
+   (ui-table-cell
+    {}
+    (let [visible? (or new? (fs/dirty? props))]
+      (if visible? 
+        (ui-button-group
+         {:basic true}
+         (ui-button {:icon "save outline"
+                     :disabled (= :invalid project/order-validator props)
+                     :onClick  (fn []
+                                 (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                   (save-order id diff)))
+                     }
+                    )
+         (ui-button {:icon "undo" :onClick
+                     (fn [] (if new?
+                              (remove-order id)
+                              (comp/transact! this [(fs/reset-form! {})])))})
+         (ui-button {:icon "times" :onClick #(remove-order id)}))
+        (ui-button-group
+         {:basic true}
+         
+         
+         (ui-button {:icon "times" :onClick #(remove-order id)}))
+
+        
+        )
+      
+      ))
+
+
+   #_(td
+      (let [visible? (or new? (fs/dirty? props))]
+        (when visible?
+          (div :.ui.buttons
+               (button :.ui.inline.primary.button
+                       {:classes  [(when saving? "loading")]
+                                        ;:disabled (= :invalid (item/item-validator props))
+                        :onClick  (fn []
+                                    (let [diff (fs/dirty-fields props false {:new-entity? new?})]
+                                      #_(comp/transact! this [(item/try-save-item {:item/id id :diff diff})])))} "Save")
+               (button :.ui.inline.secondary.button
+                       
+                       "Undo")))))))
+
+(def ui-order (comp/factory Order {:keyfn :order/id}))
+
+
+
+(defsc Finance [this {:finance/keys [id orders] :as props}]
+  {:query [:finance/id {:finance/orders (comp/get-query Order)}]
+   :route-segment  ["finance" :finance/id]
+   :ident  :finance/id
+   :initial-state {:finance/orders []}
+   :will-enter (fn [app {:keys [finance/id] :as params}]
+                 (dr/route-deferred
+                  [:finance/id (uuid id)]
+                  (fn []
+                    (df/load! app [:finance/id (uuid id)] Finance
+                              {:marker :order-marker})
+                    #_(merge/merge-component! app Finance {:finance/id (uuid id) :finance/orders [{:ui/new? true
+                                                                                                   :order/id (random-uuid)
+                                                                                                   :order/name "N"
+                                                                                                   :order/currency :currency/CAD
+                                                                                                   :order/days 0
+                                                                                                   :order/amount 0}]})
+                    (comp/transact! app [(dr/target-ready {:target [:finance/id (uuid id)]})]))))}
+
+  (let [
+        remove-order (fn [orderid] (comp/transact! this [(project/remove-order {:order/id orderid :finance id})]))
+        save-order (fn [dbid diff] (comp/transact! this [(project/try-save-order {:order/id dbid :diff diff :finance id})]))
+        revenue (apply math/+ (mapv :order/amount orders))
+        work  (apply math/+ (mapv :order/days orders))
+        adr (if (> work 0) (math/div revenue work) 0)]
+    (js/console.log "revenue" revenue)
+    (ui-container {}
+                  (ui-segment {:color :violet}
+                              
+                              (ui-header {:textAlign :center :color "blue"} "Orders")
+                              
+                              (ui-grid {}
+
+                                       (ui-grid-column {:width 14}
+                                                       (ui-table {:color :blue :striped true :celled true :style {:fontSize "85%"}}
+                                                                 (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %)
+                                                                                                           ["Name" "Currency" "Days" "Amount" "Actions"])))
+                                                                 
+                                                                 (ui-table-body
+                                                                  {}
+                                                                  (map (fn [order] (ui-order
+                                                                                    
+                                                                                    (comp/computed order {:remove-order remove-order :save-order save-order}) )) orders))
+
+                                                                 (ui-table-footer {} (ui-table-row {:textAlign :right}
+                                                                                                   (ui-table-header-cell {:colSpan 5}
+                                                                                                                         (ui-icon {:basic true
+                                                                                                                                   :onClick  (fn []
+                                                                                                                                               (let [random-id (random-uuid)]
+
+                                                                                                                                                 (merge/merge-component!
+                                                                                                                                                  SPA Order
+                                                                                                                                                  {:ui/new? true
+                                                                                                                                                   :order/id random-id
+                                                                                                                                                   :order/name "N"
+                                                                                                                                                   :order/currency :currency/CAD
+                                                                                                                                                   :order/days 0
+                                                                                                                                                   :order/amount 0}
+                                                                                                                                                  :append [:finance/id id :finance/orders]
+                                                                                                                                                  
+                                                                                                                                                  ))
+                                                                                                                                               #_(comp/transact! this add-order {:id ids})) :name "plus"}
+                                                                                                                                  ))))))
+                                       (ui-grid-column
+                                        {:width 2}
+                                        (ui-form
+                                         {:style {:fontSize "90%"}}
+                                         (ui-form-field
+                                          {}
+                                          (dom/label {} "Revenue: ")
+                                          (dom/span {}  (math/bigdec->str revenue)))
+                                         (ui-form-field
+                                          {}
+                                          (dom/label {} "Work: ")
+                                          (dom/span {}  (math/bigdec->str work)))
+                                         (ui-form-field
+                                          {}
+                                          (dom/label {} "ADR: ")
+                                          (dom/span {}  (math/bigdec->str adr)))))))
+                  #_(ui-segment {:color :blue}
+                                (ui-header {:textAlign :center :color "blue"} "Targets")
+                                
+                                (ui-table {:color :blue :striped true :celled true}
+                                          (ui-table-header {} (ui-table-row {} (map #(ui-table-header-cell {} %)
+                                                                                    ["Name" "Currency" "Days" "Amount"])))
+                                          
+                                          (ui-table-body
+                                           {}
+                                           (map (fn [order] (ui-order
+                                                             (comp/computed order {:remove-order remove-order :save-order save-order}) )) orders))
+
+                                          (ui-table-footer {} (ui-table-row {:textAlign :right}
+                                                                            (ui-table-header-cell {:colSpan 5}
+                                                                                                  (ui-icon {:basic true
+                                                                                                            :onClick  #(merge/merge-component!
+                                                                                                                        this Order
+                                                                                                                        {:ui/new? true
+                                                                                                                         :order/id (random-uuid)
+                                                                                                                         :order/name ""
+                                                                                                                         :order/currency nil
+                                                                                                                         :order/days 0
+                                                                                                                         :order/amount 0}
+                                                                                                                        :append [:finance/id id :finance/orders])
+                                                                                                            :name "plus"}
+                                                                                                           )))))))
+    
+    ))
 
 
 
@@ -994,7 +1232,7 @@
                   (ui-grid-row
                    {}
                    (ui-button  {:basic true :style {:marginLeft "25px" } :onClick (fn [e d]
-                                                                                                (m/toggle! this :ui/modal-open?)
+                                                                                    (m/toggle! this :ui/modal-open?)
                                                                                     (merge/merge-component! this ActionRow
                                                                                                             {:ui/new? true
                                                                                                              :db/id (tempid/tempid)
@@ -1304,7 +1542,7 @@
                                          ::form/pick-one {:options/query-key :item/all-items
                                                           :options/subquery  [:item/id :item/name :item/price]
                                                           :options/transform (fn [{:item/keys [id name price]}]
-                                                                               {:text (str name " - " (math/numeric->currency-str price)) :value [:item/id id]})}}}})
+                                                                               {:text (str name " - " (math2/numeric->currency-str price)) :value [:item/id id]})}}}})
 
 (defsc RiskIssues [this {:keys [] :as props}]
   {:query []
@@ -1317,7 +1555,7 @@
 
 (dr/defrouter ProjectPanelRouter
   [this {:keys [route-factory route-props current-state] :as props}]
-  {:router-targets [ProjectInfo workplans/WorkPlan2  GovReview TimeLine ActionList AccountForm]
+  {:router-targets [ProjectInfo workplans/WorkPlan2  GovReview TimeLine ActionList AccountForm Finance]
    :always-render-body? true}
   (div :.container
        ;; Show an overlay loader on the current route when we're routing
@@ -1418,8 +1656,11 @@
                                                                                                            (dr/change-route this (dr/path-to  TimeLine {:timeline/id  id} )) )} )
                               (ui-menu-item {:name "Work Plan" :active (= active-item :workplan) :onClick (fn []
                                                                                                             (m/set-value! this :ui/active-item :workplan)
-
-                                                                                                            (dr/change-route this (dr/path-to  workplans/WorkPlan2 {:workplan/id id} ))   )} )))
+                                                                                                            (dr/change-route this (dr/path-to  workplans/WorkPlan2 {:workplan/id id} )))} )
+                              (ui-menu-item {:name "Finance" :active (= active-item :finance) :onClick (fn []
+                                                                                                         (m/set-value! this :ui/active-item :finance)
+                                                                                                         (dr/change-route this (dr/path-to Finance {:finance/id  id})))}
+                                            )))
 
      (ui-grid-column {:width 12} 
                      (ui-project-panel-router router))]

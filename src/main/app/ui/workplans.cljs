@@ -505,29 +505,30 @@
               resources-ts)
         (ui-table-row
          {}
-         (concat
-          [
-           (ui-table-cell
-            {:style
-             {:position "sticky"
-              :left  0
-              :background "#3281b9"
-              :color "white"
-              
-              }} "Total")]
+         (let [totals (apply mapv workplan/timesheet-+
+                             (map :resource-ts/timesheets resources-ts))
+               total (apply + totals)]
+           (concat
+            [
+             (ui-table-cell
+              {:style
+               {:position "sticky"
+                :left  0
+                :background "#3281b9"
+                :color "white"
+                
+                }} "Total")]
 
 
 
-          (conj
-           (mapv
-            #(ui-table-cell {} (goog.string.format "%.1f" %))
-
-            (apply mapv workplan/timesheet-+
-                   (map :resource-ts/timesheets resources-ts)))
-           (ui-table-cell {} ""))
+            (conj
+             (mapv
+              #(ui-table-cell {} (goog.string.format "%.1f" %))
+              totals )
+             (ui-table-cell {} (goog.string.format "%.1f" total)))
 
 
-          )))))])))
+            ))))))])))
 
 
 

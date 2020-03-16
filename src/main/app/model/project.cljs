@@ -206,6 +206,86 @@
             (swap! state (fn [s] (assoc-in s (conj ref  :project-info/fluxod-project-names) (conj current-names new-name))))))
   (remote [env] true))
 
+(defn order-valid?
+  "A user-written item validator (by field)"
+  [{:item/keys [name days amount] :as order} field]
+  (try
+    (case field
+      :order/name (boolean (seq name))
+      :order/days (math/> days 0)
+      :item/amount (math/>= amount 0)
+      true)
+    (catch :default _
+      false)))
+
+(def order-validator (fs/make-validator order-valid?))
+
+
+(defmutation remove-order [{:order/keys [id] :keys [finance]}]
+  (action [{:keys [state]}]
+          (swap! state (fn [s]
+                         (-> s
+                             (merge/remove-ident* [:order/id id] [:finance/id finance :finance/orders])
+                             (update :order/id dissoc id))))))
+
+
+(defmutation set-order-currency [{:keys [id value]}]
+  (action [{:keys [state]}]
+          (let [tasks (vals (get @state :task/id))]
+            (swap! state assoc-in [:order/id id :order/currency] value)))
+
+  (remote [env]
+          true))
+
+(defmutation save-order
+  "Unchecked mutation. Sends the given diff to the server without checking validity. See try-save-item."
+  [{:order/keys [id]
+    :keys      [diff]
+    :as        params}]
+  (action [{:keys [app state]}]
+          (js/console.log "id " id)
+          (swap! state assoc-in [:order/id id :ui/saving?] true))
+  (remote [env] true)
+  (ok-action [{:keys [state tempid->realid] :as env}]
+             (swap! state (fn [s]
+                            (-> s
+                                (update-in [:order/id id] assoc :ui/new? false :ui/saving? false)
+                                (fs/entity->pristine* [:order/id id])))))
+  (error-action [{:keys [state]}]
+                (js/alert "Failed to save item")
+                (swap! state (fn [s]
+                               (-> s
+                                   (update-in [:order/id id] assoc :ui/saving? false))))))
+
+
+
+
+
+
+
+
+
+
+(defmutation try-save-order [{:order/keys [id]
+                             :keys      [diff]
+                             :as        params}]
+  (action [{:keys [app state]}]
+          (let [state-map       @state
+                ident           [:order/by-id id]
+                completed-state (fs/mark-complete* state-map ident)
+                order            (get-in completed-state ident)
+                Order    (comp/registry-key->class :app.ui.projects/Order)
+                item-props      (fdn/db->tree (comp/get-query Order) order completed-state)
+                valid?          (= :valid (order-validator item-props))]
+            (if valid?
+              (comp/transact! app [(save-order params)])
+              (reset! state completed-state)))))
+
+
+
+
+
+
 
 
 (defmutation set-project-status [{:keys [project-info/id status]}]

@@ -2276,3 +2276,14 @@
 
 
 
+;; (comment (ns util
+;;            (:require 
+;;             [goog.object :as gobj]))
+;;          (defn add-method! [cls nm f]
+;;            (set! (.. cls -prototype nm) f))
+;;          (defn add-methods! [cls map-of-methods]
+;;            (gobj/extend (.-prototype cls) (clj->js map-of-methods)))
+;;          ...
+;;          (defsc X ...)
+;;          (add-methods! X {:newMethod (fn [] (this-as this ...))
+;;                           :otherMethod (fn [] ...)}))
