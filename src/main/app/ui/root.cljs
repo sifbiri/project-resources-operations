@@ -700,8 +700,20 @@
         (recur (t/+ s (t/new-period 1 :days))
                (conj r (str (str/capitalize day-of-week) ". " (str (str/capitalize month) ". " day-of-month) " " year)))))))
 
-
-
+(defn
+  color
+  ([n] (color n false))
+  ([n i?]
+     (if i?
+       (cond
+         (< n 6) "red"
+         (and (>= n 6) (< n 8)) "yellow"
+         (>= n 8) "lightGreen")
+       (cond
+         (= n 0) "white"
+         (and (> n 0) (<= n 8)) "lightGreen"
+         (and (> n 8) (<= n 10)) "orange"
+         (> n 10) "red"))))
 
 
 (defsc ProjectLine [this {:keys [project-line/id
@@ -709,7 +721,8 @@
                                  project-line/assignments
                                  project-line/project
                                  ui/selected
-                                 ui/dates] :as props}]
+                                 ui/dates] :as props}
+                    {:keys [inverse-color?]}]
   {:query [:project-line/id
            [:ui/dates '_]
            {:project-line/project (comp/get-query projects/Project)}
@@ -728,11 +741,7 @@
         start (:start dates)
         end (:end dates)
 
-        color (fn [n] (cond
-                        (= n 0) "white"
-                        (and (> n 0) (<= n 8)) "lightGreen"
-                        (and (> n 8) (<= n 10)) "orange"
-                        (> n 10) "red"))
+        ;; in project line (totals )
 
 
         r-step
@@ -789,7 +798,7 @@
          (str (:project/name project) " ")
          (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline" :z-index -1}})))
 
-        (mapv #(td {:style {:backgroundColor (color %)}}
+        (mapv #(td {:style {:backgroundColor (color % inverse-color?)}}
                    (goog.string.format "%.2f" %))
              (loop [r transformed
                     t []]
@@ -812,7 +821,7 @@
                                                                          :background "white"
                                                                          :color "black"}}
                                                (:assignment/name (first asses)))]
-                               (mapv #(td {:style {:background-color (color (first (vals %)))}}
+                               (mapv #(td {:style {:background-color (color (first (vals %)) inverse-color?)}}
                                          (goog.string.format "%.2f" (first (vals %)))) asses))))
                  )
                transformed)))))))
@@ -823,9 +832,11 @@
 
 
 
+
 (defsc ResourceLine [this {:resource-line/keys [resource project-lines totals]
                            :keys [ui/selected ui/dates]
-                           :as props}]
+                           :as props}
+                     {:keys [inverse-color?]}]
   {:query
    [:ui/selected
     {:resource-line/resource (comp/get-query users/Resource)
@@ -949,14 +960,10 @@
 
   ;; TODO extract common functions to top
 
+  ;; here tooo 
 
 
-
-  (let [color (fn [n] (cond
-                        (= n 0) "white"
-                        (and (> n 0) (<= n 8)) "lightGreen"
-                        (and (> n 8) (<= n 10)) "orange"
-                        (> n 10) "red"))
+  (let [
         marker (get (comp/props this) [df/marker-table :resource-line-loader])]
 
     (if (not (df/loading? marker))
@@ -977,7 +984,7 @@
            (str (:resource/name resource) " ")
            (when (not selected) (ui-icon {:name "angle down" :link true :style {:display "inline"}})))
 
-       (when totals (mapv #(td {:style {:backgroundColor (color %)}}
+       (when totals (mapv #(td {:style {:backgroundColor (color % inverse-color?)}}
 
                               
                               (goog.string.format "%.2f" %)) totals))
@@ -986,7 +993,7 @@
        )
 
       (when selected
-        (mapv ui-project-line project-lines)))
+        (mapv (fn [p] (ui-project-line (comp/computed p {:inverse-color? inverse-color?}))) project-lines)))
       (tr (td {:colSpan 8}
 
               (ui-loader {:active true :style {:zIndex 5 }:inline :centered} ))))))
@@ -1561,10 +1568,11 @@
 (def ui-project-checkbox (comp/factory ProjectCheckBox {:keyfn :project/id}))
 
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
-                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? ui/show-more-projects? workplan/projects]:as props}]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? ui/show-more-projects? workplan/projects ui/inverse-color?]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
                    {:workplan/projects (comp/get-query ProjectCheckBox)}
                    :ui/check-all?
+                   :ui/inverse-color?
                    :ui/loading :ui/show-more?
                                         ;{:workplan/projects (comp/get-query Project)}
                                         ;{:workplan/project-lines (comp/get-query ProjectLine)}
@@ -1709,9 +1717,16 @@
 
        (ui-grid-column {:width 3 :style {:color "#3281b9"}}
                        (div {:style {}}
+                            (ui-checkbox {:toggle true
+                                          :value inverse-color?
+                                          :onChange #(m/toggle! this :ui/inverse-color?)})
+                            
+
                             (ui-accordion
                              {:as Menu  :vertical true :style {:color "#3281b9"}}
+                             
                              (ui-menu-item {}
+                                           
                                            (ui-accordion-title
                                             {:active (= active-index 0)
                                              :content "Dates"
@@ -1951,7 +1966,7 @@
                                    ))
                                  (ui-table-body
                                   {}
-                                  (mapv ui-resource-line (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))
+                                  (mapv (fn [r] (ui-resource-line (comp/computed r {:inverse-color? inverse-color?}))) (sort-by #(get-in  % [:resource-line/resource :resource/name]) resource-lines))
                                   ))))]
 
       (ui-segment {:style {:textAlign "center"}}
