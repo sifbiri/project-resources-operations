@@ -1,12 +1,31 @@
 == Ops FLuxym
 
-=== To Run 
+== To Acess server
+
+1. `ssh -i "fluxym.pem" ubuntu@ec2-3-136-63-15.us-east-2.compute.amazonaws.com`
+2. Then `cd fluxy`, the repo
+
+=== First Run  
+
 1. Ensure having Java, Clojure, NPM or Yarn installed 
 2. Inside `dataomic-pro...` run `bin/transactor sql-transactor-template.properties`
 3. Run `yarn run client/main` to launch client
 4. Run `clj -A:dev` then `(start)`
 
-=== Overview 
+== To Restart
+1. after acess, `screen -dr`
+2. Then pick the `top line number`
+3. hit `screen -dr _previous top line number_`
+4. Then `(user/restart)`
+
+== User Login
+
+User login is taken care by Microsoft Fluxym accounts, each account has profile, this can
+be admin, team lead, project manager, user, each provide acess to set of "modules". Those rights can only
+changed by users who have `admin` rights, from the panel. 
+
+=== Tech Overview 
+
 We use _ReactJS_ on the frontend as the view layer 
 combined with _Fulcro_ to manage the client state as
 normalized client DB. We use _Pathom_ as the communication layer, 
