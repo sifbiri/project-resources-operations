@@ -24,7 +24,7 @@ User login is taken care by Microsoft Fluxym accounts, each account has profile,
 be admin, team lead, project manager, user, each provide acess to set of "modules". Those rights can only
 changed by users who have `admin` rights, from the panel. 
 
-=== Tech Overview 
+== Tech Overview 
 
 We use _ReactJS_ on the frontend as the view layer 
 combined with _Fulcro_ to manage the client state as
