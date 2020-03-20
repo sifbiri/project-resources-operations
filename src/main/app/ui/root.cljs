@@ -1380,7 +1380,7 @@
   {:query [{:list/items (comp/get-query ResourceCheckboxItem)  } :list/all-checked? :list/show-more?]
    :ident (fn [] [:component/id :checkboxes])
    ;:shouldComponentUpdate (fn [_ _ _] true)
-   :initLocalState (fn [_] {:all-checked? false :list/show-more? false})}
+   :initLocalState (fn [_] {:list/all-checked? false :list/show-more? false})}
   (let [#_#_all-checked? (every? item-checked? items)
         show-more? (comp/get-state this :list/show-more?)]
 
@@ -1392,17 +1392,15 @@
                          :checked (comp/get-state this :all-checked?)
                          :onClick (fn [a b]
                                     
-                                    (comp/set-state! this {:all-checked? (not (comp/get-state this :all-checked?))} )
-                                    (m/toggle! this :all-checked?)
+                                    #_(comp/set-state! this {:all-checked? (not (comp/get-state this :all-checked?))} )
+                                    (m/toggle! this :list/all-checked?)
                                     
-                                    (let [{:keys [all-checked?]}(comp/get-state this)]
+                                    (if all-checked?
+                                      (comp/transact! this [(uncheck-all-resource-boxes )])
+                                      (comp/transact! this [(check-all-resource-boxes )])
                                       
-                                      (if all-checked?
-                                        (comp/transact! this [(uncheck-all-resource-boxes )])
-                                        (comp/transact! this [(check-all-resource-boxes )])
-                                        
-                                        
-                                        )))})
+                                      
+                                      ))})
              (dom/label {:style {:color "#3281b9"}} "Check all")
              (ui-divider {})
              
@@ -1568,10 +1566,11 @@
 (def ui-project-checkbox (comp/factory ProjectCheckBox {:keyfn :project/id}))
 
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
-                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? ui/show-more-projects? workplan/projects ui/inverse-color?]:as props}]
+                       :keys [ui/dates ui/loading ui/show-more? workplan/teams  ui/check-all? ui/show-more-projects? workplan/projects ui/inverse-color? ui/all-checked-resources?]:as props}]
   {:query         [{:workplan/resource-lines (comp/get-query ResourceLine)}
                    {:workplan/projects (comp/get-query ProjectCheckBox)}
                    :ui/check-all?
+                   :ui/all-checked-resources?
                    :ui/inverse-color?
                    :ui/loading :ui/show-more?
                                         ;{:workplan/projects (comp/get-query Project)}
@@ -1797,16 +1796,14 @@
                                                                                                                                        :onClick (fn [a b]
                                                                                                                                                   
                                                                                                                                                   #_(comp/set-state! this {:all-checked? (not (comp/get-state this :all-checked?))} )
-                                                                                                                                                  (m/toggle! this :all-checked?)
+                                                                                                                                                  (m/toggle! this :ui/all-checked-resources?)
                                                                                                                                                   
-                                                                                                                                                  (let [{:keys [all-checked?]}(comp/get-state this)]
+                                                                                                                                                  (if all-checked-resources?
+                                                                                                                                                    (comp/transact! this [(uncheck-all-resource-boxes )])
+                                                                                                                                                    (comp/transact! this [(check-all-resource-boxes )])
                                                                                                                                                     
-                                                                                                                                                    (if all-checked?
-                                                                                                                                                      (comp/transact! this [(uncheck-all-resource-boxes )])
-                                                                                                                                                      (comp/transact! this [(check-all-resource-boxes )])
-                                                                                                                                                      
-                                                                                                                                                      
-                                                                                                                                                      )))})
+                                                                                                                                                    
+                                                                                                                                                    ))})
                                                                                                                            (dom/label {:style {:color "#3281b9"}} "Check all")
                                                                                                                            (ui-divider {})                                                                                                                           
                                                                                                                            (mapv #(ui-resource-checkbox-item  % )
