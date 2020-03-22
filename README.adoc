@@ -1,9 +1,9 @@
 == Ops FLuxym
 
 == To Acess server
-
-1. `ssh -i "fluxym.pem" ubuntu@ec2-3-136-63-15.us-east-2.compute.amazonaws.com`
-2. Then `cd fluxy`, the repo
+1. git pull https://github.com/bsifou/OpsPortal.git, then `cd OpsPortal`
+2. `ssh -i "fluxym.pem" ubuntu@ec2-3-136-63-15.us-east-2.compute.amazonaws.com`
+3. Then `cd fluxy`, the repo on server
 
 Note. to acess aws console, password is stored in Dashlane: sbiri@fluxym.com 
 === First Run  
