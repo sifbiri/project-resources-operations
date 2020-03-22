@@ -1,7 +1,8 @@
 == Ops FLuxym
 
 == To Acess server
-1. git pull https://github.com/bsifou/OpsPortal.git, then `cd OpsPortal`
+0. Ensure having `git` installed 
+1. `git pull https://github.com/bsifou/OpsPortal.git`, then `cd OpsPortal`
 2. `ssh -i "fluxym.pem" ubuntu@ec2-3-136-63-15.us-east-2.compute.amazonaws.com`
 3. Then `cd fluxy`, the repo on server
 
