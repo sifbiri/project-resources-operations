@@ -1,11 +1,13 @@
 (ns app.clara
+
   (:require
     [clara.rules :as clara :refer [defrule defquery]]
     [com.fulcrologic.rad.type-support.decimal :as math]
     [com.fulcrologic.fulcro.application :as app]
     [com.fulcrologic.fulcro.algorithms.scheduling :as sched]
     [clojure.set :as set]
-    [taoensso.timbre :as log]))
+    [taoensso.timbre :as log])
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General purpose functions that any app could use.

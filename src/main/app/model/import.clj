@@ -1,5 +1,8 @@
 (ns app.model.import
   (:require
+   [tinklj.encryption.aead :refer [encrypt decrypt]]
+   [tinklj.keys.keyset-handle :as keyset-handle]
+   [tinklj.primitives :as primitives]
    [com.wsscode.pathom.connect :as pc]
    [clj-fuzzy.metrics :as fm]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
@@ -15,7 +18,18 @@
    [clojure.java.io :as io]
    [datomic.api :as d]
    [app.model.database :refer [db-url]]
-   [taoensso.timbre :as log]))
+   [taoensso.timbre :as log]
+   [tinklj.keys.keyset-handle :as keyset-handles]
+   [tinklj.keysets.keyset-storage  :as keyset-storage]
+   [tinklj.primitives :as primitives]
+   [tinklj.encryption.aead :refer [encrypt decrypt]]))
+
+#_(def ciphertext (encrypt aead (.getBytes "password") aad))
+
+
+(defn rand-str [len]
+  (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
+
 
 
 
@@ -40,6 +54,24 @@
                        :keys import/id 
                        :where
                        [?e :import/id ?id]] db)})
+
+(pc/defresolver msaccount [{:keys [connection db]} _]
+  {::pc/output [{:msaccount [:msaccount/password :msaccount/email]}]}
+  (let [{:keys [email password salt]}
+        (first (d/q '[:find ?e ?s ?p
+                      :keys email salt password
+                      :where
+                      [?d :msaccount/password ?p]
+                      [?d :msaccount/email ?e]
+                      [?d :msaccount/salt ?s]
+                      [?d :msaccount/type :msaccount]
+                      ]
+                    (d/db (d/connect db-url))))
+        keyset-handle (keyset-storage/load-clear-text-keyset-handle "resources/ks.json")
+        aead (primitives/aead keyset-handle)
+        
+        pass (decrypt aead password  (.getBytes salt))]
+    {:msaccount {:msaccount/password (String. pass) :msaccount/email email}}))
 
 
 (pc/defresolver import  [{:keys [connection db]} {:keys [import/id]}]
@@ -187,7 +219,28 @@
     (api/update-db)
     {}))
 
-(def resolvers [import-file name->fluxod-name all-imports import get-import-file update-db])
+
+(pc/defmutation
+  save-msaccount
+  [{:keys [db connection] :as env}  {:keys [email password]}]
+  {::pc/params [:email :passowrd]
+   ::pc/output []}
+  (let [keyset-handle (keyset-storage/load-clear-text-keyset-handle "resources/ks.json")
+        aead (primitives/aead keyset-handle)
+        aad (rand-str (+ (rand-int 12) 2))
+        aadbytes (.getBytes aad)
+        ciphertext (encrypt aead (.getBytes password) aadbytes)
+        ]
+
+    (if (d/pull db [:msaccount/email] [:msaccount/type :msaccount])
+      (d/transact connection [{:db/id [:msaccount/type :msaccount]
+                               :msaccount/email email  :msaccount/salt aad :msaccount/password ciphertext}])
+
+      (d/transact connection [{:db/id "new" :msaccount/email email   :msaccount/salt aad :msaccount/password ciphertext :msaccount/type :msaccount}]))
+    {}
+    ))
+
+(def resolvers [save-msaccount import-file name->fluxod-name all-imports import get-import-file update-db msaccount])
 
 
 

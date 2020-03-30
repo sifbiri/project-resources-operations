@@ -2,7 +2,22 @@
   (:require [clj-http.client :as client]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [datomic.api :as d]
+            [app.model.database :refer [db-url]]
+            [tinklj.config :refer [register]]
+            [tinklj.keys.keyset-handle :as keyset-handles]
+            [tinklj.encryption.aead :refer [encrypt decrypt]]
+            [tinklj.keysets.keyset-storage  :as keyset-storage]
+            [tinklj.primitives :as primitives]
+            [app.model.session :as session]))
+
+(register)
+
+(def filename "resources/ks.json")
+(def keyset-handle (keyset-handles/generate-new :aes128-gcm))
+
+(keyset-storage/write-clear-text-keyset-handle keyset-handle filename)
 
 ;(println "hello")
 
@@ -25,8 +40,25 @@
 
 
 (defn prepare-request-options []
-  (let [res1-security-token (client/post "https://login.microsoftonline.com/extSTS.srf"
-                                         {:body (clojure.java.io/file "src/load.xml") :body-encoding "UTF-8"
+  (let [{:keys [email salt password]
+         } (first (d/q '[:find ?e ?s ?p
+                         :keys email salt password
+                         :where
+                         [?d :msaccount/password ?p]
+                         [?d :msaccount/email ?e]
+                         [?d :msaccount/salt ?s]
+                         [?d :msaccount/type :msaccount]
+                         ]
+                       (d/db (d/connect db-url))))
+           keyset-handle (keyset-storage/load-clear-text-keyset-handle "resources/ks.json")
+
+           aead (primitives/aead keyset-handle)
+
+           pass (decrypt aead password (.getBytes salt))
+           
+        
+        res1-security-token (client/post "https://login.microsoftonline.com/extSTS.srf"
+                                         {:body (session/make-load email (String. pass)) :body-encoding "UTF-8"
                                           :cookie-store cs})
 
 
@@ -51,6 +83,7 @@
         
 
         ]
+    
 
     {;:async? true
      :cookie-store cs ;:oauth-token security-token

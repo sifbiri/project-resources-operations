@@ -528,16 +528,16 @@
 
 
 
-(let [r (d/q '[:find #_?allow-actuals #_?allow-forecast ?rid
-               :keys #_resource/allow-actuals? #_resource/allow-forecast?  resource-ts/id
-               :in $ ?name
-               :where
-               [?r :resource/id ?rid]
-               ;[?r :resource/allow-actuals ?allow-actuals]
-               ;[?r :resource/allow-forecast ?allow-forecast]
-               [?r  :resource/name ?name]]
-             (d/db (d/connect db-url))
-             #uuid "68045544-f9d3-e911-b092-00155de43b0b")]
-  (merge
-   {:resource/allow-actuals? false :resource/allow-forecast? false :resource-ts/id #uuid "68045544-f9d3-e911-b092-00155de43b0b"}
-   (if (vector? r) {} r)))
+;; (let [r (d/q '[:find #_?allow-actuals #_?allow-forecast ?rid
+;;                :keys #_resource/allow-actuals? #_resource/allow-forecast?  resource-ts/id
+;;                :in $ ?name
+;;                :where
+;;                [?r :resource/id ?rid]
+;;                ;[?r :resource/allow-actuals ?allow-actuals]
+;;                ;[?r :resource/allow-forecast ?allow-forecast]
+;;                [?r  :resource/name ?name]]
+;;              (d/db (d/connect db-url))
+;;              #uuid "68045544-f9d3-e911-b092-00155de43b0b")]
+;;   (merge
+;;    {:resource/allow-actuals? false :resource/allow-forecast? false :resource-ts/id #uuid "68045544-f9d3-e911-b092-00155de43b0b"}
+;;    (if (vector? r) {} r)))

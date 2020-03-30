@@ -1,0 +1,13 @@
+{
+    "primaryKeyId": 182975128,
+    "key": [{
+        "keyData": {
+            "typeUrl": "type.googleapis.com/google.crypto.tink.AesGcmKey",
+            "keyMaterialType": "SYMMETRIC",
+            "value": "GhB+H05NNxkVqdIc9mjE/YEe"
+        },
+        "outputPrefixType": "TINK",
+        "keyId": 182975128,
+        "status": "ENABLED"
+    }]
+}

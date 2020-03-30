@@ -39,8 +39,8 @@
 
 (defn ^:export init []
   (log/info "Application starting.")
-  (form/install-ui-controls! SPA ui-controls/all-controls)
-  (attr/register-attributes! model/all-attributes)
+  #_(form/install-ui-controls! SPA ui-controls/all-controls)
+  #_(attr/register-attributes! model/all-attributes)
   (cssi/upsert-css "componentcss" {:component root/Root})
 
   (inspect/app-started! SPA)

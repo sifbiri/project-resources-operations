@@ -55,19 +55,19 @@
 
                                         ;(def db-uri-base "datomic:mem://")
 
-(def resource io/resource)
+;(def resource io/resource)
 
 
-;; (defn scratch-conn
-;;   "Create a connection to an anonymous, in-memory database."
-;;   []
-;;   (let [uri (str db-uri-base (d/squuid))]
-;;     (d/delete-database uri)
-;;     (d/create-database uri)
-;;     (d/connect uri)))
+;; ;; (defn scratch-conn
+;; ;;   "Create a connection to an anonymous, in-memory database."
+;; ;;   []
+;; ;;   (let [uri (str db-uri-base (d/squuid))]
+;; ;;     (d/delete-database uri)
+;; ;;     (d/create-database uri)
+;; ;;     (d/connect uri)))
 
 
-;; (def conn (scratch-conn))
+;; ;; (def conn (scratch-conn))
 
 (defn read-all
   "Read all forms in f, where f is any resource that can
@@ -133,7 +133,8 @@
      ))
 
 
-(def resources
+(defn resources
+  []
   (as-> (-> (client/get "https://flu.sharepoint.com/sites/pwa/_api/ProjectData/%5Ben-us%5D/Resources"
                         (project/prepare-request-options))
             :body
@@ -177,11 +178,11 @@
   [m]
   (apply dissoc                                                                                            
          m                                                                                                  
-         (for [[k v] m :when (nil? v)] k)))
+          (for [[k v] m :when (nil? v)] k)))
 
 (defn get-resource
   [id]
-  (let [resource-server (first (filter #(= (:resource/id %)  id) resources))
+  (let [resource-server (first (filter #(= (:resource/id %)  id) (resources)))
         val  (d/entity (d/db (d/connect db-url)) [:resource/id  id])]
     
     (if (number? (:db/id id)) id (remove-nils resource-server))))
@@ -295,42 +296,42 @@
 
 
 
-(def all-project-names '("LeFrak"
-                         "RBC - IVALUA - S2C"
-                         "Louboutin US"
-                         "Boys & Girls Club of America"
-                         "Visteon (Xeeva)"
-                         "simple"
-                         "TESTPROJECT2"
-                         "FLX NORAM Portfolio Master"
-                         "Desjardins - Appro360"
-                         "Revo - APA"
-                         "OLIN BRASS - APA"
-                         "NEOGEN - APA"
-                         "Kraton - APA"
-                         "Ivanhoe Cambridge - P2P"
-                         "Ivanhoe Cambridge - TMA"
-                         "Customers Support"
-                         "Vacations"
-                         "Cadillac Fairview - Quantum"
-                         "COGECO - S2C - Wave 1"
-                         "COGECO - Spend - Wave 2"
-                         "COGECO - Supplier Performance - Wave 3"
-                         "Other Projects"
-                         "Training"
-                         "Closed Projects"
-                         "COGECO - LEGAL AFFAIRS"
-                         "Cadillac Fairview - Enhancements and Reports"
-                         "Vortex - CMS Activities"
-                         "Bell - Enhancements"
-                         "Ivalua - Subcontracting"
-                         "Test 679"
-                         "Opérations d’administration de feuilles de temps"))
+;; (def all-project-names '("LeFrak"
+;;                          "RBC - IVALUA - S2C"
+;;                          "Louboutin US"
+;;                          "Boys & Girls Club of America"
+;;                          "Visteon (Xeeva)"
+;;                          "simple"
+;;                          "TESTPROJECT2"
+;;                          "FLX NORAM Portfolio Master"
+;;                          "Desjardins - Appro360"
+;;                          "Revo - APA"
+;;                          "OLIN BRASS - APA"
+;;                          "NEOGEN - APA"
+;;                          "Kraton - APA"
+;;                          "Ivanhoe Cambridge - P2P"
+;;                          "Ivanhoe Cambridge - TMA"
+;;                          "Customers Support"
+;;                          "Vacations"
+;;                          "Cadillac Fairview - Quantum"
+;;                          "COGECO - S2C - Wave 1"
+;;                          "COGECO - Spend - Wave 2"
+;;                          "COGECO - Supplier Performance - Wave 3"
+;;                          "Other Projects"
+;;                          "Training"
+;;                          "Closed Projects"
+;;                          "COGECO - LEGAL AFFAIRS"
+;;                          "Cadillac Fairview - Enhancements and Reports"
+;;                          "Vortex - CMS Activities"
+;;                          "Bell - Enhancements"
+;;                          "Ivalua - Subcontracting"
+;;                          "Test 679"
+;;                          "Opérations d’administration de feuilles de temps"))
 
 
-(def selected-project-names #{"Louboutin US" "simple" "Desjardins - Appro360"})
+;; (def selected-project-names #{"Louboutin US" "simple" "Desjardins - Appro360"})
 
-(def task-props [:task/name :task/is-active :task/is-root?  :task/parent-task-name :task/parent-task-id :task/is-root? :task/start-date :task/end-date :task/id])
+;; (def task-props [:task/name :task/is-active :task/is-root?  :task/parent-task-name :task/parent-task-id :task/is-root? :task/start-date :task/end-date :task/id])
 
 
 
@@ -417,7 +418,6 @@
                                         ;(pmap #(select-keys % task-props) response)
     response))
 
-
                                         ;tasks-for-project
 
 
@@ -475,16 +475,16 @@
 
 
 
-(defn transact-all2
-  ([conn txs]
-     (transact-all2 conn txs nil))
-  ([conn txs res]
-     (if (seq txs)
-       (transact-all2 conn (rest txs) @(d/transact conn (first txs)))
-       res)))
+;; (defn transact-all2
+;;   ([conn txs]
+;;      (transact-all2 conn txs nil))
+;;   ([conn txs res]
+;;      (if (seq txs)
+;;        (transact-all2 conn (rest txs) @(d/transact conn (first txs)))
+;;        res)))
 
-                                        ;(def conn (scratch-conn))
-                                        ;(transact-all  conn2 "resources/edn/schema.edn")
+;;                                         ;(def conn (scratch-conn))
+;;                                         ;(transact-all  conn2 "resources/edn/schema.edn")
 
 (defn find-in-grouped-by [m key]
   (->> (seq m)
@@ -492,16 +492,16 @@
 
 
 
-;; (d/transact {:db/id 17592186048985 :resource/profile}
-;;             (d/connect ))
+;; ;; (d/transact {:db/id 17592186048985 :resource/profile}
+;; ;;             (d/connect ))
 
-#_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
+;; #_(d/transact (d/connect "datomic:dev://localhost:4334/one2") (get-all-projects))
 
-                                        ;(println "Test")
+;;                                         ;(println "Test")
 
 
 
-;; TODO transact per project
+;; ;; TODO transact per project
 (defn update-db []
   (println "delete projects...........")
   (d/transact
@@ -536,15 +536,15 @@
   (d/create-database db-url)
   (println "seeding schema")
   
-  (transact-all (d/connect db-url) "resources/edn/schema.edn")
-  (update-db))
+   (transact-all (d/connect db-url) "resources/edn/schema.edn")
+   (update-db))
 
 
 (def my-pool (at-at/mk-pool))
 
-(def schedule (at-at/every (t/millis (t/new-duration 250 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 400 :minutes))))
-                                        ;(at-at/stop schedule)
-                                        ;(def db-uri "datomic:dev://localhost:4334/one2")
+(def schedule (at-at/every (t/millis (t/new-duration 3 :hours)) update-db my-pool :initial-delay (t/millis (t/new-duration 400 :minutes))))
+;;(at-at/stop schedule)
+;;(def db-uri "datomic:dev://localhost:4334/one2")
                                         ;(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
 
 
@@ -556,40 +556,38 @@
 
 
 
-;; ===================
-;; TESTING AND STUFF 
+;; ;; ===================
+;; ;; TESTING AND STUFF 
 
-(comment
-  (d/transact connection [{:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"
-                           :action-list/actions [{:action/action "Action 1"
-                                                  :db/id "new"
-                                                  :action/owner "Sifou"
-                                                  :action/status :open
-                                                  :action/due-date (t/inst (t/now))}
-                                                 {:db/id "new2"
-                                                  :action/action "Action 2"
-                                                  :action/owner "Sifou"
-                                                  :action/status :closed
-                                                  :action/due-date (t/inst (t/now))}]}])
+;; (comment
+;;   (d/transact connection [{:action-list/id #uuid "850d9f1e-27e1-e911-b19b-9cb6d0e1bd60"
+;;                            :action-list/actions [{:action/action "Action 1"
+;;                                                   :db/id "new"
+;;                                                   :action/owner "Sifou"
+;;                                                   :action/status :open
+;;                                                   :action/due-date (t/inst (t/now))}
+;;                                                  {:db/id "new2"
+;;                                                   :action/action "Action 2"
+;;                                                   :action/owner "Sifou"
+;;                                                   :action/status :closed
+;;                                                   :action/due-date (t/inst (t/now))}]}])
   
-  (pmap (comp (fn [m] (update m :action-list/actions (fn [x] (pmap #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
-        )
+;;   (pmap (comp (fn [m] (update m :action-list/actions (fn [x] (pmap #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
+;;         )
 
 
-  (first )
-  (d/transact connection [[:db/retractEntity 17592186087466]])
+;;   (first )
+;;   (d/transact connection [[:db/retractEntity 17592186087466]])
 
 
 
-  (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
+;;   (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
 
   
 
-  "datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
+;;   "datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
 
-                                        ;(d/transact (d/db (d/connect db-url)) [{:action-list/id #uuid  :action-list/actions [new-values]}] )
-
-
+;;                                         ;(d/transact (d/db (d/connect db-url)) [{:action-list/id #uuid  :action-list/actions [new-values]}] )
 
 
 
@@ -599,160 +597,171 @@
 
 
 
-  (d/transact (d/connect db-url) [[:db/add [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"] :project-info/:project-info/fluxod-project-names "NEW1"]])
-  (d/pull (d/db (d/connect db-url)) [:project-info/fluxod-project-names] [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"])
-
-  (mapv
-   (fn [id]
-
-     [:db/retractEntity id])
-
-   (d/q '[:find [?e ...]
-
-          :where
-          [?e :import/id ?n]
-
-          ] (d/db (d/connect db-url))))
 
 
-  (d/q '[:find ?name .
-         :in $ ?id
-         :where
-         [?r :resource/id ?id]
-         [?r :resource/name ?name]] (d/db (d/connect db-url)) #uuid "44f8c22d-50da-e911-b095-00155de07410")
+;;   (d/transact (d/connect db-url) [[:db/add [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"] :project-info/:project-info/fluxod-project-names "NEW1"]])
+;;   (d/pull (d/db (d/connect db-url)) [:project-info/fluxod-project-names] [:project-info/id #uuid "375d400e-82d9-e911-b08f-00155de07709"])
+
+;;   (mapv
+;;    (fn [id]
+
+;;      [:db/retractEntity id])
+
+;;    (d/q '[:find [?e ...]
+
+;;           :where
+;;           [?e :import/id ?n]
+
+;;           ] (d/db (d/connect db-url))))
+
+
+;;   (d/q '[:find ?name .
+;;          :in $ ?id
+;;          :where
+;;          [?r :resource/id ?id]
+;;          [?r :resource/name ?name]] (d/db (d/connect db-url)) #uuid "44f8c22d-50da-e911-b095-00155de07410")
 
 
 
-  (d/q '[:find ?work-fluxod ?date ?fluxod-po
-         :keys timesheet/work-fluxod date fluxod-po
-         :in $ ?rid ?pid ?start ?end
+;;   (d/q '[:find ?work-fluxod ?date ?fluxod-po
+;;          :keys timesheet/work-fluxod date fluxod-po
+;;          :in $ ?rid ?pid ?start ?end
          
-         :where
-         [?r :resource/id ?rid]
-         [?r :resource/name ?rn]
+;;          :where
+;;          [?r :resource/id ?rid]
+;;          [?r :resource/name ?rn]
          
-         [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-         [?fluxod :fluxod-ts/days ?work-fluxod]
-         [?fluxod :fluxod-ts/date ?date]
+;;          [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+;;          [?fluxod :fluxod-ts/days ?work-fluxod]
+;;          [?fluxod :fluxod-ts/date ?date]
          
-         [?fluxod :fluxod-ts/client ?client]
-         [?fluxod :fluxod-ts/po ?fluxod-po]
+;;          [?fluxod :fluxod-ts/client ?client]
+;;          [?fluxod :fluxod-ts/po ?fluxod-po]
          
-         [?pinfo :project-info/fluxod-client-name ?client]
-         [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-         [?pinfo :project-info/id ?pid]
+;;          [?pinfo :project-info/fluxod-client-name ?client]
+;;          [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+;;          [?pinfo :project-info/id ?pid]
          
-         [?e :project/id ?pid]
-         [?e :project/name ?name]
-                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
-         [(tick.alpha.api/> ?date ?start)]
-         [(tick.alpha.api/< ?date ?end)]
+;;          [?e :project/id ?pid]
+;;          [?e :project/name ?name]
+;;                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+;;          [(tick.alpha.api/> ?date ?start)]
+;;          [(tick.alpha.api/< ?date ?end)]
          
-         [?r :resource/fluxod-name ?fluxod-name]
-         ] (d/db (d/connect db-url))
-           #uuid "6c045544-f9d3-e911-b092-00155de43b0b"
-           #uuid "f4a0ac9d-57f6-e911-b19c-9cb6d0e1bd60"
-           #inst "2019-11-20T00:00:00.000-00:00"
-           #inst "2020-05-20T00:00:00.000-00:00"
-           )
+;;          [?r :resource/fluxod-name ?fluxod-name]
+;;          ] (d/db (d/connect db-url))
+;;            #uuid "6c045544-f9d3-e911-b092-00155de43b0b"
+;;            #uuid "f4a0ac9d-57f6-e911-b19c-9cb6d0e1bd60"
+;;            #inst "2019-11-20T00:00:00.000-00:00"
+;;            #inst "2020-05-20T00:00:00.000-00:00"
+;;            )
 
 
 
 
 
 
-  ;; TODO use this to delete projects .....
+;;   ;; TODO use this to delete projects .....
 
 
 
-  ;; colin bret #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+;;   ;; colin bret #uuid "67045544-f9d3-e911-b092-00155de43b0b"
 
-  (d/q '[:find ?fluxod-name  ;?work-fluxod ?date ?fluxod-po
-                                        ;:keys timesheet/work-fluxod date fluxod-po
-         :in $ ?rid ?pid ?min-date ?max-date
-         :where
-         [?r :resource/id ?rid]
-                                        ;[?r :resource/fluxod-name ?fluxod-name]
-         [?act :fluxod-ts/activity-type ?t]
-         [(= :mission ?t)]
-         [?fluxod :fluxod-ts/resource-name ?fluxod-name]
-         [?fluxod :fluxod-ts/days ?work-fluxod]
-         [?fluxod :fluxod-ts/date ?date]
+;;   (d/q '[:find ?fluxod-name  ;?work-fluxod ?date ?fluxod-po
+;;                                         ;:keys timesheet/work-fluxod date fluxod-po
+;;          :in $ ?rid ?pid ?min-date ?max-date
+;;          :where
+;;          [?r :resource/id ?rid]
+;;                                         ;[?r :resource/fluxod-name ?fluxod-name]
+;;          [?act :fluxod-ts/activity-type ?t]
+;;          [(= :mission ?t)]
+;;          [?fluxod :fluxod-ts/resource-name ?fluxod-name]
+;;          [?fluxod :fluxod-ts/days ?work-fluxod]
+;;          [?fluxod :fluxod-ts/date ?date]
          
-         [?fluxod :fluxod-ts/client ?client]
-         [?fluxod :fluxod-ts/po ?fluxod-po]
+;;          [?fluxod :fluxod-ts/client ?client]
+;;          [?fluxod :fluxod-ts/po ?fluxod-po]
          
-         [?pinfo :project-info/fluxod-client-name ?client]
-         [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-         [?pinfo :project-info/id ?pid]
+;;          [?pinfo :project-info/fluxod-client-name ?client]
+;;          [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+;;          [?pinfo :project-info/id ?pid]
          
-         [?e :project/id ?pid]
-         [?e :project/name ?name]
-                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
-                                        ;[(tick.alpha.api/>= ?date ?min-date)]
-                                        ;[(tick.alpha.api/<= ?date ?max-date)]
+;;          [?e :project/id ?pid]
+;;          [?e :project/name ?name]
+;;                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+;;                                         ;[(tick.alpha.api/>= ?date ?min-date)]
+;;                                         ;[(tick.alpha.api/<= ?date ?max-date)]
          
          
-         ] (d/db (d/connect db-url))
-           #uuid "67045544-f9d3-e911-b092-00155de43b0b"
-           #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
-           (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
-           (t/inst (t/at (t/new-date 2020 3 12) "12:00")))
-  (d/transact (d/connect db-url) (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
-                                                                                      :where [?e :import/time _]] (d/db (d/connect db-url))))))
+;;          ] (d/db (d/connect db-url))
+;;            #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+;;            #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+;;            (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
+;;            (t/inst (t/at (t/new-date 2020 3 12) "12:00")))
+;;   (d/transact (d/connect db-url) (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+;;                                                                                       :where [?e :import/time _]] (d/db (d/connect db-url))))))
 
-  (clojure.pprint/pprint
-   (d/q '[:find [?fluxod-name2 ...] ;?work-fluxod ?date ?fluxod-po
-                                        ;:keys timesheet/work-fluxod date fluxod-po
-          :in $ ?rid ?pid ?min-date ?max-date
-          :where
-                                        ;[?r :resource/id ?rid]
-                                        ;[?r :resource/fluxod-name ?fluxod-name]
+;;   (clojure.pprint/pprint
+;;    (d/q '[:find [?fluxod-name2 ...] ;?work-fluxod ?date ?fluxod-po
+;;                                         ;:keys timesheet/work-fluxod date fluxod-po
+;;           :in $ ?rid ?pid ?min-date ?max-date
+;;           :where
+;;                                         ;[?r :resource/id ?rid]
+;;                                         ;[?r :resource/fluxod-name ?fluxod-name]
           
-          [?fluxod :fluxod-ts/resource-name ?fluxod-name2]
+;;           [?fluxod :fluxod-ts/resource-name ?fluxod-name2]
           
-                                        ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
-                                        ;[(tick.alpha.api/>= ?date ?min-date)]
-                                        ;[(tick.alpha.api/<= ?date ?max-date)]
+;;                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
+;;                                         ;[(tick.alpha.api/>= ?date ?min-date)]
+;;                                         ;[(tick.alpha.api/<= ?date ?max-date)]
           
           
-          ] (d/db (d/connect db-url))
-            #uuid "67045544-f9d3-e911-b092-00155de43b0b"
-            #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
-            (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
-            (t/inst (t/at (t/new-date 2020 3 12) "12:00"))))
+;;           ] (d/db (d/connect db-url))
+;;             #uuid "67045544-f9d3-e911-b092-00155de43b0b"
+;;             #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
+;;             (t/inst (t/at (t/new-date 2019 9 3) "12:00"))
+;;             (t/inst (t/at (t/new-date 2020 3 12) "12:00"))))
 
-;; test2 
-  (d/transact (d/connect db-url)
-              (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
+;; ;; test2 
+;;   (d/transact (d/connect db-url)
+;;               (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
                                                                    
-                                                                   :where
-                                                                   [?e :import/time ?date]
+;;                                                                    :where
+;;                                                                    [?e :import/time ?date]
                                                                    
                                                                    
-                                                                   ] (d/db (d/connect db-url))))))
+;;                                                                    ] (d/db (d/connect db-url))))))
 
 
 
-  (sort (d/q '[:find  [?date ...]
-               :in $  ?pid 
-               :where
-               [?fluxod :fluxod-ts/date ?date]
+;;   (sort (d/q '[:find  [?date ...]
+;;                :in $  ?pid 
+;;                :where
+;;                [?fluxod :fluxod-ts/date ?date]
                
-               [?fluxod :fluxod-ts/client ?client]
-               [?fluxod :fluxod-ts/po ?fluxod-po]
+;;                [?fluxod :fluxod-ts/client ?client]
+;;                [?fluxod :fluxod-ts/po ?fluxod-po]
                
-               [?pinfo :project-info/fluxod-client-name ?client]
-               [?pinfo :project-info/fluxod-project-names ?fluxod-po]
-               [?pinfo :project-info/id ?pid]
+;;                [?pinfo :project-info/fluxod-client-name ?client]
+;;                [?pinfo :project-info/fluxod-project-names ?fluxod-po]
+;;                [?pinfo :project-info/id ?pid]
                
-               [?e :project/id ?pid]
-               [?e :project/name ?name]
-               ](d/db (d/connect db-url))
-                #uuid "8c98f847-f853-ea11-9d73-b4ae2be9eec5")))
+;;                [?e :project/id ?pid]
+;;                [?e :project/name ?name]
+;;                ](d/db (d/connect db-url))
+;;                 #uuid "8c98f847-f853-ea11-9d73-b4ae2be9eec5")))
 
 
 
+#_(first (d/q '[:find ?e ?s ?p
+                :keys email salt password
+                :where
+                [?d :msaccount/password ?p]
+                [?d :msaccount/email ?e]
+                [?d :msaccount/salt ?s]
+                [?d :msaccount/type :msaccount]
+                ]
+              (d/db (d/connect db-url))))
 
 
 

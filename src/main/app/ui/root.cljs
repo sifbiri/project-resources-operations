@@ -1563,6 +1563,9 @@
   (dom/label {:style {:color "#3281b9"}} (:project/name p))
   ))
 
+(def x)
+
+
 (def ui-project-checkbox (comp/factory ProjectCheckBox {:keyfn :project/id}))
 
 (defsc WorkPlan [this {:workplan/keys [resource-lines team-checkboxes]
@@ -1976,7 +1979,7 @@
                                         ;(dr/change-route)
 
 (dr/defrouter TopRouter [this {:keys [route-factory route-props current-state] :as props}]
-  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel imports/ImportMain]
+  {:router-targets [Main  Signup SignupSuccess WorkDay WorkPlan users/AdminUsers teams/Teams projects/AdminProjects projects/ProjectPanel imports/ImportMain imports/MSAccount]
    :always-render-body? true}
   (ui-grid-row {:centered true :columns 2}
                (when (not= :routed current-state)
@@ -2072,17 +2075,27 @@
                                                     :content
                                                     (ui-dropdown {:item true :text "Admin"}
                                                                  (ui-dropdown-menu {}
-                                                                                   (if (get #{:profile/admin
-                                                                                              :profile/team-leader
-                                                                                              
-                                                                                              } profile)
-                                                                                     
+                                                                                   (cond
+                                                                                     (get #{:profile/admin                                                                                            
+                                                                                            } profile)
                                                                                      [(ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
                                                                                       (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
-                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")]
+                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")
+                                                                                      (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/MSAccount))} "MS Account")]
+
+                                                                                     (get #{
+                                                                                            :profile/team-leader
+                                                                                            
+                                                                                            } profile)
+                                                                                     
+                                                                                         [(ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to users/AdminUsers))} "Users")
+                                                                                          
+                                                                                          (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to teams/Teams))} "Teams")
+                                                                                          (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")
+                                                                                          (ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/MSAccount))} "MS Account")]
 
                                                                                      
-                                                                                     [(ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")])
+                                                                                     :else [(ui-dropdown-item {:onClick #(dr/change-route this (dr/path-to imports/ImportMain))} "Import")])
                                                                                    
 
                                                                                    

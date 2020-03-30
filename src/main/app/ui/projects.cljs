@@ -1538,7 +1538,7 @@
    ::form/cancel-route ["landing-page"]
    ::form/route-prefix "line-item"
    ::form/layout       [[:line-item/item :line-item/quantity]]
-   ::form/subforms     {:line-item/item {::form/ui       form/ToOneEntityPicker
+   #_#_::form/subforms     {:line-item/item {::form/ui       form/ToOneEntityPicker
                                          ::form/pick-one {:options/query-key :item/all-items
                                                           :options/subquery  [:item/id :item/name :item/price]
                                                           :options/transform (fn [{:item/keys [id name price]}]

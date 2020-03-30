@@ -24,6 +24,12 @@
             [com.fulcrologic.fulcro.algorithms.data-targeting :as targeting]))
 
 
+(defmutation save-msaccount [{:keys [password email]}]
+  (action [{:keys [state ref] :as env}]
+          ())
+  (remote [env] true))
+
+
 (defn period-to-string [x]
   (->> x
        t/zoned-date-time

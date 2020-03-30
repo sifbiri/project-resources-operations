@@ -7,6 +7,17 @@
 3. Then `cd fluxy`, the repo on server
 
 Note. to acess aws console, password is stored in Dashlane: sbiri@fluxym.com 
+
+== When after server hardware restart
+1 - after acess, `cd fluxy`
+2 - then `cd  datomic-pro-0.9.5981`
+3 - then run `bin/transactor sql-transactor-template.properties &` this starts the DB
+4 - then inside `fluxy` hit `screen`
+5 - then `clj -A:dev`
+6 - after moments, type `
+
+
+
 === First Run  
 
 1. Ensure having Java, Clojure, NPM or Yarn installed 

@@ -161,6 +161,44 @@
                                         ;[com.fulcrologic.semantic-ui.button.ui-button :refer [ui-button]]
    ))
 
+
+
+
+(defsc MSAccount [this {:msaccount/keys [email password]}]
+  {:query [:msaccount/email :msaccount/password]
+   :route-segment ["msaccount"]
+   :ident (fn [] [:component/id :msaccount])
+   :will-enter (fn [app {:keys [] :as params}]
+                 (dr/route-deferred
+                  [:component/id :msaccount]
+                  (fn []
+                    (df/load!
+                     app
+                     :msaccount
+                     MSAccount
+                     { 
+                      :marker :msaccount :post-mutation `dr/target-ready :post-mutation-params {:target [:component/id :msaccount]}}))))
+   }
+  (let []
+    (ui-container {:style {:width "40%"}}
+                  (ui-header {} "MS Account")
+                  (ui-form
+                   {}
+                   (ui-form-field
+                    {}
+                    (dom/label {} "Email: ")
+                    (ui-input {:placeholder "email address"
+                               :value email
+                               :onChange #(m/set-string! this :msaccount/email :event %)}))
+                   (ui-form-field
+                    {}
+                    (dom/label {} "Password: ")
+                    (ui-input {:placeholder "password" :type "password"
+                               :value password
+                               :onChange #(m/set-string! this :msaccount/password :event %)}))
+                   (ui-button {:basic true :onClick #(comp/transact! this [(import/save-msaccount {:email email :password password})])}
+                              "Save")))))
+
 (defsc Import [this {:import/keys [type time start-period end-period files fileUrl]}]
   {:query         [:import/id :import/type :import/time #_:import/status :import/end-period
                    :import/fileUrl

@@ -17,7 +17,7 @@
   :start (let [{:keys [config] :or {config "config/dev.edn"}} (args)
                configuration (load-config! {:config-path config})]
            (log/info "Loaded config" config)
-           (attr/register-attributes! model/all-attributes)
+           #_(attr/register-attributes! model/all-attributes)
            (configure-logging! configuration)
            configuration))
 
