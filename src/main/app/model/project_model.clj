@@ -86,6 +86,8 @@
     
 
     {;:async? true
+     ;:user email
+     ;:password (String. pass)
      :cookie-store cs ;:oauth-token security-token
      :headers {"X-RequestDigest" digest
                "If-Match" "*"}
