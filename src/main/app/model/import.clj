@@ -22,16 +22,18 @@
    [tinklj.keys.keyset-handle :as keyset-handles]
    [tinklj.keysets.keyset-storage  :as keyset-storage]
    [tinklj.primitives :as primitives]
-   [tinklj.encryption.aead :refer [encrypt decrypt]]))
+   [tinklj.encryption.aead :refer [encrypt decrypt]]
+
+   [buddy.core.crypto :as crypto]
+   [buddy.core.codecs :as codecs]
+   [buddy.core.nonce :as nonce]
+   [buddy.core.hash :as hash]))
 
 #_(def ciphertext (encrypt aead (.getBytes "password") aad))
 
 
 (defn rand-str [len]
   (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
-
-
-
 
 
 (def ms-names-atom (atom []))
@@ -57,21 +59,23 @@
 
 (pc/defresolver msaccount [{:keys [connection db]} _]
   {::pc/output [{:msaccount [:msaccount/password :msaccount/email]}]}
-  (let [{:keys [email password salt]}
-        (first (d/q '[:find ?e ?s ?p
-                      :keys email salt password
+  (let [{:keys [email password key iv]}
+        (first (d/q '[:find ?e  ?p ?key ?iv
+                      :keys email password key iv
                       :where
                       [?d :msaccount/password ?p]
                       [?d :msaccount/email ?e]
-                      [?d :msaccount/salt ?s]
+                      [?d :msaccount/iv ?iv]
+                      [?d :msaccount/key ?key]
                       [?d :msaccount/type :msaccount]
                       ]
                     (d/db (d/connect db-url))))
-        keyset-handle (keyset-storage/load-clear-text-keyset-handle "resources/ks.json")
-        aead (primitives/aead keyset-handle)
         
-        pass (decrypt aead password  (.getBytes salt))]
-    {:msaccount {:msaccount/password (String. pass) :msaccount/email email}}))
+        
+        
+        pass (-> (crypto/decrypt password key iv {:algorithm :aes128-cbc-hmac-sha256})
+                 (codecs/bytes->str))]
+    {:msaccount {:msaccount/password  pass :msaccount/email email}}))
 
 
 (pc/defresolver import  [{:keys [connection db]} {:keys [import/id]}]
@@ -225,18 +229,19 @@
   [{:keys [db connection] :as env}  {:keys [email password]}]
   {::pc/params [:email :passowrd]
    ::pc/output []}
-  (let [keyset-handle (keyset-storage/load-clear-text-keyset-handle "resources/ks.json")
-        aead (primitives/aead keyset-handle)
-        aad (rand-str (+ (rand-int 12) 2))
-        aadbytes (.getBytes aad)
-        ciphertext (encrypt aead (.getBytes password) aadbytes)
+  (let [original-text (codecs/to-bytes password)
+        iv (nonce/random-bytes 16)
+        key (hash/sha256 "ivJsakeflat")
+        encrypted (crypto/encrypt original-text key iv
+                                  {:algorithm :aes128-cbc-hmac-sha256})
         ]
 
     (if (d/pull db [:msaccount/email] [:msaccount/type :msaccount])
       (d/transact connection [{:db/id [:msaccount/type :msaccount]
-                               :msaccount/email email  :msaccount/salt aad :msaccount/password ciphertext}])
+                               :msaccount/email email  :msaccount/iv iv :msaccount/key key
+                               :msaccount/password encrypted}])
 
-      (d/transact connection [{:db/id "new" :msaccount/email email   :msaccount/salt aad :msaccount/password ciphertext :msaccount/type :msaccount}]))
+      (d/transact connection [{:db/id "new" :msaccount/email email   :msaccount/iv iv :msaccount/key key :msaccount/password encrypted :msaccount/type :msaccount}]))
     {}
     ))
 

@@ -10,7 +10,13 @@
             [tinklj.encryption.aead :refer [encrypt decrypt]]
             [tinklj.keysets.keyset-storage  :as keyset-storage]
             [tinklj.primitives :as primitives]
-            [app.model.session :as session]))
+            [app.model.session :as session]
+
+            [buddy.core.crypto :as crypto]
+            [buddy.core.codecs :as codecs]
+            [buddy.core.nonce :as nonce]
+            [buddy.core.hash :as hash]))
+
 
 (register)
 
@@ -40,25 +46,23 @@
 
 
 (defn prepare-request-options []
-  (let [{:keys [email salt password]
-         } (first (d/q '[:find ?e ?s ?p
-                         :keys email salt password
-                         :where
-                         [?d :msaccount/password ?p]
-                         [?d :msaccount/email ?e]
-                         [?d :msaccount/salt ?s]
-                         [?d :msaccount/type :msaccount]
-                         ]
-                       (d/db (d/connect db-url))))
-           keyset-handle (keyset-storage/load-clear-text-keyset-handle "resources/ks.json")
+  (let [{:keys [email password key iv]}
+        (first (d/q '[:find ?e  ?p ?key ?iv
+                      :keys email password key iv
+                      :where
+                      [?d :msaccount/password ?p]
+                      [?d :msaccount/email ?e]
+                      [?d :msaccount/iv ?iv]
+                      [?d :msaccount/key ?key]
+                      [?d :msaccount/type :msaccount]
+                      ]
+                    (d/db (d/connect db-url))))
 
-           aead (primitives/aead keyset-handle)
+        pass (-> (crypto/decrypt password key iv {:algorithm :aes128-cbc-hmac-sha256})
+                 (codecs/bytes->str))
 
-           pass (decrypt aead password (.getBytes salt))
-           
-        
         res1-security-token (client/post "https://login.microsoftonline.com/extSTS.srf"
-                                         {:body (session/make-load email (String. pass)) :body-encoding "UTF-8"
+                                         {:body (session/make-load email pass) :body-encoding "UTF-8"
                                           :cookie-store cs})
 
 
@@ -86,8 +90,6 @@
     
 
     {;:async? true
-     ;:user email
-     ;:password (String. pass)
      :cookie-store cs ;:oauth-token security-token
      :headers {"X-RequestDigest" digest
                "If-Match" "*"}

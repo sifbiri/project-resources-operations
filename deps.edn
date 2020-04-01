@@ -39,12 +39,10 @@
 
   tinklj {:mvn/version "0.1.2-SNAPSHOT"}
 
+  buddy {:mvn/version "2.0.0"}
 
   com.cerner/clara-rules {:mvn/version "0.20.0"}
-
   
-
-
   fulcrologic/fulcro-rad-datomic
   {:git/url "https://github.com/fulcrologic/fulcro-rad-datomic.git" :sha "e1f9a70f32f6ddb5ecc03f67e053f81a5eb16a9d"
    
