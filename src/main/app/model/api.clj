@@ -55,7 +55,7 @@
 
                                         ;(def db-uri-base "datomic:mem://")
 
-;(def resource io/resource)
+                                        ;(def resource io/resource)
 
 
 ;; ;; (defn scratch-conn
@@ -178,7 +178,7 @@
   [m]
   (apply dissoc                                                                                            
          m                                                                                                  
-          (for [[k v] m :when (nil? v)] k)))
+         (for [[k v] m :when (nil? v)] k)))
 
 (defn get-resource
   [id]
@@ -418,9 +418,25 @@
                                         ;(pmap #(select-keys % task-props) response)
     response))
 
-                                        ;tasks-for-project
+                                        ;
 
 
+
+
+;; (defn transact-all2
+;;   ([conn txs]
+;;      (transact-all2 conn txs nil))
+;;   ([conn txs res]
+;;      (if (seq txs)
+;;        (transact-all2 conn (rest txs) @(d/transact conn (first txs)))
+;;        res)))
+
+;;                                         ;(def conn (scratch-conn))
+;;                                         ;(transact-all  conn2 "resources/edn/schema.edn")
+
+(defn find-in-grouped-by [m key]
+  (->> (seq m)
+       (reduce (fn [r [{:keys [:user-id :a]} :as k] v] (update r a conj {k v}))) {}))
 
 (defn get-all-projects
   []
@@ -465,30 +481,12 @@
          (pmap remove-nils)
          (pmap
           (fn [x] (remove-nils (assoc x
-                                 :project/assignments (pmap (fn [x] (dissoc x :project/name))  (all-assignments (str (:project/id x))))
-                                 :project/tasks (tasks-for-project (str (:project/id x))))))
+                                 :project/assignments (mapv (fn [x] (dissoc x :project/name))  (all-assignments (str (:project/id x))))
+                                 #_#_:project/tasks (tasks-for-project (str (:project/id x))))))
           
           )
                                         ;(pmap (fn [x] (:assoc)))
          )))
-
-
-
-
-;; (defn transact-all2
-;;   ([conn txs]
-;;      (transact-all2 conn txs nil))
-;;   ([conn txs res]
-;;      (if (seq txs)
-;;        (transact-all2 conn (rest txs) @(d/transact conn (first txs)))
-;;        res)))
-
-;;                                         ;(def conn (scratch-conn))
-;;                                         ;(transact-all  conn2 "resources/edn/schema.edn")
-
-(defn find-in-grouped-by [m key]
-  (->> (seq m)
-       (reduce (fn [r [{:keys [:user-id :a]} :as k] v] (update r a conj {k v}))) {}))
 
 
 
@@ -536,8 +534,8 @@
   (d/create-database db-url)
   (println "seeding schema")
   
-   (transact-all (d/connect db-url) "resources/edn/schema.edn")
-   (update-db))
+  (transact-all (d/connect db-url) "resources/edn/schema.edn")
+  (update-db))
 
 
 (def my-pool (at-at/mk-pool))
@@ -571,7 +569,7 @@
 ;;                                                   :action/owner "Sifou"
 ;;                                                   :action/status :closed
 ;;                                                   :action/due-date (t/inst (t/now))}]}])
-  
+
 ;;   (pmap (comp (fn [m] (update m :action-list/actions (fn [x] (pmap #(clojure.set/rename-keys %  {:db/id :action/id}) x)))) first)
 ;;         )
 
@@ -583,7 +581,7 @@
 
 ;;   (d/transact connection [[:db/retractEntity 17592186087495] [:db/retractEntity 17592186087496] [:db/retractEntity 17592186087487] [:db/retractEntity 17592186087488]])
 
-  
+
 
 ;;   "datomic:sql://?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
 
@@ -626,28 +624,28 @@
 ;;   (d/q '[:find ?work-fluxod ?date ?fluxod-po
 ;;          :keys timesheet/work-fluxod date fluxod-po
 ;;          :in $ ?rid ?pid ?start ?end
-         
+
 ;;          :where
 ;;          [?r :resource/id ?rid]
 ;;          [?r :resource/name ?rn]
-         
+
 ;;          [?fluxod :fluxod-ts/resource-name ?fluxod-name]
 ;;          [?fluxod :fluxod-ts/days ?work-fluxod]
 ;;          [?fluxod :fluxod-ts/date ?date]
-         
+
 ;;          [?fluxod :fluxod-ts/client ?client]
 ;;          [?fluxod :fluxod-ts/po ?fluxod-po]
-         
+
 ;;          [?pinfo :project-info/fluxod-client-name ?client]
 ;;          [?pinfo :project-info/fluxod-project-names ?fluxod-po]
 ;;          [?pinfo :project-info/id ?pid]
-         
+
 ;;          [?e :project/id ?pid]
 ;;          [?e :project/name ?name]
 ;;                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
 ;;          [(tick.alpha.api/> ?date ?start)]
 ;;          [(tick.alpha.api/< ?date ?end)]
-         
+
 ;;          [?r :resource/fluxod-name ?fluxod-name]
 ;;          ] (d/db (d/connect db-url))
 ;;            #uuid "6c045544-f9d3-e911-b092-00155de43b0b"
@@ -678,21 +676,21 @@
 ;;          [?fluxod :fluxod-ts/resource-name ?fluxod-name]
 ;;          [?fluxod :fluxod-ts/days ?work-fluxod]
 ;;          [?fluxod :fluxod-ts/date ?date]
-         
+
 ;;          [?fluxod :fluxod-ts/client ?client]
 ;;          [?fluxod :fluxod-ts/po ?fluxod-po]
-         
+
 ;;          [?pinfo :project-info/fluxod-client-name ?client]
 ;;          [?pinfo :project-info/fluxod-project-names ?fluxod-po]
 ;;          [?pinfo :project-info/id ?pid]
-         
+
 ;;          [?e :project/id ?pid]
 ;;          [?e :project/name ?name]
 ;;                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
 ;;                                         ;[(tick.alpha.api/>= ?date ?min-date)]
 ;;                                         ;[(tick.alpha.api/<= ?date ?max-date)]
-         
-         
+
+
 ;;          ] (d/db (d/connect db-url))
 ;;            #uuid "67045544-f9d3-e911-b092-00155de43b0b"
 ;;            #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
@@ -708,14 +706,14 @@
 ;;           :where
 ;;                                         ;[?r :resource/id ?rid]
 ;;                                         ;[?r :resource/fluxod-name ?fluxod-name]
-          
+
 ;;           [?fluxod :fluxod-ts/resource-name ?fluxod-name2]
-          
+
 ;;                                         ;[(tick.alpha.api/> ?date #inst "2019-11-20T00:00:00.000-00:00")]
 ;;                                         ;[(tick.alpha.api/>= ?date ?min-date)]
 ;;                                         ;[(tick.alpha.api/<= ?date ?max-date)]
-          
-          
+
+
 ;;           ] (d/db (d/connect db-url))
 ;;             #uuid "67045544-f9d3-e911-b092-00155de43b0b"
 ;;             #uuid "4a4edb29-2ee1-e911-b19b-9cb6d0e1bd60"
@@ -725,11 +723,11 @@
 ;; ;; test2 
 ;;   (d/transact (d/connect db-url)
 ;;               (into [] (mapv (fn [e] [:db/retractEntity e]) (d/q '[:find [?e ...]
-                                                                   
+
 ;;                                                                    :where
 ;;                                                                    [?e :import/time ?date]
-                                                                   
-                                                                   
+
+
 ;;                                                                    ] (d/db (d/connect db-url))))))
 
 
@@ -738,14 +736,14 @@
 ;;                :in $  ?pid 
 ;;                :where
 ;;                [?fluxod :fluxod-ts/date ?date]
-               
+
 ;;                [?fluxod :fluxod-ts/client ?client]
 ;;                [?fluxod :fluxod-ts/po ?fluxod-po]
-               
+
 ;;                [?pinfo :project-info/fluxod-client-name ?client]
 ;;                [?pinfo :project-info/fluxod-project-names ?fluxod-po]
 ;;                [?pinfo :project-info/id ?pid]
-               
+
 ;;                [?e :project/id ?pid]
 ;;                [?e :project/name ?name]
 ;;                ](d/db (d/connect db-url))
