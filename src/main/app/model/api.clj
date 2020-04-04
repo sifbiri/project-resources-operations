@@ -547,9 +547,9 @@
   (update-db))
 
 
-;(def my-pool (at-at/mk-pool))
+(def my-pool (at-at/mk-pool))
 
-;(def schedule (at-at/every (t/millis (t/new-duration 250 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 400 :minutes))))
+(def schedule (at-at/every (t/millis (t/new-duration 250 :minutes)) update-db my-pool :initial-delay (t/millis (t/new-duration 400 :minutes))))
                                         ;(at-at/stop schedule)
                                         ;(def db-uri "datomic:dev://localhost:4334/one2")
                                         ;(transact-all (d/connect "datomic:dev://localhost:4334/one2") "resources/edn/schema.edn")
