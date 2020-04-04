@@ -46,7 +46,7 @@
 
 
 (defn prepare-request-options []
-  (let [#_#_{:keys [email password key iv]}
+  (let [{:keys [email password key iv]}
         (first (d/q '[:find ?e  ?p ?key ?iv
                       :keys email password key iv
                       :where
@@ -58,11 +58,11 @@
                       ]
                     (d/db (d/connect db-url))))
 
-        #_#_pass (-> (crypto/decrypt password key iv {:algorithm :aes128-cbc-hmac-sha256})
+        pass (-> (crypto/decrypt password key iv {:algorithm :aes128-cbc-hmac-sha256})
                  (codecs/bytes->str))
 
         res1-security-token (client/post "https://login.microsoftonline.com/extSTS.srf"
-                                         {:body  (clojure.java.io/file "src/main/app/model/load.xml") #_(session/make-load email pass) :body-encoding "UTF-8"
+                                         {:body (session/make-load email pass) :body-encoding "UTF-8"
                                           :cookie-store cs})
 
 
@@ -90,8 +90,6 @@
     
 
     {;:async? true
-     ; :email email
-     ;:password pass
      :cookie-store cs ;:oauth-token security-token
      :headers {"X-RequestDigest" digest
                "If-Match" "*"}

@@ -1718,10 +1718,20 @@
       [
 
        (ui-grid-column {:width 3 :style {:color "#3281b9"}}
-                       (div {:style {}}
-                            (ui-checkbox {:toggle true
-                                          :value inverse-color?
-                                          :onChange #(m/toggle! this :ui/inverse-color?)})
+                       (div {:style {:color "#3281b9"}}
+                            (ui-form-field
+                             {:style {:color "#3281b9"}}
+                             
+                             (ui-checkbox {:toggle true
+                                           :style {:color "#3281b9"}
+                                           ;:label "Reverse colors"
+                                           :color "blue"
+                                           :value inverse-color?
+                                           :onChange #(m/toggle! this :ui/inverse-color?)})
+                             (dom/label {:style {:color "#3281b9"
+                                                 :position "relative"
+                                                 :top "-7px"
+                                                 :left "4px"}} "Reverse colors"))
                             
 
                             (ui-accordion
