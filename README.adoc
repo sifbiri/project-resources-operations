@@ -1,5 +1,3 @@
-== Ops FLuxym
-
 == To Acess server
 0. Ensure having `git` installed 
 1. `git pull https://github.com/bsifou/OpsPortal.git`, then `cd OpsPortal`
